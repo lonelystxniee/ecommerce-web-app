@@ -78,14 +78,14 @@ const AuthForm = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+    <div className="fixed inset-0 flex items-center justify-center p-4 z-200">
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
         onClick={onClose}
       ></div>
 
       <div
-        className="relative z-[210] w-full max-w-[480px] rounded-xl shadow-2xl overflow-hidden animate-zoomIn"
+        className="relative w-full overflow-hidden shadow-2xl z-210 max-w-120 rounded-xl animate-zoomIn"
         style={{
           backgroundColor: "#f2ebe3",
           backgroundImage: `url('https://www.toptal.com/designers/subtlepatterns/uploads/paper.png')`,
@@ -93,7 +93,7 @@ const AuthForm = ({ isOpen, onClose }) => {
       >
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 z-30"
+          className="absolute z-30 text-gray-400 top-3 right-3 hover:text-gray-600"
         >
           <X size={20} />
         </button>
@@ -134,7 +134,7 @@ const AuthForm = ({ isOpen, onClose }) => {
                     onChange={(e) => setPassword(e.target.value)}
                   />
                   <div
-                    className="absolute right-3 top-9 text-gray-400 cursor-pointer"
+                    className="absolute text-gray-400 cursor-pointer right-3 top-9"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -203,7 +203,7 @@ const AuthForm = ({ isOpen, onClose }) => {
             )}
           </form>
 
-          <p className="mt-6 text-center text-sm text-gray-600 font-medium">
+          <p className="mt-6 text-sm font-medium text-center text-gray-600">
             {isLogin ? "Bạn chưa có tài khoản?" : "Bạn đã có tài khoản?"}{" "}
             <span
               className="text-[#800a0d] font-bold cursor-pointer hover:underline"

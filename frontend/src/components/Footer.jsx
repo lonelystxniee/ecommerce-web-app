@@ -4,7 +4,7 @@ import { Mail, Phone, MapPin } from "lucide-react";
 const Footer = () => {
   return (
     <footer className="mt-10 bg-[#e0be91]/20 text-secondary-2">
-      <div className="mx-auto max-w-[1200px] px-4">
+      <div className="px-4 mx-auto max-w-300">
         {/* MAIN */}
         <div className="pt-10 pb-10">
           {/* TOP GRID */}
@@ -77,7 +77,7 @@ const Footer = () => {
                 src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fprofile.php%3Fid%3D61586852291537&width=340&height=130&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=true"
                 width="100%"
                 height="130"
-                className="border-0 overflow-hidden rounded"
+                className="overflow-hidden border-0 rounded"
                 allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
               />
             </div>

@@ -15,7 +15,6 @@ import {
   Headset,
   CreditCard,
 } from "lucide-react";
-//import { products } from "../data";
 import { useCart } from "../context/CartContext";
 
 const bannerImages = [
@@ -24,7 +23,6 @@ const bannerImages = [
   "https://cdn.honglam.vn/honglam/Sac_Hoa_1_06cf1c5837.jpg",
 ];
 
-// ===== DANH SÁCH Ô MAI CODE CỨNG – CHỈ DÙNG CHO SECTION 5 =====
 const products = [
   {
     id: 1,
@@ -144,25 +142,25 @@ const Home = () => {
   return (
     <div className="bg-[#f7f4ef] min-h-screen pb-20 font-sans">
       {/* SECTION 1: HERO (Sidebar + Banner) */}
-      <section className="mx-auto max-w-[1200px] px-4 pt-4">
+      <section className="px-4 pt-4 mx-auto max-w-300">
         {/* Ép chiều cao chung */}
-        <div className="flex gap-4 h-[360px]">
+        <div className="flex gap-4 h-90">
           {/* ===== SIDEBAR ===== */}
-          <div className="hidden md:block w-[260px] h-full">
-            <div className="relative h-full bg-[#9d0b0f] text-white shadow-lg p-[6px]">
+          <div className="hidden h-full md:block w-65">
+            <div className="relative h-full bg-[#9d0b0f] text-white shadow-lg p-1.5">
               <div className="relative h-full border border-[#d4a373]">
                 {/* 4 góc trang trí */}
-                <span className="absolute -top-[2px] -left-[2px] w-3 h-3 border-t-2 border-l-2 border-[#d4a373]" />
-                <span className="absolute -top-[2px] -right-[2px] w-3 h-3 border-t-2 border-r-2 border-[#d4a373]" />
-                <span className="absolute -bottom-[2px] -left-[2px] w-3 h-3 border-b-2 border-l-2 border-[#d4a373]" />
-                <span className="absolute -bottom-[2px] -right-[2px] w-3 h-3 border-b-2 border-r-2 border-[#d4a373]" />
+                <span className="absolute -top-0.5 -left-0.5 w-3 h-3 border-t-2 border-l-2 border-[#d4a373]" />
+                <span className="absolute -top-0.5 -right-0.5 w-3 h-3 border-t-2 border-r-2 border-[#d4a373]" />
+                <span className="absolute -bottom-0.5 -left-0.5 w-3 h-3 border-b-2 border-l-2 border-[#d4a373]" />
+                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 border-b-2 border-r-2 border-[#d4a373]" />
 
                 {/* Nội dung */}
                 <div className="bg-[#9d0b0f] h-full flex flex-col">
                   {/* Header */}
-                  <div className="flex h-[44px] items-center gap-2 px-4 bg-[#800a0d] border-b border-[#a10c0d] flex-shrink-0">
-                    <Menu className="h-5 w-5" />
-                    <span className="font-bold uppercase text-sm">
+                  <div className="flex h-11 items-center gap-2 px-4 bg-[#800a0d] border-b border-[#a10c0d] shrink-0">
+                    <Menu className="w-5 h-5" />
+                    <span className="text-sm font-bold uppercase">
                       Danh mục sản phẩm
                     </span>
                   </div>
@@ -171,57 +169,57 @@ const Home = () => {
                   <div className="flex-1">
                     <Link
                       to="/category/giai-phap-qua-tang"
-                      className="flex h-[44px] items-center gap-2 px-4 border-b border-[#a10c0d] hover:bg-[rgba(0,0,0,.15)] cursor-pointer"
+                      className="flex h-11 items-center gap-2 px-4 border-b border-[#a10c0d] hover:bg-[rgba(0,0,0,.15)] cursor-pointer"
                     >
-                      <Clock className="h-5 w-5" />
+                      <Clock className="w-5 h-5" />
                       <span>Giải pháp quà tặng, quà biếu</span>
                     </Link>
 
                     <Link
                       to="/category/o-mai"
-                      className="flex h-[44px] items-center gap-2 px-4 border-b border-[#a10c0d] hover:bg-[rgba(0,0,0,.15)] cursor-pointer"
+                      className="flex h-11 items-center gap-2 px-4 border-b border-[#a10c0d] hover:bg-[rgba(0,0,0,.15)] cursor-pointer"
                     >
-                      <Package className="h-5 w-5" />
+                      <Package className="w-5 h-5" />
                       <span>Ô mai (xí muội)</span>
                     </Link>
 
                     <Link
                       to="/category/mut-tet"
-                      className="flex h-[44px] items-center gap-2 px-4 border-b border-[#a10c0d] hover:bg-[rgba(0,0,0,.15)] cursor-pointer"
+                      className="flex h-11 items-center gap-2 px-4 border-b border-[#a10c0d] hover:bg-[rgba(0,0,0,.15)] cursor-pointer"
                     >
-                      <Sparkles className="h-5 w-5" />
+                      <Sparkles className="w-5 h-5" />
                       <span>Mứt Tết</span>
                     </Link>
 
                     <Link
                       to="/category/banh-keo"
-                      className="flex h-[44px] items-center gap-2 px-4 border-b border-[#a10c0d] hover:bg-[rgba(0,0,0,.15)] cursor-pointer"
+                      className="flex h-11 items-center gap-2 px-4 border-b border-[#a10c0d] hover:bg-[rgba(0,0,0,.15)] cursor-pointer"
                     >
-                      <Gift className="h-5 w-5" />
+                      <Gift className="w-5 h-5" />
                       <span>Bánh - Kẹo</span>
                     </Link>
 
                     <Link
                       to="/category/che-tra"
-                      className="flex h-[44px] items-center gap-2 px-4 border-b border-[#a10c0d] hover:bg-[rgba(0,0,0,.15)] cursor-pointer"
+                      className="flex h-11 items-center gap-2 px-4 border-b border-[#a10c0d] hover:bg-[rgba(0,0,0,.15)] cursor-pointer"
                     >
-                      <Cake className="h-5 w-5" />
+                      <Cake className="w-5 h-5" />
                       <span>Chè, Trà đặc sản</span>
                     </Link>
 
                     <Link
                       to="/category/san-pham-khac"
-                      className="flex h-[44px] items-center gap-2 px-4 border-b border-[#a10c0d] hover:bg-[rgba(0,0,0,.15)] cursor-pointer"
+                      className="flex h-11 items-center gap-2 px-4 border-b border-[#a10c0d] hover:bg-[rgba(0,0,0,.15)] cursor-pointer"
                     >
-                      <Coffee className="h-5 w-5" />
+                      <Coffee className="w-5 h-5" />
                       <span>Sản phẩm khác</span>
                     </Link>
 
                     <Link
                       to="/category/thuc-uong"
-                      className="flex h-[44px] items-center gap-2 px-4 hover:bg-[rgba(0,0,0,.15)] cursor-pointer"
+                      className="flex h-11 items-center gap-2 px-4 hover:bg-[rgba(0,0,0,.15)] cursor-pointer"
                     >
-                      <Wine className="h-5 w-5" />
+                      <Wine className="w-5 h-5" />
                       <span>Thức uống</span>
                     </Link>
                   </div>
@@ -232,13 +230,13 @@ const Home = () => {
 
           {/* ===== BANNER ===== */}
           <div className="flex-1 h-full">
-            <div className="relative h-full bg-[#9d0b0f] shadow-lg p-[6px]">
+            <div className="relative h-full bg-[#9d0b0f] shadow-lg p-1.5">
               <div className="relative h-full border border-[#d4a373]">
                 {/* 4 góc trang trí */}
-                <span className="absolute -top-[2px] -left-[2px] w-3 h-3 border-t-2 border-l-2 border-[#d4a373]" />
-                <span className="absolute -top-[2px] -right-[2px] w-3 h-3 border-t-2 border-r-2 border-[#d4a373]" />
-                <span className="absolute -bottom-[2px] -left-[2px] w-3 h-3 border-b-2 border-l-2 border-[#d4a373]" />
-                <span className="absolute -bottom-[2px] -right-[2px] w-3 h-3 border-b-2 border-r-2 border-[#d4a373]" />
+                <span className="absolute -top-0.5 -left-0.5 w-3 h-3 border-t-2 border-l-2 border-[#d4a373]" />
+                <span className="absolute -top-0.5 -right-0.5 w-3 h-3 border-t-2 border-r-2 border-[#d4a373]" />
+                <span className="absolute -bottom-0.5 -left-0.5 w-3 h-3 border-b-2 border-l-2 border-[#d4a373]" />
+                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 border-b-2 border-r-2 border-[#d4a373]" />
 
                 {/* SLIDER */}
                 <div className="relative h-full bg-[#f7f4ef] overflow-hidden">
@@ -255,12 +253,12 @@ const Home = () => {
                     {sliderImages.map((img, i) => (
                       <div
                         key={i}
-                        className="min-w-full h-full flex items-center justify-center"
+                        className="flex items-center justify-center h-full min-w-full"
                       >
                         <img
                           src={img}
                           alt="Banner"
-                          className="max-w-full max-h-full object-contain"
+                          className="object-contain max-w-full max-h-full"
                         />
                       </div>
                     ))}
@@ -276,7 +274,7 @@ const Home = () => {
                     <img
                       alt="next"
                       src="https://honglam.vn/_next/static/media/slick-next-xs-hover.c14e777f.png"
-                      className="h-8 w-8 object-cover"
+                      className="object-cover w-8 h-8"
                     />
                   </button>
                 </div>
@@ -287,7 +285,7 @@ const Home = () => {
       </section>
 
       {/* SECTION 2: SERVICE BAR */}
-      <div className="mx-auto mt-2.5 max-w-[1200px] px-4">
+      <div className="mx-auto mt-2.5 max-w-300 px-4">
         <div className="relative bg-[rgba(255,255,255,.6)]">
           <div className="grid grid-cols-2 border border-[#c0a884] md:grid-cols-3 md:gap-4 lg:grid-cols-4">
             {/* Giao hàng */}
@@ -295,7 +293,7 @@ const Home = () => {
               <div className="flex flex-col items-center justify-center gap-2.5 p-5 md:flex-row">
                 <Truck className="h-10 w-10 text-[#9d0b0f]" />
                 <div className="text-secondary-2">
-                  <h3 className="text-center text-sm md:text-left md:text-base md:font-bold">
+                  <h3 className="text-sm text-center md:text-left md:text-base md:font-bold">
                     Giao hàng siêu tốc
                   </h3>
                   <p className="hidden text-[13px] md:block">
@@ -310,7 +308,7 @@ const Home = () => {
               <div className="flex flex-col items-center justify-center gap-2.5 p-5 md:flex-row">
                 <Headset className="h-10 w-10 text-[#9d0b0f]" />
                 <div className="text-secondary-2">
-                  <h3 className="text-center text-sm md:text-left md:text-base md:font-bold">
+                  <h3 className="text-sm text-center md:text-left md:text-base md:font-bold">
                     Tư vấn miễn phí
                   </h3>
                   <p className="hidden text-[13px] md:block">
@@ -325,7 +323,7 @@ const Home = () => {
               <div className="flex flex-col items-center justify-center gap-2.5 p-5 md:flex-row">
                 <CreditCard className="h-10 w-10 text-[#9d0b0f]" />
                 <div className="text-secondary-2">
-                  <h3 className="text-center text-sm md:text-left md:text-base md:font-bold">
+                  <h3 className="text-sm text-center md:text-left md:text-base md:font-bold">
                     Thanh toán
                   </h3>
                   <p className="hidden text-[13px] md:block">
@@ -340,7 +338,7 @@ const Home = () => {
               <div className="flex flex-col items-center justify-center gap-2.5 p-5 md:flex-row">
                 <Gift className="h-10 w-10 text-[#9d0b0f]" />
                 <div className="text-secondary-2">
-                  <h3 className="text-center text-sm md:text-left md:text-base md:font-bold">
+                  <h3 className="text-sm text-center md:text-left md:text-base md:font-bold">
                     Giải pháp quà tặng
                   </h3>
                   <p className="hidden text-[13px] md:block">
@@ -354,43 +352,43 @@ const Home = () => {
       </div>
 
       {/* SECTION 3: SẢN PHẨM BÁN CHẠY */}
-      <div className="mx-auto max-w-[1200px] px-4 mt-10 text-center">
+      <div className="px-4 mx-auto mt-10 text-center max-w-300">
         <SectionHeading title="Sản phẩm bán chạy" />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 grid-rows-2 gap-5 mt-8 items-stretch">
+        <div className="grid items-stretch grid-cols-1 grid-rows-2 gap-5 mt-8 md:grid-cols-3">
           {/* CỘT 1 - TRÊN (Sản phẩm 0) */}
           <div className="relative h-full">
             <OrangeCard product={products[0]} />
           </div>
 
           {/* GIỮA – CHIẾM 2 HÀNG (Sản phẩm index 1) */}
-          <div className="relative row-span-2 h-full group">
+          <div className="relative h-full row-span-2 group">
             {/* 4 góc trang trí - thêm pointer-events-none để không cản click */}
-            <span className="absolute -top-[2px] -left-[2px] w-3 h-3 border-t-2 border-l-2 border-[#d4a373] z-10 pointer-events-none" />
-            <span className="absolute -top-[2px] -right-[2px] w-3 h-3 border-t-2 border-r-2 border-[#d4a373] z-10 pointer-events-none" />
-            <span className="absolute -bottom-[2px] -left-[2px] w-3 h-3 border-b-2 border-l-2 border-[#d4a373] z-10 pointer-events-none" />
-            <span className="absolute -bottom-[2px] -right-[2px] w-3 h-3 border-b-2 border-r-2 border-[#d4a373] z-10 pointer-events-none" />
+            <span className="absolute -top-0.5 -left-0.5 w-3 h-3 border-t-2 border-l-2 border-[#d4a373] z-10 pointer-events-none" />
+            <span className="absolute -top-0.5 -right-0.5 w-3 h-3 border-t-2 border-r-2 border-[#d4a373] z-10 pointer-events-none" />
+            <span className="absolute -bottom-0.5 -left-0.5 w-3 h-3 border-b-2 border-l-2 border-[#d4a373] z-10 pointer-events-none" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 border-b-2 border-r-2 border-[#d4a373] z-10 pointer-events-none" />
 
             {/* KHỐI NỘI DUNG CHÍNH (Đã bỏ thẻ div rỗng gây lỗi) */}
             <div
               onClick={() => navigate(`/product/${products[1]?.id}`)} // CLICK VÀO ĐÂY LÀ SANG TRANG CHI TIẾT
               className="bg-[#f39200] p-8 text-white flex flex-col items-center justify-center h-full shadow-md cursor-pointer hover:brightness-105 transition-all overflow-hidden"
             >
-              <h3 className="text-xl font-bold mb-1 uppercase tracking-tight">
+              <h3 className="mb-1 text-xl font-bold tracking-tight uppercase">
                 {products[1]?.name}
               </h3>
-              <p className="text-xs mb-6 opacity-90 italic">
+              <p className="mb-6 text-xs italic opacity-90">
                 {products[1]?.slogan}
               </p>
 
               <img
                 src={products[1]?.image}
-                className="w-56 h-56 object-contain mb-8 drop-shadow-2xl transition-transform group-hover:scale-110 duration-500"
+                className="object-contain w-56 h-56 mb-8 transition-transform duration-500 drop-shadow-2xl group-hover:scale-110"
                 alt=""
               />
 
-              <p className="text-xs mb-1 font-medium">Chỉ từ</p>
-              <p className="text-3xl font-black mb-6 italic">55.000đ</p>
+              <p className="mb-1 text-xs font-medium">Chỉ từ</p>
+              <p className="mb-6 text-3xl italic font-black">55.000đ</p>
 
               {/* NÚT MUA NGAY (Dẫn sang thanh toán) */}
               <button
@@ -424,13 +422,13 @@ const Home = () => {
       </div>
 
       {/* SECTION 4: GIẢI PHÁP QUÀ TẶNG */}
-      <div className="mx-auto max-w-[1200px] px-4 mt-20 text-center">
+      <div className="px-4 mx-auto mt-20 text-center max-w-300">
         <SectionHeading title="Giải pháp quà tặng, quà biếu" />
         <p className="text-secondary-2 my-5 hidden px-[12%] text-center text-base lg:block text-gray-600 font-medium leading-relaxed italic">
           Bộ quà tặng Hồng Lam là giải pháp quà Tết, quà Trung Thu, quà lễ
           Tết,.. được lựa chọn để kết nối các mối quan hệ xã hội.
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-10">
+        <div className="grid grid-cols-1 gap-8 mt-10 md:grid-cols-3">
           <GiftCard
             id={158} // Thêm ID ở đây
             title="Bộ quà Sắc Hoa"
@@ -451,7 +449,7 @@ const Home = () => {
           />
         </div>
         {/* ... nút Xem tất cả sản phẩm giữ nguyên ... */}
-        <div className="mt-8 flex justify-center">
+        <div className="flex justify-center mt-8">
           <Link
             to="/category/giai-phap-qua-tang"
             className="hover:text-[#9d0b0f] group inline-flex items-center gap-2 text-base text-[#917359] font-bold transition-all underline-offset-4"
@@ -467,22 +465,22 @@ const Home = () => {
       </div>
 
       {/* SECTION 5: Ô MAI (XÍ MUỘI) */}
-      <div className="mx-auto max-w-[1200px] px-4 mt-20 text-center">
+      <div className="px-4 mx-auto mt-20 text-center max-w-300">
         <SectionHeading title="Ô mai (xí muội)" />
         <p className="text-[#88694f] my-5 text-center text-base font-medium">
           Ô mai xí muội đặc sản Hà Nội
         </p>
 
-        <div className="flex h-auto items-start gap-4 mt-8">
+        <div className="flex items-start h-auto gap-4 mt-8">
           {/* Ảnh lớn bên trái - Có viền trắng bao quanh bên trong */}
           <div
             className="relative hidden h-full md:block shrink-0"
             style={{ width: "363px" }}
           >
-            <div className="absolute top-1 right-1 bottom-1 left-1 z-[2] border border-white opacity-60"></div>
+            <div className="absolute border border-white top-1 right-1 bottom-1 left-1 z-2 opacity-60"></div>
             <img
               src="https://cdn.honglam.vn/honglam/HL_5_04_1_91ecb38969.jpg"
-              className="relative z-[1] h-[363px] w-full object-cover"
+              className="relative z-1 h-90.75 w-full object-cover"
               alt="Ô mai xí muội banner"
             />
           </div>
@@ -492,24 +490,24 @@ const Home = () => {
             {/* Nút điều hướng Trái */}
             <div
               onClick={prevSlide}
-              className="absolute top-1/2 -left-4 z-[3] h-8 w-8 -translate-y-1/2 cursor-pointer"
+              className="absolute w-8 h-8 -translate-y-1/2 cursor-pointer top-1/2 -left-4 z-3"
             >
               <img
                 alt="prev"
                 src="https://honglam.vn/_next/static/media/slick-prev-xs-hover.d0444fb5.png"
-                className="h-8 w-8 object-cover"
+                className="object-cover w-8 h-8"
               />
             </div>
 
             {/* Nút điều hướng Phải */}
             <div
               onClick={nextSlide}
-              className="absolute top-1/2 -right-4 z-[3] h-8 w-8 -translate-y-1/2 cursor-pointer"
+              className="absolute w-8 h-8 -translate-y-1/2 cursor-pointer top-1/2 -right-4 z-3"
             >
               <img
                 alt="next"
                 src="https://honglam.vn/_next/static/media/slick-next-xs-hover.c14e777f.png"
-                className="h-8 w-8 object-cover"
+                className="object-cover w-8 h-8"
               />
             </div>
 
@@ -524,7 +522,7 @@ const Home = () => {
                 {Array.from({ length: totalSlides }).map((_, i) => (
                   <div
                     key={i}
-                    className="min-w-full grid grid-cols-2 lg:grid-cols-3 gap-4 px-1"
+                    className="grid min-w-full grid-cols-2 gap-4 px-1 lg:grid-cols-3"
                   >
                     {products
                       .slice(
@@ -540,7 +538,7 @@ const Home = () => {
             </div>
 
             {/* Pagination Dots (Dạng ảnh như element bạn check) */}
-            <div className="mt-4 flex justify-center gap-2">
+            <div className="flex justify-center gap-2 mt-4">
               {Array.from({ length: totalSlides }).map((_, i) => (
                 <button key={i} onClick={() => setSlideIndex(i)}>
                   <img
@@ -559,7 +557,7 @@ const Home = () => {
         </div>
 
         {/* Link Xem tất cả sản phẩm */}
-        <div className="mt-8 flex justify-center">
+        <div className="flex justify-center mt-8">
           <Link
             to="/category/o-mai"
             className="hover:text-[#9d0b0f] group inline-flex items-center gap-2 text-base text-[#917359] font-bold transition-all underline-offset-4"
@@ -575,34 +573,34 @@ const Home = () => {
       </div>
 
       {/* SECTION 6: TẠP CHÍ  */}
-      <div className="mx-auto mt-20 max-w-[1200px] px-4">
+      <div className="px-4 mx-auto mt-20 max-w-300">
         {/* HEADER */}
         <div className="relative flex items-center justify-center md:justify-start">
           <SectionHeading title="Tạp chí " />
 
-          <div className="bg-primary z-[1] -ml-1 hidden h-[1px] flex-1 md:block"></div>
+          <div className="flex-1 hidden h-px -ml-1 bg-primary z-1 md:block"></div>
 
           <a
             href="/tap-chi-hong-lam"
-            className="text-primary hidden text-nowrap md:block"
+            className="hidden text-primary text-nowrap md:block"
           >
             Xem thêm
           </a>
 
-          <div className="bg-primary z-[1] hidden h-[1px] w-4 md:block"></div>
-          <div className="border-primary z-[1] hidden h-[5px] w-[5px] border md:block"></div>
+          <div className="hidden w-4 h-px bg-primary z-1 md:block"></div>
+          <div className="border-primary z-1 hidden h-1.25 w-1.25 border md:block"></div>
         </div>
 
         {/* LIST */}
         <div className="mt-6 space-y-5">
           {/* Item 1 */}
-          <div className="group flex gap-4">
+          <div className="flex gap-4 group">
             <div className="h-fit border-2 border-[#e0be91] p-1">
               <a href="/nhin-lai-su-kien-ra-mat-bo-suu-tap-qua-tet-2026-ma-dao-khai-xuan-cua-o-mai-hong-lam">
                 <img
                   src="https://cdn.honglam.vn/honglam/8_297d391f7a.png"
                   alt="post"
-                  className="h-[100px] w-[150px] max-w-none object-cover md:h-[120px] md:w-[177px]"
+                  className="h-25 w-37.5 max-w-none object-cover md:h-30 md:w-44.25"
                 />
               </a>
             </div>
@@ -610,13 +608,13 @@ const Home = () => {
             <div>
               <a
                 href="/nhin-lai-su-kien-ra-mat-bo-suu-tap-qua-tet-2026-ma-dao-khai-xuan-cua-o-mai-hong-lam"
-                className="text-secondary-2 group-hover:text-primary line-clamp-2 text-base font-bold transition-all md:text-lg"
+                className="text-base font-bold transition-all text-secondary-2 group-hover:text-primary line-clamp-2 md:text-lg"
               >
                 Nhìn lại sự kiện ra mắt bộ sưu tập quà Tết 2026 “Mã đáo khai
                 xuân”
               </a>
 
-              <div className="text-secondary-2 mt-2 line-clamp-3 text-sm">
+              <div className="mt-2 text-sm text-secondary-2 line-clamp-3">
                 Ngày 14/12 vừa qua, tại không gian cửa hàng Ô mai Hồng Lam Lạc
                 Long Quân, sự kiện ra mắt bộ sưu tập quà Tết 2026 đã diễn ra
                 trong không khí ấm cúng, gần gũi…
@@ -625,13 +623,13 @@ const Home = () => {
           </div>
 
           {/* Item 2 */}
-          <div className="group flex gap-4">
+          <div className="flex gap-4 group">
             <div className="h-fit border-2 border-[#e0be91] p-1">
               <a href="/o-mai-hong-lam-ghi-dau-an-tai-hoi-nghi-khoa-hoc-efsc-2025-lan-toa-tinh-hoa-qua-viet">
                 <img
                   src="https://cdn.honglam.vn/honglam/01_Anh_bia_4b9d178e16.jpg"
                   alt="post"
-                  className="h-[100px] w-[150px] max-w-none object-cover md:h-[120px] md:w-[177px]"
+                  className="h-25 w-37.5 max-w-none object-cover md:h-30 md:w-44.25"
                 />
               </a>
             </div>
@@ -639,12 +637,12 @@ const Home = () => {
             <div>
               <a
                 href="/o-mai-hong-lam-ghi-dau-an-tai-hoi-nghi-khoa-hoc-efsc-2025-lan-toa-tinh-hoa-qua-viet"
-                className="text-secondary-2 group-hover:text-primary line-clamp-2 text-base font-bold transition-all md:text-lg"
+                className="text-base font-bold transition-all text-secondary-2 group-hover:text-primary line-clamp-2 md:text-lg"
               >
                 Ô Mai Hồng Lam ghi dấu ấn tại Hội nghị Khoa học EFSC 2025
               </a>
 
-              <div className="text-secondary-2 mt-2 line-clamp-3 text-sm">
+              <div className="mt-2 text-sm text-secondary-2 line-clamp-3">
                 Ô mai Hồng Lam tham gia Hội nghị EFSC 2025 ngày 14–15/11, lan
                 tỏa tinh hoa quà Việt đến đông đảo đối tác và khách tham quan…
               </div>
@@ -652,13 +650,13 @@ const Home = () => {
           </div>
 
           {/* Item 3 */}
-          <div className="group flex gap-4">
+          <div className="flex gap-4 group">
             <div className="h-fit border-2 border-[#e0be91] p-1">
               <a href="/hong-lam-chung-tay-ho-tro-truong-mam-non-kim-lu-thai-nguyen-sau-bao-lu">
                 <img
                   src="https://cdn.honglam.vn/honglam/Thumb_4_0649d483dc.png"
                   alt="post"
-                  className="h-[100px] w-[150px] max-w-none object-cover md:h-[120px] md:w-[177px]"
+                  className="h-25 w-37.5 max-w-none object-cover md:h-30 md:w-44.25"
                 />
               </a>
             </div>
@@ -666,12 +664,12 @@ const Home = () => {
             <div>
               <a
                 href="/hong-lam-chung-tay-ho-tro-truong-mam-non-kim-lu-thai-nguyen-sau-bao-lu"
-                className="text-secondary-2 group-hover:text-primary line-clamp-2 text-base font-bold transition-all md:text-lg"
+                className="text-base font-bold transition-all text-secondary-2 group-hover:text-primary line-clamp-2 md:text-lg"
               >
                 Hồng Lam chung tay hỗ trợ Trường Mầm non Kim Lư (Thái Nguyên)
               </a>
 
-              <div className="text-secondary-2 mt-2 line-clamp-3 text-sm">
+              <div className="mt-2 text-sm text-secondary-2 line-clamp-3">
                 Sau đợt mưa lũ kéo dài tại miền núi phía Bắc, Hồng Lam đã tổ
                 chức hoạt động thiện nguyện nhằm hỗ trợ thầy cô và học sinh…
               </div>
@@ -681,19 +679,19 @@ const Home = () => {
       </div>
 
       {/* SECTION 7: THƯ VIỆN VIDEO */}
-      <div className="mx-auto mt-20 max-w-[1200px] px-4">
+      <div className="px-4 mx-auto mt-20 max-w-300">
         {/* Header */}
         <div className="relative flex items-center justify-center md:justify-start">
           <SectionHeading title="Thư viện Video" />
 
-          <div className="bg-primary z-[1] -ml-1 hidden h-[1px] flex-1 md:block"></div>
+          <div className="flex-1 hidden h-px -ml-1 bg-primary z-1 md:block"></div>
 
-          <a href="/video" className="text-primary hidden text-nowrap md:block">
+          <a href="/video" className="hidden text-primary text-nowrap md:block">
             Xem thêm
           </a>
 
-          <div className="bg-primary z-[1] hidden h-[1px] w-4 md:block"></div>
-          <div className="border-primary z-[1] hidden h-[5px] w-[5px] border md:block"></div>
+          <div className="hidden w-4 h-px bg-primary z-1 md:block"></div>
+          <div className="border-primary z-1 hidden h-1.25 w-1.25 border md:block"></div>
         </div>
 
         {/* Content */}
@@ -702,15 +700,15 @@ const Home = () => {
             {/* Video lớn */}
             <a
               href="/hong-lam-gui-dang-que-nha"
-              className="group relative flex h-full cursor-pointer flex-col"
+              className="relative flex flex-col h-full cursor-pointer group"
             >
               <img
                 src="https://cdn.honglam.vn/honglam/Hong_Lam_gui_dang_que_nha_video_thumnail_2b00974899.jpg"
                 alt="Click Go gửi dáng quê nhà"
-                className="w-full flex-1 object-cover"
+                className="flex-1 object-cover w-full"
               />
 
-              <div className="mt-4 flex items-center gap-2">
+              <div className="flex items-center gap-2 mt-4">
                 <div className="bg-primary group-hover:bg-secondary w-fit rounded-full p-1.5 transition-all">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -758,15 +756,15 @@ const Home = () => {
                 <a
                   key={index}
                   href={video.link}
-                  className="group relative block cursor-pointer"
+                  className="relative block cursor-pointer group"
                 >
                   <img
                     src={video.img}
                     alt={video.title}
-                    className="h-[160px] w-full object-cover"
+                    className="object-cover w-full h-40"
                   />
 
-                  <div className="mt-2 flex items-center gap-2">
+                  <div className="flex items-center gap-2 mt-2">
                     <div className="bg-primary group-hover:bg-secondary w-fit rounded-full p-1.5 transition-all">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -779,7 +777,7 @@ const Home = () => {
                         <path d="M6 4v16a1 1 0 0 0 1.524.852l13-8a1 1 0 0 0 0-1.704l-13-8A1 1 0 0 0 6 4z" />
                       </svg>
                     </div>
-                    <span className="line-clamp-2 font-medium text-primary">
+                    <span className="font-medium line-clamp-2 text-primary">
                       {video.title}
                     </span>
                   </div>
@@ -793,8 +791,6 @@ const Home = () => {
   );
 };
 
-// --- SUB-COMPONENTS ---
-
 const ServiceItem = ({ img, text, last }) => (
   <div
     className={`flex items-center gap-3 justify-center ${!last ? "border-r border-[#ded3c2]" : ""} px-4 py-2`}
@@ -806,16 +802,19 @@ const ServiceItem = ({ img, text, last }) => (
   </div>
 );
 
+const newLocal =
+  "absolute -top-px -left-3 h-[calc(100%+2px)] w-[14px] object-contain";
+
 const SectionHeading = ({ title }) => (
-  <div className="relative z-[1] flex justify-center items-center my-10">
-    <div className="absolute top-1/2 left-0 w-full h-[1px] bg-[#9d0b0f] z-[1]"></div>
-    <div className="border-[#9d0b0f] relative z-[2] flex w-fit items-center border-t border-b p-[1px] bg-[#f7f4ef]">
+  <div className="relative flex items-center justify-center my-10 z-1">
+    <div className="absolute top-1/2 left-0 w-full h-px bg-[#9d0b0f] z-1"></div>
+    <div className="border-[#9d0b0f] relative z-2 flex w-fit items-center border-t border-b p-px bg-[#f7f4ef]">
       <img
         alt="left"
         src="https://honglam.vn/_next/static/media/btn47-bg-left-hover-solid.5a0f365f.png"
-        className="absolute -top-[1px] -left-[12px] h-[calc(100%+2px)] w-[14px] object-contain"
+        className={newLocal}
       />
-      <div className="bg-[#9d0b0f] px-6 py-2 flex items-center justify-center min-w-[200px] md:min-w-[310px]">
+      <div className="bg-[#9d0b0f] px-6 py-2 flex items-center justify-center min-w-50 md:min-w-77.5">
         <h3 className="text-xl md:text-2xl lg:text-[30px] font-bold text-white uppercase tracking-tighter">
           {title}
         </h3>
@@ -823,7 +822,7 @@ const SectionHeading = ({ title }) => (
       <img
         alt="right"
         src="https://honglam.vn/_next/static/media/btn47-bg-right-hover-solid.81fa6bf3.png"
-        className="absolute -top-[1px] -right-[12px] h-[calc(100%+2px)] w-[14px] object-contain"
+        className="absolute -top-px -right-3 h-[calc(100%+2px)] w-3.5 object-contain"
       />
     </div>
   </div>
@@ -831,18 +830,17 @@ const SectionHeading = ({ title }) => (
 
 const OrangeCard = ({ product }) => {
   const { addToCart } = useCart();
-  const navigate = useNavigate(); // Thêm dòng này
+  const navigate = useNavigate();
 
   return (
-    // Thêm onClick và cursor-pointer vào div ngoài cùng
     <div
       onClick={() => navigate(`/product/${product.id}`)}
       className="bg-[#f39200] p-4 text-white flex items-center justify-between shadow-sm hover:translate-x-1 transition-all cursor-pointer group h-full relative"
     >
-      <span className="absolute -top-[2px] -left-[2px] w-3 h-3 border-t-2 border-l-2 border-[#d4a373]" />
+      <span className="absolute -top-0.5 -left-0.5 w-3 h-3 border-t-2 border-l-2 border-[#d4a373]" />
       {/* ... giữ nguyên 3 góc còn lại ... */}
 
-      <div className="text-left flex-1">
+      <div className="flex-1 text-left">
         <h3 className="font-bold text-sm mb-0.5 line-clamp-1">
           {product?.name}
         </h3>
@@ -853,7 +851,7 @@ const OrangeCard = ({ product }) => {
       </div>
       <img
         src={product?.image}
-        className="w-24 h-24 object-contain drop-shadow-md group-hover:rotate-6 transition-transform"
+        className="object-contain w-24 h-24 transition-transform drop-shadow-md group-hover:rotate-6"
       />
     </div>
   );
@@ -874,27 +872,27 @@ const GiftCard = ({ id, title, price, img }) => {
       }}
     >
       {/* TIÊU ĐỀ MÀU CAM */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex items-center">
+      <div className="absolute top-0 z-20 flex items-center -translate-x-1/2 -translate-y-1/2 left-1/2">
         <div
-          className="relative flex w-fit items-center border-t border-b border-[#faa519] p-[1px] bg-white 
-                        before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[1px] before:bg-[#faa519]
-                        after:content-[''] after:absolute after:right-0 after:top-0 after:bottom-0 after:w-[1px] after:bg-[#faa519]"
+          className="relative flex w-fit items-center border-t border-b border-[#faa519] p-px bg-white 
+                        before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-px before:bg-[#faa519]
+                        after:content-[''] after:absolute after:right-0 after:top-0 after:bottom-0 after:w-px after:bg-[#faa519]"
         >
           <img
             alt="left"
             src="https://honglam.vn/_next/static/media/btn47-bg-left-hover-solid.5a0f365f.png"
-            className="absolute -top-[1px] -left-[12px] h-[calc(100%+2px)] w-[14px] object-contain"
+            className="absolute -top-px -left-3 h-[calc(100%+2px)] w-3.5 object-contain"
             style={{ filter: "hue-rotate(38deg) brightness(1.2) saturate(2)" }}
           />
           <div className="bg-[#faa519] flex items-center justify-center">
-            <h3 className="h-[40px] px-6 text-sm md:text-base font-bold text-[#9d0b0f] flex items-center uppercase tracking-tighter whitespace-nowrap">
+            <h3 className="h-10 px-6 text-sm md:text-base font-bold text-[#9d0b0f] flex items-center uppercase tracking-tighter whitespace-nowrap">
               {title}
             </h3>
           </div>
           <img
             alt="right"
             src="https://honglam.vn/_next/static/media/btn47-bg-right-hover-solid.81fa6bf3.png"
-            className="absolute -top-[1px] -right-[12px] h-[calc(100%+2px)] w-[14px] object-contain"
+            className="absolute -top-px -right-3 h-[calc(100%+2px)] w-3.5 object-contain"
             style={{ filter: "hue-rotate(38deg) brightness(1.2) saturate(2)" }}
           />
         </div>
@@ -903,19 +901,19 @@ const GiftCard = ({ id, title, price, img }) => {
       {/* ẢNH SẢN PHẨM: Thêm Link để click vào ảnh là chuyển trang */}
       <Link
         to={`/product/${id}`}
-        className="block bg-white overflow-hidden mt-4"
+        className="block mt-4 overflow-hidden bg-white"
       >
         <img
           src={img}
-          className="h-80 w-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="object-cover w-full transition-transform duration-500 h-80 group-hover:scale-105"
           alt={title}
         />
       </Link>
 
-      <div className="relative flex items-center justify-between px-4 py-5 bg-transparent overflow-hidden">
+      <div className="relative flex items-center justify-between px-4 py-5 overflow-hidden bg-transparent">
         <img
           src="https://honglam.vn/_next/static/media/bg_img.aee452a5.png"
-          className="absolute bottom-full left-0 z-[3] h-8 w-full object-cover"
+          className="absolute left-0 object-cover w-full h-8 bottom-full z-3"
           alt=""
         />
         <p className="text-[#88694f] font-bold text-sm italic">
@@ -940,20 +938,20 @@ const ProductItemSmall = ({ product }) => {
     <div className="h-full bg-white p-1 text-center shadow-[0_3px_10px_rgba(0,0,0,.04)] transition-all flex flex-col group border hover:border-[#faa51980]">
       {/* Bọc toàn bộ bằng Link */}
       <Link to={`/product/${product.id}`} className="flex flex-col h-full">
-        <div className="overflow-hidden h-[160px] lg:h-[240px]">
+        <div className="h-40 overflow-hidden lg:h-60">
           <img
             src={product.image}
-            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+            className="object-cover w-full h-full transition-transform duration-500 hover:scale-105"
           />
         </div>
-        <div className="p-3 flex flex-col flex-1 items-center">
-          <h3 className="text-gray-800 font-bold text-base line-clamp-1 group-hover:text-primary transition-colors">
+        <div className="flex flex-col items-center flex-1 p-3">
+          <h3 className="text-base font-bold text-gray-800 transition-colors line-clamp-1 group-hover:text-primary">
             {product.name}
           </h3>
           <p className="mb-4 text-[13px] text-[#88694f] italic">
             {product.slogan}
           </p>
-          <p className="text-primary font-bold mb-3 mt-auto">
+          <p className="mt-auto mb-3 font-bold text-primary">
             {product.price.toLocaleString()}đ
           </p>
           <div className="inline-flex items-center justify-center whitespace-nowrap text-sm font-bold border border-gray-200 shadow-sm rounded-[20px] px-[25px] py-1.5 text-primary hover:bg-primary hover:text-white transition-all">

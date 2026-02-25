@@ -11,8 +11,6 @@ import CategoryPage from "./pages/CategoryPage";
 import ScrollToTop from "./components/ScrollToTop";
 import AccountPage from "./pages/AccountPage";
 
-// ... các import giữ nguyên ...
-
 function App() {
   return (
     <CartProvider>
@@ -27,10 +25,8 @@ function App() {
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/category/:slug" element={<CategoryPage />} />
 
-              {/* THAY THẾ 3 DÒNG CŨ BẰNG 1 DÒNG DUY NHẤT DƯỚI ĐÂY */}
               <Route path="/account" element={<AccountPage />} />
 
-              {/* Nếu bạn vẫn muốn dùng đường dẫn /profile thì có thể thêm dòng này để nó tự chuyển hướng về /account */}
               <Route path="/profile" element={<AccountPage />} />
             </Routes>
           </main>

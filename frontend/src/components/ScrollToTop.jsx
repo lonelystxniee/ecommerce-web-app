@@ -29,16 +29,15 @@ const ScrollToTop = () => {
       {isVisible && (
         <div
           onClick={scrollToTop}
-          className="fixed bottom-10 right-4 z-[99] animate-fade-in"
+          className="fixed bottom-10 right-4 z-99 animate-fade-in"
         >
-          {/* Đây là đoạn element bạn đã check - Tôi đã sửa link ảnh sang link thật */}
-          <div className="mt-3 flex justify-end">
+          <div className="flex justify-end mt-3">
             <img
               alt="button to top"
               loading="lazy"
               width="49"
               height="68"
-              className="cursor-pointer opacity-50 transition-all hover:opacity-100 hover:-translate-y-1"
+              className="transition-all opacity-50 cursor-pointer hover:opacity-100 hover:-translate-y-1"
               src="https://honglam.vn/_next/static/media/btn-top.29d23597.png"
             />
           </div>
