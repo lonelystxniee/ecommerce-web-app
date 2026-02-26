@@ -38,5 +38,9 @@ const productSchema = new mongoose.Schema(
     },
     { timestamps: true }
 );
-
+//index for search
+productSchema.index({
+    productName: "text",
+    description: "text"
+});
 module.exports = mongoose.model("Product", productSchema);
