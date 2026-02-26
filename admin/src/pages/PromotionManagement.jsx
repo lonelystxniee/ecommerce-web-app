@@ -33,7 +33,7 @@ const PromotionManagement = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Quản lý khuyến mãi</h2>
-        <button className="bg-[#00b14f] text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-green-100 transition-all">
+        <button className="bg-[#800a0d] text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-red-100 transition-all">
           <Plus size={20} /> Tạo khuyến mãi
         </button>
       </div>
@@ -73,7 +73,7 @@ const PromotionManagement = () => {
                 <Calendar size={14} /> {promo.date}
               </div>
               <div className="flex gap-2 pt-4">
-                <button className="flex-1 bg-green-50 text-[#00b14f] py-2.5 rounded-xl text-xs font-bold hover:bg-[#00b14f] hover:text-white transition-all flex items-center justify-center gap-2">
+                <button className="flex-1 bg-green-50 text-[#800a0d] py-2.5 rounded-xl text-xs font-bold hover:bg-[#800a0d] hover:text-white transition-all flex items-center justify-center gap-2">
                   <Edit3 size={14} /> Sửa
                 </button>
                 <button className="p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all">

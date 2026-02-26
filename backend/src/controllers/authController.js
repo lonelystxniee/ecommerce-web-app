@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const Customer = require("../models/Customer");
+const User = require("../models/User");
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
@@ -228,5 +229,52 @@ exports.lockAccount = async (req, res) => {
       message: "Đã có lỗi xảy ra tại Server",
       error: error.message,
     });
+  }
+};
+
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+    res.status(200).json({ success: true, users });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.deleteUser = async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.params.id);
+    res.status(200).json({ success: true, message: "Đã xóa người dùng" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Thêm người dùng từ trang Admin
+exports.adminCreateUser = async (req, res) => {
+  try {
+    const { fullName, email, phone, password, role, status } = req.body;
+
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Email đã tồn tại trong hệ thống!" });
+    }
+
+    const newUser = await User.create({
+      fullName,
+      email,
+      phone,
+      password,
+      role: role || "CUSTOMER",
+      status: status || "ACTIVE",
+    });
+
+    res
+      .status(201)
+      .json({ success: true, message: "Tạo người dùng thành công!" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };

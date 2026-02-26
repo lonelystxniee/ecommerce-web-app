@@ -41,3 +41,24 @@ exports.getMyOrders = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// Thêm vào orderController.js
+exports.getAllOrders = async (req, res) => {
+  try {
+    const orders = await Order.find().sort({ createdAt: -1 });
+    res.json({ success: true, orders });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Cập nhật trạng thái đơn hàng (Dùng cho Admin)
+exports.updateOrderStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    await Order.findByIdAndUpdate(req.params.id, { status });
+    res.json({ success: true, message: "Cập nhật trạng thái thành công" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

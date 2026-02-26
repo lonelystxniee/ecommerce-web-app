@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 const AdminSidebar = () => {
+  const navigate = useNavigate();
   const menuItems = [
     { path: "/", icon: <LayoutDashboard size={20} />, label: "Dashboard" },
     { path: "/users", icon: <Users size={20} />, label: "Quản lý người dùng" },
@@ -27,30 +28,38 @@ const AdminSidebar = () => {
     },
   ];
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "/"; // Quay về trang khách
+  };
+
   return (
-    <div className="w-64 bg-[#00b14f] min-h-screen text-white flex flex-col p-4 fixed left-0 top-0 z-50 shadow-xl">
+    <div className="w-64 bg-[#800a0d] min-h-screen text-white flex flex-col p-4 fixed left-0 top-0 z-50 shadow-2xl border-r border-[#faa519]/30">
       <div className="flex items-center gap-3 mb-10 px-2 pt-4">
         <div className="bg-white p-2 rounded-xl shadow-inner">
-          <ShoppingBag className="text-[#00b14f]" size={24} />
+          <ShoppingBag className="text-[#9d0b0f]" size={24} />
         </div>
         <div>
           <h1 className="font-bold text-lg leading-tight uppercase tracking-tighter">
-            Tạp Hóa Ông Từ
+            ClickGo Admin
           </h1>
-          <p className="text-[10px] opacity-70">Hệ thống quản trị v1.0</p>
+          <p className="text-[10px] opacity-70 text-[#faa519] font-bold">
+            Hệ thống quản trị tinh hoa
+          </p>
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1">
+      <nav className="flex-1 space-y-2">
         {menuItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 ${
+              `flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 ${
                 isActive
-                  ? "bg-white text-[#00b14f] shadow-lg font-bold translate-x-1"
-                  : "hover:bg-green-600 opacity-80 hover:opacity-100"
+                  ? "bg-[#f39200] text-white shadow-lg font-bold translate-x-2"
+                  : "hover:bg-[#9d0b0f] hover:translate-x-1 opacity-80 hover:opacity-100"
               }`
             }
           >
@@ -60,9 +69,12 @@ const AdminSidebar = () => {
         ))}
       </nav>
 
-      <button className="flex items-center gap-3 px-4 py-4 rounded-2xl hover:bg-red-500 transition-colors mt-auto mb-4 bg-green-700/30">
+      <button
+        onClick={handleLogout}
+        className="flex items-center gap-3 px-4 py-4 rounded-xl hover:bg-black transition-colors mt-auto mb-4 bg-black/20 text-white/80"
+      >
         <LogOut size={20} />
-        <span className="font-medium text-sm">Đăng xuất hệ thống</span>
+        <span className="font-medium text-sm">Thoát hệ thống</span>
       </button>
     </div>
   );

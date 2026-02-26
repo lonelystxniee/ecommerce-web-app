@@ -12,12 +12,9 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Tất cả các trang admin đều nằm bên trong AdminLayout để giữ Sidebar cố định */}
         <Route path="/" element={<AdminLayout />}>
-          {/* Trang mặc định khi vào localhost:5174/ là Dashboard */}
           <Route index element={<Dashboard />} />
 
-          {/* Các trang quản lý khác */}
           <Route path="users" element={<UserManagement />} />
           <Route path="products" element={<ProductManagement />} />
           <Route path="orders" element={<OrderManagement />} />

@@ -1,67 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ChevronRight, Filter, ChevronDown, ShoppingBag } from "lucide-react";
+import {
+  ChevronRight,
+  Filter,
+  ChevronDown,
+  ShoppingBag,
+  RefreshCcw,
+} from "lucide-react";
 import { useCart } from "../context/CartContext";
-
-const allProducts = [
-  {
-    id: 1,
-    name: "Mơ 5",
-    category: "o-mai",
-    slogan: "Chua, cay, ngọt, dẻo",
-    price: 30000,
-    image: "https://cdn.honglam.vn/honglam/D_HL_5_1_f485410bab_7b43e4c182.png",
-  },
-  {
-    id: 2,
-    name: "Sấu bao tử",
-    category: "o-mai",
-    slogan: "Chua, cay, giòn",
-    price: 55000,
-    image:
-      "https://cdn.honglam.vn/honglam/hong_lam_Sau_bao_tu_01_1_ed570b459b_1_38b07a16d4_1_eca889aad6.png",
-  },
-  {
-    id: 10,
-    name: "Mứt Dừa Non",
-    category: "mut-tet",
-    slogan: "Ngọt thanh, mềm",
-    price: 95000,
-    image: "https://cdn.honglam.vn/honglam/Mut_dua_non_01_2_0b19b280e3.jpg",
-  },
-  {
-    id: 11,
-    name: "Mứt Sen Trần",
-    category: "mut-tet",
-    slogan: "Ngọt, giòn, thơm",
-    price: 150000,
-    image: "https://cdn.honglam.vn/honglam/Mut_sen_tran_01_48d3237993.jpg",
-  },
-  {
-    id: 20,
-    name: "Bánh Chả",
-    category: "banh-keo",
-    slogan: "Thơm, bùi",
-    price: 40000,
-    image: "https://cdn.honglam.vn/honglam/Banh_cha_01_a132276db9.jpg",
-  },
-  {
-    id: 21,
-    name: "Kẹo Dồi",
-    category: "banh-keo",
-    slogan: "Giòn rụm, ngọt bùi",
-    price: 55000,
-    image: "https://cdn.honglam.vn/honglam/Keo_doi_04_4606db8a8b.png",
-  },
-  {
-    id: 30,
-    name: "Nước cốt sấu",
-    category: "thuc-uong",
-    slogan: "Chua, ngọt",
-    price: 45000,
-    image: "https://cdn.honglam.vn/honglam/Sau_ngam_duong_01_8474b94921.jpg",
-  },
-];
 
 const sidebarItems = [
   { name: "Giải pháp quà tặng", slug: "giai-phap-qua-tang" },
@@ -76,18 +22,37 @@ const sidebarItems = [
 const CategoryPage = () => {
   const { slug } = useParams();
   const { addToCart } = useCart();
-  const [isCatOpen, setIsCatOpen] = useState(true); // State để đóng mở danh mục
+  const [isCatOpen, setIsCatOpen] = useState(true);
+
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("http://localhost:5175/api/products");
+      const data = await response.json();
+      if (data.success) {
+        setProducts(data.products);
+      }
+    } catch (error) {
+      console.error("Lỗi khi lấy sản phẩm:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+    window.scrollTo(0, 0);
+  }, [slug]);
 
   const getCatName = (s) => {
     const item = sidebarItems.find((i) => i.slug === s);
     return item ? item.name : "Sản phẩm";
   };
 
-  const filteredProducts = allProducts.filter((p) => p.category === slug);
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [slug]);
+  const filteredProducts = products.filter((p) => p.category === slug);
 
   return (
     <div className="bg-[#f7f4ef] min-h-screen font-sans text-[#3e2714]">
@@ -106,10 +71,8 @@ const CategoryPage = () => {
 
       {/* 2. MAIN CONTENT AREA */}
       <div className="mx-auto max-w-[1200px] px-4 py-8 flex flex-col md:flex-row gap-6">
-        {/* SIDEBAR BỘ LỌC */}
         <aside className="w-full md:w-[260px] shrink-0">
           <div className="bg-white border border-gray-200 rounded shadow-sm overflow-hidden sticky top-24">
-            {/* Header Bộ Lọc màu Đỏ */}
             <div className="bg-[#9d0b0f] p-3 flex items-center gap-2 text-white">
               <Filter size={18} />
               <h3 className="text-sm font-bold uppercase tracking-widest">
@@ -117,7 +80,6 @@ const CategoryPage = () => {
               </h3>
             </div>
 
-            {/* Mục Danh mục sản phẩm */}
             <div className="p-0 border-b border-gray-100">
               <button
                 onClick={() => setIsCatOpen(!isCatOpen)}
@@ -130,11 +92,10 @@ const CategoryPage = () => {
                 />
               </button>
 
-              {/* Vùng có thể cuộn lên xuống */}
               <div
-                className={`overflow-hidden transition-all duration-300 ${isCatOpen ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0"}`}
+                className={`overflow-hidden transition-all duration-300 ${isCatOpen ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0"}`}
               >
-                <ul className="px-4 pb-4 space-y-2 overflow-y-auto max-h-[300px] custom-scrollbar">
+                <ul className="px-4 pb-4 space-y-2 overflow-y-auto max-h-[400px] custom-scrollbar">
                   {sidebarItems.map((item) => (
                     <li key={item.slug}>
                       <Link
@@ -148,21 +109,10 @@ const CategoryPage = () => {
                 </ul>
               </div>
             </div>
-
-            {/* Banner Quảng cáo Sidebar */}
-            <div className="p-4 bg-gray-50">
-              <img
-                src="https://cdn.honglam.vn/honglam/HL_5_04_1_91ecb38969.jpg"
-                className="w-full rounded border border-gray-200"
-                alt="Quảng cáo"
-              />
-            </div>
           </div>
         </aside>
 
-        {/* DANH SÁCH SẢN PHẨM */}
         <main className="flex-1">
-          {/* Header nội dung sản phẩm */}
           <div className="flex flex-col sm:flex-row justify-between items-end sm:items-center mb-6 border-b border-[#9d0b0f] pb-3 gap-3">
             <h2 className="text-2xl font-bold text-[#9d0b0f] uppercase tracking-tighter">
               {getCatName(slug)}
@@ -170,61 +120,79 @@ const CategoryPage = () => {
                 ({filteredProducts.length} sản phẩm)
               </span>
             </h2>
-            <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase">
-              Sắp xếp:
-              <select className="border border-gray-300 rounded px-2 py-1 outline-none bg-white cursor-pointer">
-                <option>Mới nhất</option>
-                <option>Giá thấp đến Cao</option>
-                <option>Giá cao đến thấp</option>
-                <option>Sản phẩm mới</option>
-                <option>Giảm giá nhiều</option>
-              </select>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={fetchProducts}
+                className={`text-gray-400 hover:text-[#9d0b0f] ${loading ? "animate-spin" : ""}`}
+              >
+                <RefreshCcw size={18} />
+              </button>
             </div>
           </div>
 
-          {/* Grid Sản phẩm */}
-          {filteredProducts.length > 0 ? (
+          {loading ? (
+            <div className="flex flex-col items-center py-20">
+              <div className="w-10 h-10 border-4 border-[#9d0b0f] border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : filteredProducts.length > 0 ? (
             <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filteredProducts.map((p) => (
-                <div
-                  key={p.id}
-                  className="bg-white p-2 border border-transparent hover:border-[#faa51980] hover:shadow-md transition-all flex flex-col group h-full"
-                >
-                  <Link
-                    to={`/product/${p.id}`}
-                    className="block overflow-hidden relative"
+              {filteredProducts.map((p) => {
+                // LOGIC SỬA LỖI: Lấy giá từ biến thể đầu tiên và ảnh từ mảng ảnh
+                const displayPrice =
+                  p.variants && p.variants.length > 0 ? p.variants[0].price : 0;
+                const displayImage =
+                  p.images && p.images.length > 0 ? p.images[0] : "";
+
+                return (
+                  <div
+                    key={p._id}
+                    className="bg-white p-2 border border-transparent hover:border-[#faa51980] hover:shadow-md transition-all flex flex-col group h-full"
                   >
-                    <img
-                      src={p.image}
-                      className="w-full aspect-square object-cover transition-transform duration-500 group-hover:scale-105"
-                      alt={p.name}
-                    />
-                  </Link>
-                  <div className="p-2 text-center flex-1 flex flex-col">
                     <Link
-                      to={`/product/${p.id}`}
-                      className="font-bold text-sm text-[#3e2714] line-clamp-1 hover:text-[#9d0b0f] transition-colors mb-1"
+                      to={`/product/${p._id}`}
+                      className="block overflow-hidden relative"
                     >
-                      {p.name}
+                      <img
+                        src={displayImage}
+                        className="w-full aspect-square object-contain transition-transform duration-500 group-hover:scale-105"
+                        alt={p.name}
+                      />
                     </Link>
-                    <p className="text-[11px] text-gray-400 italic mb-3 line-clamp-1">
-                      {p.slogan}
-                    </p>
-                    <p className="text-[#9d0b0f] font-black text-base mb-4 mt-auto">
-                      {p.price.toLocaleString()}đ
-                    </p>
-                    <button
-                      onClick={() => {
-                        addToCart(p);
-                        alert(`Đã thêm ${p.name} vào giỏ!`);
-                      }}
-                      className="w-full border border-[#9d0b0f] text-[#9d0b0f] text-[11px] font-bold uppercase py-2 rounded-full hover:bg-[#9d0b0f] hover:text-white transition-all active:scale-95 shadow-sm"
-                    >
-                      Mua nhanh
-                    </button>
+                    <div className="p-2 text-center flex-1 flex flex-col">
+                      <Link
+                        to={`/product/${p._id}`}
+                        className="font-bold text-sm text-[#3e2714] line-clamp-1 hover:text-[#9d0b0f] transition-colors mb-1"
+                      >
+                        {p.name}
+                      </Link>
+                      <p className="text-[11px] text-gray-400 italic mb-3 line-clamp-1">
+                        {p.slogan || "Tinh hoa quà Việt"}
+                      </p>
+
+                      {/* SỬA LỖI TẠI ĐÂY */}
+                      <p className="text-[#9d0b0f] font-black text-base mb-4 mt-auto">
+                        Chỉ từ {displayPrice.toLocaleString()}đ
+                      </p>
+
+                      <button
+                        onClick={() => {
+                          // Thêm vào giỏ hàng lấy biến thể đầu tiên làm mặc định
+                          addToCart({
+                            ...p,
+                            id: `${p._id}-default`,
+                            price: displayPrice,
+                            image: displayImage,
+                          });
+                          alert(`Đã thêm ${p.name} vào giỏ!`);
+                        }}
+                        className="w-full border border-[#9d0b0f] text-[#9d0b0f] text-[11px] font-bold uppercase py-2 rounded-full hover:bg-[#9d0b0f] hover:text-white transition-all active:scale-95 shadow-sm"
+                      >
+                        Mua nhanh
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-32 bg-white rounded-lg border border-dashed text-gray-400">
