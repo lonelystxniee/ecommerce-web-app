@@ -12,8 +12,11 @@ import {
   Heart,
   LogOut,
 } from "lucide-react";
+import toast from "react-hot-toast";
+
 import { useCart } from "../context/CartContext";
 import AuthForm from "./AuthForm";
+import { CategoryDropdown } from "../pages/Home/CategoryDropdown";
 
 const Header = () => {
   const { totalItems } = useCart();
@@ -22,13 +25,13 @@ const Header = () => {
   const [user, setUser] = useState(null);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
 
-  // QUAN TRỌNG: Tạo 2 Ref riêng biệt cho 2 Header
   const mainDropdownRef = useRef(null);
   const stickyDropdownRef = useRef(null);
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUser(JSON.parse(savedUser));
     }
   }, []);
@@ -41,7 +44,6 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Sửa lỗi Click Outside: Kiểm tra cả 2 Ref
   useEffect(() => {
     const handleClickOutside = (event) => {
       const isClickInsideMain =
@@ -60,48 +62,63 @@ const Header = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setUser(null);
-    setIsUserDropdownOpen(false);
-    window.location.href = "/";
+    toast.promise(
+      new Promise((resolve) => {
+        setTimeout(() => {
+          localStorage.removeItem("user");
+          localStorage.removeItem("token");
+          resolve();
+        }, 1000);
+      }),
+      {
+        loading: "Đang đăng xuất...",
+        success: "Đã đăng xuất thành công!",
+        error: "Có lỗi xảy ra!",
+      },
+    );
+    setTimeout(() => {
+      window.location.href = "/";
+    }, 1500);
   };
 
   return (
     <>
       {/* --- HEADER CHÍNH (Ở TRÊN ĐẦU) --- */}
-      <header className="hidden md:flex bg-[#f7f4ef] z-50 w-full flex-col border-b border-gray-100">
-        <div className="mx-auto max-w-[1200px] w-full flex gap-2.5">
-          <div className="relative flex w-[250px] justify-center p-4 shrink-0">
+      <header className="z-50 flex flex-col w-full px-5 bg-transparent ">
+        <div className="mx-auto max-w-300 w-full flex gap-2.5">
+          <div className="relative flex justify-center p-4 md:w-60 shrink-0">
             {/* Logo Section */}
-            <div className="relative w-[260px] h-[90px] shrink-0 overflow-visible">
+            <div className="relative w-34 md:w-40 h-22.5 shrink-0 overflow-visible">
               <Link
                 to="/"
-                className="absolute inset-0 flex items-center justify-center z-10"
+                className="absolute inset-0 z-10 flex flex-col items-center justify-center"
               >
                 <img
                   src="/logo.png"
                   alt="Logo"
-                  className="h-[210px] w-auto object-contain"
+                  className="object-cover h-full w-50"
                 />
+                <p className="absolute text-sm font-bold text-transparent md:text-base whitespace-nowrap bottom-2 bg-linear-to-r from-primary to-secondary bg-clip-text">
+                  Trao niềm tin, nhận tài lộc
+                </p>
               </Link>
             </div>
             <img
               alt="Logo banner"
-              className="pointer-events-none absolute top-0 left-1/2 h-[180px] w-auto max-w-max -translate-x-1/2 object-cover z-[1]"
+              className="absolute top-0 object-cover w-auto -translate-x-1/2 pointer-events-none left-1/2 h-45 max-w-max z-1"
               src="https://honglam.vn/_next/static/media/bg-logo.953e94d2.png"
             />
           </div>
 
-          <div className="flex-1 flex flex-col justify-start pt-2">
+          <div className="flex flex-col justify-start flex-1 pt-2">
             <div className="flex items-center justify-end gap-6 py-4">
-              <div className="text-[#9d0b0f] flex items-center gap-1 font-bold">
-                <Phone size={14} className="fill-[#9d0b0f] text-white" />
+              <div className="flex items-center gap-1 font-bold text-primary">
+                <Phone size={14} className="text-white fill-primary" />
                 <span className="text-sm">Giao hàng tận nơi: 19008122</span>
               </div>
             </div>
 
-            <div className="flex w-full items-center gap-4">
+            <div className="flex items-center w-full gap-4">
               <SearchBar />
               <AuthAndCart
                 totalItems={totalItems}
@@ -109,7 +126,7 @@ const Header = () => {
                 onAuthClick={() => setIsAuthOpen(true)}
                 isDropdownOpen={isUserDropdownOpen}
                 setIsDropdownOpen={setIsUserDropdownOpen}
-                dropdownRef={mainDropdownRef} // Ref cho header chính
+                dropdownRef={mainDropdownRef}
                 onLogout={handleLogout}
               />
             </div>
@@ -117,21 +134,19 @@ const Header = () => {
         </div>
       </header>
 
-      {/* --- STICKY HEADER (KHI CUỘN XUỐNG) --- */}
       <div
-        className={`fixed top-0 left-0 w-full bg-white shadow-md z-[100] transition-all duration-500 transform ${
+        className={`fixed top-0 left-0 w-full bg-white shadow-md z-100 transition-all duration-500 transform bg-[url('https://honglam.vn/_next/static/media/bg-body.9bfd1cb8.png')] ${
           isScrolled
             ? "translate-y-0 opacity-100"
             : "-translate-y-full opacity-0 pointer-events-none"
         }`}
       >
-        <div className="mx-auto max-w-[1200px] px-4 py-2 flex items-center gap-6">
-          <div className="bg-[#9d0b0f] text-white flex h-11 items-center gap-2 px-4 cursor-pointer">
-            <Menu size={20} />
-            <span className="font-bold uppercase text-xs">Danh mục</span>
+        <div className="flex items-center gap-6 px-4 py-2 mx-auto max-w-300">
+          <div className="flex-1 w-full">
+            <CategoryDropdown display />
           </div>
-          <div className="flex-1">
-            <SearchBar sticky />
+          <div className="hidden flex-2 lg:block">
+            <SearchBar />
           </div>
           <AuthAndCart
             totalItems={totalItems}
@@ -139,7 +154,7 @@ const Header = () => {
             onAuthClick={() => setIsAuthOpen(true)}
             isDropdownOpen={isUserDropdownOpen}
             setIsDropdownOpen={setIsUserDropdownOpen}
-            dropdownRef={stickyDropdownRef} // Ref cho header sticky
+            dropdownRef={stickyDropdownRef}
             onLogout={handleLogout}
           />
         </div>
@@ -150,20 +165,29 @@ const Header = () => {
   );
 };
 
-// --- Sub-components ---
-
 const SearchBar = ({ sticky }) => (
   <form
     className={`${sticky ? "flex" : "hidden lg:flex"} flex-1 relative group`}
   >
-    <div className="search border-[#faa519] flex flex-1 border px-[1px] py-[1px] bg-white rounded-sm overflow-hidden">
+    <div
+      className="flex flex-1 px-px py-px overflow-hidden bg-white border-y border-secondary relative
+      before:bg-[url('https://honglam.vn/_next/static/media/bg-search-left.56be37b9.png')]
+      before:content-[''] before:absolute before:top-0 before:bottom-0 before:left-0 before:w-3 before:bg-no-repeat before:bg-contain
+      after:bg-[url('https://honglam.vn/_next/static/media/bg-search-right.02ad1c3a.png')]
+      after:content-[''] after:absolute after:top-0 after:bottom-0 after:right-0 after:w-3 after:bg-no-repeat after:bg-contain
+    "
+    >
+      <div className="flex items-center justify-center gap-3 px-6 text-sm cursor-pointer text-primary">
+        <span className="font-semibold">Tất cả</span>
+        <ChevronDown className="w-4 h-4" />
+      </div>
       <input
         type="text"
         placeholder="Từ khóa tìm kiếm..."
-        className="flex-1 h-9 px-4 text-sm outline-none"
+        className="flex-1 px-4 text-sm font-semibold outline-none h-9 placeholder:text-primary text-primary"
       />
-      <button className="bg-[#faa519] text-[#9d0b0f] px-5 py-2 text-xs font-bold flex items-center gap-2">
-        <Search size={14} strokeWidth={3} /> TÌM KIẾM
+      <button className="flex items-center gap-2 px-5 py-2 mr-2 text-sm font-semibold rounded-md bg-secondary text-primary">
+        <Search size={14} strokeWidth={3} /> Tìm kiếm
       </button>
     </div>
   </form>
@@ -178,22 +202,22 @@ const AuthAndCart = ({
   dropdownRef,
   onLogout,
 }) => (
-  <div className="flex items-center gap-4 shrink-0">
+  <div className="flex items-center justify-end gap-4 ml-auto">
     <div className="relative" ref={dropdownRef}>
       <div
         onClick={user ? () => setIsDropdownOpen(!isDropdownOpen) : onAuthClick}
-        className="flex items-center gap-2 group text-[#9d0b0f] cursor-pointer"
+        className="flex items-center gap-2 cursor-pointer group text-primary"
       >
-        <div className="border-[#faa519] rounded-full border-2 p-1.5 group-hover:bg-[#faa519] transition-all">
+        <div className="border-secondary rounded-full border-2 p-1.5 group-hover:bg-secondary transition-all">
           <UserRound size={20} className="group-hover:text-white" />
         </div>
-        <div className="leading-tight hidden lg:block">
+        <div className="hidden leading-tight md:block">
           {user ? (
             <>
-              <span className="text-[11px] font-bold block">
+              <span className="block text-sm font-bold">
                 {user.full_name || user.fullName || "Tài khoản"}
               </span>
-              <p className="flex items-center text-[10px] font-medium text-[#795e2f]">
+              <p className="flex items-center text-[11px] font-medium text-[#795e2f]">
                 Tài khoản{" "}
                 <ChevronDown
                   size={10}
@@ -203,10 +227,10 @@ const AuthAndCart = ({
             </>
           ) : (
             <>
-              <span className="text-[11px] font-bold block">
+              <span className="block text-sm font-bold">
                 Đăng kí & Đăng nhập
               </span>
-              <p className="flex items-center text-[10px] font-medium text-[#795e2f]">
+              <p className="flex items-center text-[11px] font-medium text-[#795e2f]">
                 Tài khoản <ChevronDown size={10} />
               </p>
             </>
@@ -216,42 +240,54 @@ const AuthAndCart = ({
 
       {/* DROPDOWN MENU */}
       {user && isDropdownOpen && (
-        <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-[110]">
-          {/* QUAN TRỌNG: Thêm onClick={() => setIsDropdownOpen(false)} vào các Link */}
+        <div className="absolute right-0 w-56 py-2 mt-2 bg-[url('https://honglam.vn/_next/static/media/bg-body.9bfd1cb8.png')] border border-gray-100 rounded-lg shadow-xl z-110">
           <Link
             to="/account?tab=info"
             onClick={() => setIsDropdownOpen(false)}
-            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#5c4033] hover:bg-[#f7f4ef]"
+            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#5c4033] hover:text-[#ce450a] group"
           >
-            <User size={18} className="text-[#9d0b0f]" /> Thông tin tài khoản
+            <User
+              size={18}
+              className="text-primary group-hover:text-[#ce450a]"
+            />{" "}
+            Thông tin tài khoản
           </Link>
           <Link
             to="/account?tab=orders"
             onClick={() => setIsDropdownOpen(false)}
-            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#5c4033] hover:bg-[#f7f4ef]"
+            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#5c4033] hover:text-[#ce450a]  group"
           >
-            <Package size={18} className="text-[#9d0b0f]" /> Quản lý đơn hàng
+            <Package
+              size={18}
+              className="text-primary group-hover:text-[#ce450a]"
+            />{" "}
+            Quản lý đơn hàng
           </Link>
           <Link
             to="/account?tab=favorites"
             onClick={() => setIsDropdownOpen(false)}
-            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#5c4033] hover:bg-[#f7f4ef]"
+            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#5c4033] hover:text-[#ce450a] group"
           >
-            <Heart size={18} className="text-[#9d0b0f]" /> Sản phẩm yêu thích
+            <Heart
+              size={18}
+              className="text-primary group-hover:text-[#ce450a]"
+            />{" "}
+            Sản phẩm yêu thích
           </Link>
           <hr className="my-1 border-gray-100" />
           <button
             onClick={onLogout}
-            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#9d0b0f] hover:bg-[#f7f4ef] font-semibold"
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-primary group hover:text-[#ce450a] font-semibold cursor-pointer"
           >
-            <LogOut size={18} /> Đăng xuất
+            <LogOut size={18} className="group-hover:text-[#ce450a]" /> Đăng
+            xuất
           </button>
         </div>
       )}
     </div>
 
-    <Link to="/cart" className="relative group text-[#9d0b0f]">
-      <div className="border-[#faa519] rounded-full border-2 p-1.5 group-hover:bg-[#faa519] transition-all">
+    <Link to="/cart" className="relative group text-primary">
+      <div className="border-secondary rounded-full border-2 p-1.5 group-hover:bg-secondary transition-all">
         <ShoppingCart size={20} className="group-hover:text-white" />
       </div>
       {totalItems > 0 && (

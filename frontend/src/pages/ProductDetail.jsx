@@ -12,6 +12,8 @@ import {
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 
+import toast from "react-hot-toast";
+
 const ProductDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -123,64 +125,64 @@ const ProductDetail = () => {
         hasItems = true;
       }
     });
-    if (!hasItems) return alert("Vui lòng chọn số lượng!");
+    if (!hasItems) return toast.error("Vui lòng chọn số lượng!");
     if (type === "buy_now") navigate("/cart");
-    else alert("Đã thêm vào giỏ hàng thành công!");
+    else toast.success("Đã thêm vào giỏ hàng thành công!");
   };
 
   // Giao diện khi đang tải
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f7f4ef]">
-        <div className="w-12 h-12 border-4 border-[#9d0b0f] border-t-transparent rounded-full animate-spin"></div>
+      <div className="flex items-center justify-center min-h-screen bg-transparent">
+        <div className="w-12 h-12 border-4 rounded-full border-primary border-t-transparent animate-spin"></div>
       </div>
     );
 
   // Giao diện khi không tìm thấy sản phẩm
   if (!product)
     return (
-      <div className="p-20 text-center font-bold bg-[#f7f4ef] min-h-screen">
+      <div className="min-h-screen p-20 font-bold text-center bg-transparent text-section">
         Sản phẩm không tồn tại!
       </div>
     );
 
   return (
-    <div className="bg-[#f7f4ef] min-h-screen font-sans text-[#3e2714] pb-10">
-      <div className="container mx-auto max-w-[1200px] px-4 py-6">
+    <div className="bg-transparent min-h-screen font-sans text-[#3e2714] pb-10">
+      <div className="container px-4 py-6 mx-auto max-w-300">
         {/* Breadcrumb */}
         <div className="text-[12px] text-gray-500 mb-6 uppercase font-bold">
           Trang chủ / Sản phẩm /{" "}
           <span className="text-primary">{product.name}</span>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8 items-start mb-12">
+        <div className="flex flex-col items-start gap-8 mb-12 lg:flex-row">
           {/* CỘT 1: HÌNH ẢNH */}
-          <div className="lg:w-5/12 w-full flex flex-col gap-4">
-            <div className="relative bg-white p-2 shadow-md border border-gray-100 rounded-sm overflow-hidden">
+          <div className="flex flex-col w-full gap-4 lg:w-5/12">
+            <div className="relative p-2 overflow-hidden bg-white border border-gray-100 rounded-sm shadow-md">
               <div
                 onClick={prevImg}
-                className="absolute top-1/2 left-2 z-[3] h-8 w-8 -translate-y-1/2 cursor-pointer"
+                className="absolute w-8 h-8 -translate-y-1/2 cursor-pointer top-1/2 left-2 z-3"
               >
                 <img
                   alt="prev"
                   src="https://honglam.vn/_next/static/media/slick-prev-xs-hover.d0444fb5.png"
-                  className="h-8 w-8"
+                  className="w-8 h-8"
                 />
               </div>
               <div
                 onClick={nextImg}
-                className="absolute top-1/2 right-2 z-[3] h-8 w-8 -translate-y-1/2 cursor-pointer"
+                className="absolute w-8 h-8 -translate-y-1/2 cursor-pointer top-1/2 right-2 z-3"
               >
                 <img
                   alt="next"
                   src="https://honglam.vn/_next/static/media/slick-next-xs-hover.c14e777f.png"
-                  className="h-8 w-8"
+                  className="w-8 h-8"
                 />
               </div>
-              <div className="overflow-hidden bg-white flex justify-center">
+              <div className="flex justify-center overflow-hidden bg-white">
                 <img
                   src={productImages[activeImg]}
-                  className="h-[400px] object-contain"
+                  className="object-contain h-100"
                   alt={product.name}
                 />
               </div>
@@ -192,15 +194,15 @@ const ProductDetail = () => {
                   key={i}
                   src={img}
                   onClick={() => setActiveImg(i)}
-                  className={`border-2 h-20 w-full object-contain cursor-pointer ${activeImg === i ? "border-[#9d0b0f]" : "border-transparent opacity-60"}`}
+                  className={`border-2 h-20 w-full object-contain cursor-pointer ${activeImg === i ? "border-primary" : "border-transparent opacity-60"}`}
                 />
               ))}
             </div>
           </div>
 
           {/* CỘT 2: THÔNG TIN */}
-          <div className="lg:w-4/12 w-full flex flex-col">
-            <h1 className="text-3xl font-bold text-[#9d0b0f] mb-1 font-serif uppercase tracking-tight">
+          <div className="flex flex-col w-full lg:w-4/12">
+            <h1 className="mb-1 text-3xl font-bold tracking-tight uppercase font-seagull text-primary">
               {product.name}
             </h1>
             <p className="text-sm text-[#88694f] mb-4 italic">
@@ -212,7 +214,7 @@ const ProductDetail = () => {
                   key={s}
                   size={14}
                   fill="#faa519"
-                  className="text-[#faa519]"
+                  className="text-secondary"
                 />
               ))}
             </div>
@@ -238,16 +240,16 @@ const ProductDetail = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {variants.map((v, i) => (
-                    <tr key={i} className="hover:bg-white/30 font-bold">
+                    <tr key={i} className="font-bold hover:bg-white/30">
                       <td className="py-4 pl-3 text-gray-700">{v.label}</td>
-                      <td className="py-4 text-center text-[#9d0b0f]">
+                      <td className="py-4 text-center text-primary">
                         {v.price.toLocaleString()}đ
                       </td>
-                      <td className="py-4 flex justify-center">
-                        <div className="flex items-center bg-white border border-gray-300 rounded overflow-hidden">
+                      <td className="flex justify-center py-4">
+                        <div className="flex items-center overflow-hidden bg-white border border-gray-300 rounded">
                           <button
                             onClick={() => updateQty(i, -1)}
-                            className="px-2 py-1 border-r text-gray-400"
+                            className="px-2 py-1 text-gray-400 border-r"
                           >
                             <Minus size={12} />
                           </button>
@@ -256,7 +258,7 @@ const ProductDetail = () => {
                           </span>
                           <button
                             onClick={() => updateQty(i, 1)}
-                            className="px-2 py-1 border-l text-gray-400"
+                            className="px-2 py-1 text-gray-400 border-l"
                           >
                             <Plus size={12} />
                           </button>
@@ -269,16 +271,16 @@ const ProductDetail = () => {
             </div>
 
             <div className="mt-8">
-              <p className="text-xl font-bold mb-6 italic">
+              <p className="mb-6 text-xl italic font-bold">
                 Thành tiền:{" "}
-                <span className="text-[#9d0b0f] text-2xl font-black">
+                <span className="text-2xl font-black text-primary">
                   {calculateTotal().toLocaleString()}đ
                 </span>
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={() => handleAction("buy_now")}
-                  className="flex-1 bg-[#9d0b0f] text-white py-4 rounded-md font-bold uppercase tracking-widest shadow-lg active:scale-95"
+                  className="flex-1 py-4 font-bold tracking-widest text-white uppercase rounded-md shadow-lg bg-primary active:scale-95"
                 >
                   MUA NGAY
                 </button>
@@ -294,18 +296,18 @@ const ProductDetail = () => {
         </div>
 
         {/* PHẦN BÌNH LUẬN */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
-          <div className="flex items-center gap-3 mb-8 border-b border-gray-100 pb-4">
-            <MessageSquare size={24} className="text-[#9d0b0f]" />
+        <div className="p-8 bg-white border border-gray-100 shadow-sm rounded-xl">
+          <div className="flex items-center gap-3 pb-4 mb-8 border-b border-gray-100">
+            <MessageSquare size={24} className="text-primary" />
             <h3 className="text-xl font-bold uppercase">
               Đánh giá & Bình luận
             </h3>
           </div>
           <form
             onSubmit={handleSendComment}
-            className="mb-10 flex gap-4 items-start"
+            className="flex items-start gap-4 mb-10"
           >
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
+            <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-full shrink-0">
               <User className="text-gray-400" />
             </div>
             <div className="flex-1 space-y-3">
@@ -313,11 +315,11 @@ const ProductDetail = () => {
                 value={userComment}
                 onChange={(e) => setUserComment(e.target.value)}
                 placeholder="Nhận xét của bạn..."
-                className="w-full border p-4 rounded-xl outline-none focus:border-[#9d0b0f] text-sm h-32"
+                className="w-full h-32 p-4 text-sm border outline-none rounded-xl focus:border-primary"
               />
               <button
                 type="submit"
-                className="bg-[#9d0b0f] text-white px-8 py-2.5 rounded-full font-bold text-sm flex items-center gap-2"
+                className="bg-primary text-white px-8 py-2.5 rounded-full font-bold text-sm flex items-center gap-2"
               >
                 Gửi bình luận <Send size={14} />
               </button>
