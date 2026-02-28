@@ -12,7 +12,7 @@ const ProductItemSmall = ({ product }) => (
   >
     <div className="relative w-full mb-4 overflow-hidden">
       <img
-        src={product.image}
+        src={product.images?.[0] || product.image}
         alt={product.name}
         className="object-contain w-full h-full transition-transform duration-700 ease-out group-hover:scale-110"
       />

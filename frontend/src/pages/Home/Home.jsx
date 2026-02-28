@@ -51,123 +51,37 @@ const bannerImages = [
   "https://cdn.honglam.vn/honglam/Sac_Hoa_1_06cf1c5837.jpg",
 ];
 
-const products = [
-  {
-    id: 1,
-    name: "Mơ 5",
-    slogan: "Chua, cay, ngọt, dẻo",
-    price: 30000,
-    image: "https://cdn.honglam.vn/honglam/D_HL_5_1_f485410bab_7b43e4c182.png",
-  },
-  {
-    id: 2,
-    name: "Sấu bao tử",
-    slogan: "Chua, cay, giòn",
-    price: 55000,
-    image:
-      "https://cdn.honglam.vn/honglam/hong_lam_Sau_bao_tu_01_1_ed570b459b_1_38b07a16d4_1_eca889aad6.png",
-  },
-  {
-    id: 3,
-    name: "Mơ dẻo Chùa Hương",
-    slogan: "Chua, ngọt, dẻo, gừng",
-    price: 30000,
-    image:
-      "https://cdn.honglam.vn/honglam/D_Mo_chua_huong_337d43cd04_1eebaacf29.png",
-  },
-  {
-    id: 4,
-    name: "Mận dẻo đặc biệt",
-    slogan: "Chua, ngọt, dẻo",
-    price: 30000,
-    image:
-      "https://cdn.honglam.vn/honglam/D_Man_deo_DB_a49979c621_78a02f0269.png",
-  },
-  {
-    id: 5,
-    name: "Mơ dẻo Nam Định",
-    slogan: "Chua, ngọt, dẻo, gừng",
-    price: 30000,
-    image:
-      "https://cdn.honglam.vn/honglam/D_Mo_chua_huong_337d43cd04_1eebaacf29.png",
-  },
-  {
-    id: 6,
-    name: "Mơ dẻo chua",
-    slogan: "Chua, ngọt, dẻo, gừng",
-    price: 30000,
-    image:
-      "https://cdn.honglam.vn/honglam/D_Mo_chua_huong_337d43cd04_1eebaacf29.png",
-  },
-];
-
-const banhKeoProducts = [
-  {
-    id: 101,
-    name: "Bánh mãng cầu cuộn",
-    slogan: "Thơm, ngọt",
-    image:
-      "https://cdn.honglam.vn/honglam/hong_lam_Banh_Mang_Cau_Cuon_01_418c8793c5.jpg",
-  },
-  {
-    id: 102,
-    name: "Kẹo lạc dồi Sìu Châu",
-    slogan: "Giòn tan, thơm bùi",
-    image:
-      "https://cdn.honglam.vn/honglam/hong_lam_Keo_siu_chau_01_97e2c0a958.jpg",
-  },
-  {
-    id: 103,
-    name: "Kẹo dồi",
-    slogan: "Kẹo dồi",
-    image: "https://cdn.honglam.vn/honglam/Keo_doi_04_4606db8a8b.png",
-  },
-];
-
-const cheTraProducts = [
-  {
-    id: 201,
-    name: "Trà Sen Bách Diệp",
-    slogan: "Ngọt dịu, thơm hương sen",
-    image: "https://cdn.honglam.vn/honglam/Tra_sen_bach_diep_01_b2657d93a1.jpg",
-  },
-  {
-    id: 202,
-    name: "Tâm sen",
-    slogan: "Chát nhẹ, ngọt hậu",
-    image: "https://cdn.honglam.vn/honglam/Tam_sen_01_da35c3d7b6.jpg",
-  },
-  {
-    id: 203,
-    name: "Chè (trà) Thái thượng hạng",
-    slogan: "Chát nhẹ, ngọt hậu",
-    image:
-      "https://cdn.honglam.vn/honglam/z7151040333072_da209d58df3ad1c431f2d93f63115e6f_b2e4dbff31.jpg",
-  },
-];
-
 const Home = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const [allProducts, setAllProducts] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Helper: filter products by category name (case-insensitive substring)
+  const filterByCategory = (slug) =>
+    allProducts.filter((p) => {
+      const cats = p.categoryID || [];
+      return cats.some((c) =>
+        (c.name || "").toLowerCase().includes(slug.toLowerCase())
+      );
+    });
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch("http://localhost:5175/api/products");
+        const response = await fetch("http://localhost:5175/api/products?limit=100");
         const data = await response.json();
         if (data.success) {
-          // Map backend structure to frontend structure
-          const mappedProducts = data.products.map((p) => ({
+          const mapped = data.products.map((p) => ({
+            ...p,
             id: p._id,
-            name: p.name,
-            slogan: p.slogan || "",
-            price: p.price || 0,
-            image: p.image || "https://via.placeholder.com/300",
+            name: p.productName || p.name,
+            image: (p.images && p.images.length > 0) ? p.images[0] : (p.image || "https://via.placeholder.com/300"),
           }));
-          setProducts(mappedProducts);
+          setAllProducts(mapped);
+          setProducts(mapped);
         } else {
           setError(data.message || "Failed to fetch products");
         }
@@ -354,7 +268,7 @@ const Home = () => {
               </p>
 
               <img
-                src={products[1]?.image}
+                src={products[1]?.images?.[0] || products[1]?.image}
                 className="object-contain w-24 mb-1 transition-transform duration-500 md:w-48 drop-shadow-2xl"
                 alt=""
               />
@@ -444,7 +358,7 @@ const Home = () => {
         title="Ô mai (xí muội)"
         subtitle="Ô mai xí muội đặc sản Hà Nội"
         bannerImage="https://cdn.honglam.vn/honglam/HL_5_04_1_91ecb38969.jpg"
-        products={products}
+        products={filterByCategory("o-mai")}
         categoryLink="/category/o-mai"
       />
 
@@ -453,7 +367,7 @@ const Home = () => {
         title="Bánh - Kẹo"
         subtitle="Bánh kẹo đặc sản truyền thống"
         bannerImage="https://cdn.honglam.vn/honglam/Anh_web_Banh_keo_2_d4d154866e.jpg"
-        products={banhKeoProducts}
+        products={filterByCategory("banh")}
         categoryLink="/category/banh-keo"
       />
 
@@ -462,7 +376,7 @@ const Home = () => {
         title="Chè, Trà đặc sản"
         subtitle="Hương vị trà Việt tinh tế"
         bannerImage="https://cdn.honglam.vn/honglam/Anh_web_Tra_1_a6f8a30e3a.jpg"
-        products={cheTraProducts}
+        products={filterByCategory("tra")}
         categoryLink="/category/che-tra"
       />
 
@@ -733,7 +647,7 @@ const OrangeCard = ({ product }) => {
         </button>
       </div>
       <img
-        src={product?.image}
+        src={product?.images?.[0] || product?.image}
         className="self-center object-contain w-24 transition-transform md:w-44 drop-shadow-md group-hover:rotate-6"
       />
     </div>
@@ -817,7 +731,7 @@ const ProductItemSmall = ({ product }) => {
       <Link to={`/product/${product.id}`} className="flex flex-col h-full">
         <div className="h-40 overflow-hidden lg:h-60">
           <img
-            src={product.image}
+            src={product.images?.[0] || product.image}
             className="object-cover w-full h-full transition-transform duration-500 hover:scale-105"
           />
         </div>
