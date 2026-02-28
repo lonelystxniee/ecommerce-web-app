@@ -26,17 +26,12 @@ const ProductDetail = () => {
     const fetchProduct = async () => {
       setLoading(true);
       try {
-        const res = await fetch("http://localhost:5175/api/products");
+        const res = await fetch(`http://localhost:5175/api/products/${id}`);
         const data = await res.json();
         if (data.success) {
-          const found = data.products.find((p) => p._id === id);
-          if (found) {
-            setProduct(found);
-            // Logic: Khởi tạo số lượng tương ứng với số lượng biến thể từ DB
-            if (found.variants) {
-              setQuantities(new Array(found.variants.length).fill(0));
-            }
-          }
+          setProduct(data.product);
+          // Initialize quantities for the single "default" variant since backend is flat
+          setQuantities([0]);
         }
       } catch (error) {
         console.error("Lỗi lấy chi tiết sản phẩm:", error);
@@ -93,8 +88,8 @@ const ProductDetail = () => {
     setUserComment("");
   };
 
-  // Logic: Sử dụng trực tiếp variants từ DB thay vì tính toán x1.5 hay x2.25
-  const variants = product?.variants || [];
+  // Logic: Use flat fields from backend
+  const variants = product ? [{ label: "Giá gốc", price: product.price }] : [];
 
   const updateQty = (index, delta) => {
     const newQty = [...quantities];

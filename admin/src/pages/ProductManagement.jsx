@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-  Search,
   Plus,
   Trash2,
   X,
@@ -8,15 +7,25 @@ import {
   PlusCircle,
   Package,
   FileText,
+  Edit2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 const ProductManagement = () => {
   const [products, setProducts] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingProductId, setEditingProductId] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({ totalPages: 1, totalProducts: 0 });
+  const LIMIT = 12;
 
   // Khởi tạo form
   const [formData, setFormData] = useState({
     name: "",
+    code: "", // Added code field
     slogan: "",
     category: "o-mai",
     description: "", // Trường mô tả đã có sẵn ở đây
@@ -24,19 +33,44 @@ const ProductManagement = () => {
     images: [],
   });
 
-  const fetchProducts = async () => {
+  const [imageFiles, setImageFiles] = useState([]);
+
+  const [categories, setCategories] = useState([]);
+
+  const fetchCategories = async () => {
     try {
-      const res = await fetch("http://localhost:5175/api/products");
+      const res = await fetch("http://localhost:5175/api/category");
       const data = await res.json();
-      if (data.success) setProducts(data.products);
+      if (data.success) {
+        setCategories(data.categories || data.data || []);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const fetchProducts = async (page = currentPage) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`http://localhost:5175/api/products?page=${page}&limit=${LIMIT}`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setProducts(data.products);
+        if (data.pagination) {
+          setPagination(data.pagination);
+        }
+      }
     } catch (e) {
       console.error(e);
     }
   };
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    fetchProducts(currentPage);
+    fetchCategories();
+  }, [currentPage]);
 
   // --- XỬ LÝ BIẾN THỂ ---
   const handleAddVariant = () => {
@@ -60,60 +94,177 @@ const ProductManagement = () => {
   // --- XỬ LÝ ẢNH ---
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({
-          ...prev,
-          images: [...prev.images, reader.result],
-        }));
-      };
-      reader.readAsDataURL(file);
-    });
+    if (files.length > 0) {
+      setImageFiles((prev) => [...prev, ...files]);
+      files.forEach((file) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setFormData((prev) => ({
+            ...prev,
+            images: [...prev.images, reader.result], // Preview
+          }));
+        };
+        reader.readAsDataURL(file);
+      });
+    }
   };
 
   const removeImage = (index) => {
-    setFormData({
-      ...formData,
-      images: formData.images.filter((_, i) => i !== index),
-    });
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setFormData((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.images.length === 0)
-      return alert("Vui lòng thêm ít nhất 1 ảnh!");
+    if (imageFiles.length === 0 && !isEditMode)
+      return alert("Vui lòng thêm ít nhất một ảnh sản phẩm!");
 
     try {
-      const res = await fetch("http://localhost:5175/api/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      if (res.ok) {
-        alert("Thêm sản phẩm thành công!");
-        setIsModalOpen(false);
-        setFormData({
-          name: "",
-          slogan: "",
-          category: "o-mai",
-          description: "",
-          variants: [{ label: "200g", price: "", stock: 100 }],
-          images: [],
+      const url = isEditMode
+        ? `http://localhost:5175/api/products/${editingProductId}`
+        : "http://localhost:5175/api/products";
+      const method = isEditMode ? "PUT" : "POST";
+      const token = localStorage.getItem("token");
+
+      const data = new FormData();
+      data.append("name", formData.name);
+      data.append("productCode", formData.code); // Map code to productCode
+      data.append("slogan", formData.slogan);
+      data.append("categoryName", formData.category);
+      data.append("description", formData.description);
+      data.append("price", formData.variants[0]?.price || 0); // Backend expects single price/quantity for now
+      data.append("quantity", formData.variants[0]?.stock || 0);
+
+      if (imageFiles.length > 0) {
+        imageFiles.forEach(file => {
+          data.append("images", file);
         });
+      }
+
+      const res = await fetch(url, {
+        method: method,
+        headers: {
+          "Authorization": `Bearer ${token}`
+        },
+        body: data,
+      });
+
+      const result = await res.json();
+
+      if (res.ok && result.success) {
+        alert(isEditMode ? "Cập nhật thành công!" : "Thêm sản phẩm thành công!");
+        handleCloseModal();
         fetchProducts();
+      } else {
+        alert(result.message || "Lỗi khi xử lý!");
       }
     } catch (e) {
-      alert("Lỗi khi thêm!");
+      alert("Lỗi kết nối server!");
     }
+  };
+
+  const handleImportExcel = async (e) => {
+    if (isLoading) return;
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (
+      !window.confirm(
+        `Bạn có chắc chắn muốn nhập sản phẩm từ tệp ${file.name}?`
+      )
+    )
+      return;
+
+    try {
+      setIsLoading(true);
+      const data = new FormData();
+      data.append("file", file);
+      const token = localStorage.getItem("token");
+
+      console.log("Đang tải tệp lên server...");
+      const res = await fetch("http://localhost:5175/api/products/import-excel", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: data,
+      });
+
+      const result = await res.json();
+      if (result.success) {
+        const { insertedCount, failedCount, errors: importErrors, createdCategoriesCount } = result;
+        let msg = `✅ Nhập thành công ${insertedCount} sản phẩm!`;
+        if (createdCategoriesCount > 0) msg += `\n📁 Đã tự động tạo ${createdCategoriesCount} danh mục mới.`;
+        if (failedCount > 0) {
+          msg += `\n⚠️ ${failedCount} dòng bị lỗi:`;
+          importErrors.slice(0, 5).forEach(e => {
+            msg += `\n  - Dòng ${e.row}: ${e.message}`;
+          });
+          if (failedCount > 5) msg += `\n  ... và ${failedCount - 5} lỗi khác.`;
+        }
+        alert(msg);
+        fetchProducts();
+      } else {
+        alert(result.message || "Lỗi khi nhập Excel! Kiểm tra định dạng file.");
+      }
+    } catch (error) {
+      console.error("Import error:", error);
+      alert("Lỗi kết nối server hoặc file quá lớn!");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEdit = (product) => {
+    setFormData({
+      name: product.name,
+      code: product.productCode || "", // Map backend's productCode to code
+      slogan: product.slogan || "",
+      category: product.categoryID?.[0]?.name || "o-mai",
+      description: product.description || "",
+      variants: [{ label: "Giá gốc", price: product.price, stock: product.quantity }],
+      images: product.images || (product.image ? [product.image] : []),
+    });
+    setImageFiles([]);
+    setEditingProductId(product._id);
+    setIsEditMode(true);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setIsEditMode(false);
+    setEditingProductId(null);
+    setImageFiles([]);
+    setFormData({
+      name: "",
+      code: "", // Reset code
+      slogan: "",
+      category: "o-mai",
+      description: "",
+      variants: [{ label: "200g", price: "", stock: 100 }],
+      images: [],
+    });
   };
 
   const handleDelete = async (id) => {
     if (window.confirm("Xóa sản phẩm này?")) {
-      await fetch(`http://localhost:5175/api/products/${id}`, {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`http://localhost:5175/api/products/${id}`, {
         method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
       });
-      fetchProducts();
+      const data = await res.json();
+      if (data.success) {
+        fetchProducts();
+      } else {
+        alert(data.message || "Lỗi khi xóa!");
+      }
     }
   };
 
@@ -129,13 +280,47 @@ const ProductManagement = () => {
             Cập nhật kho hàng Ô mai Hồng Lam
           </p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-[#9d0b0f] text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-[#f39200] transition-all shadow-lg"
-        >
-          <Plus size={20} /> Thêm sản phẩm mới
-        </button>
+        <div className="flex gap-4">
+          <label className="bg-green-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-green-700 transition-all shadow-lg cursor-pointer">
+            <Upload size={20} /> Nhập Excel
+            <input
+              type="file"
+              className="hidden"
+              accept=".xlsx, .xls"
+              onChange={handleImportExcel}
+            />
+          </label>
+          <button
+            onClick={() => {
+              setIsEditMode(false);
+              setIsModalOpen(true);
+            }}
+            className={`bg-[#9d0b0f] text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-[#f39200] transition-all shadow-lg ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Đang xử lý...
+              </div>
+            ) : (
+              <>
+                <Plus size={20} /> Thêm sản phẩm mới
+              </>
+            )}
+          </button>
+        </div>
       </div>
+
+      {isLoading && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/20 backdrop-blur-[2px]">
+          <div className="bg-white p-8 rounded-[32px] shadow-2xl flex flex-col items-center gap-4 border-2 border-[#9d0b0f]">
+            <div className="w-12 h-12 border-4 border-[#9d0b0f] border-t-transparent rounded-full animate-spin"></div>
+            <p className="font-bold text-[#9d0b0f] animate-pulse">Đang nhập dữ liệu từ Excel...</p>
+            <p className="text-xs text-gray-400">Vui lòng không đóng trình duyệt</p>
+          </div>
+        </div>
+      )}
 
       {/* Grid sản phẩm */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -173,6 +358,12 @@ const ProductManagement = () => {
                   </span>
                   <div className="flex gap-1">
                     <button
+                      onClick={() => handleEdit(p)}
+                      className="p-2 bg-blue-50 text-blue-500 rounded-xl hover:bg-blue-500 hover:text-white transition-all"
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button
                       onClick={() => handleDelete(p._id)}
                       className="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"
                     >
@@ -186,71 +377,141 @@ const ProductManagement = () => {
         })}
       </div>
 
+      {/* PAGINATION */}
+      {pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200">
+          <p className="text-sm text-[#88694f]">
+            Trang <span className="font-bold text-[#9d0b0f]">{pagination.currentPage}</span> / {pagination.totalPages}
+            {" — "}Tổng <span className="font-bold">{pagination.totalProducts}</span> sản phẩm
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="p-2 rounded-xl border border-gray-200 hover:bg-[#9d0b0f] hover:text-white hover:border-[#9d0b0f] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft size={18} />
+            </button>
+
+            {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+              .filter(p => p === 1 || p === pagination.totalPages || Math.abs(p - currentPage) <= 2)
+              .reduce((acc, p, idx, arr) => {
+                if (idx > 0 && p - arr[idx - 1] > 1) acc.push("...");
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((p, idx) =>
+                p === "..." ? (
+                  <span key={`ellipsis-${idx}`} className="px-2 text-gray-400">…</span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => setCurrentPage(p)}
+                    className={`w-9 h-9 rounded-xl text-sm font-bold transition-all ${currentPage === p
+                        ? "bg-[#9d0b0f] text-white shadow-lg"
+                        : "border border-gray-200 hover:border-[#9d0b0f] hover:text-[#9d0b0f]"
+                      }`}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+
+            <button
+              onClick={() => setCurrentPage(p => Math.min(pagination.totalPages, p + 1))}
+              disabled={currentPage === pagination.totalPages}
+              className="p-2 rounded-xl border border-gray-200 hover:bg-[#9d0b0f] hover:text-white hover:border-[#9d0b0f] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* MODAL THÊM SẢN PHẨM */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setIsModalOpen(false)}
+            onClick={handleCloseModal}
           ></div>
           <div className="relative bg-[#f7f4ef] w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[32px] shadow-2xl border-2 border-[#9d0b0f]">
             <div className="bg-[#9d0b0f] p-6 text-white flex justify-between items-center sticky top-0 z-10">
-              <h3 className="text-xl font-bold uppercase">Thêm sản phẩm mới</h3>
-              <X
-                className="cursor-pointer"
-                onClick={() => setIsModalOpen(false)}
-              />
+              <h3 className="text-xl font-bold uppercase">
+                {isEditMode ? "Cập nhật sản phẩm" : "Thêm sản phẩm mới"}
+              </h3>
+              <X className="cursor-pointer" onClick={handleCloseModal} />
             </div>
 
             <form onSubmit={handleSubmit} className="p-8 space-y-8">
               {/* Thông tin cơ bản */}
-              <div className="grid grid-cols-2 gap-6">
-                <div className="col-span-2 md:col-span-1">
-                  <label className="text-xs font-bold text-[#88694f] uppercase block mb-1">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-[#88694f] mb-1.5 ml-1">
+                    Mã sản phẩm (SKU)
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full bg-[#f7f4ef] border-2 border-stone-200 p-3.5 rounded-2xl outline-none focus:border-[#9d0b0f] transition-all font-bold text-[#3e2714]"
+                    placeholder="VD: OM001"
+                    value={formData.code}
+                    onChange={(e) =>
+                      setFormData({ ...formData, code: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-[#88694f] mb-1.5 ml-1">
                     Tên sản phẩm
                   </label>
                   <input
-                    required
-                    className="w-full p-3 rounded-xl border outline-none focus:border-[#f39200]"
                     type="text"
+                    className="w-full bg-[#f7f4ef] border-2 border-stone-200 p-3.5 rounded-2xl outline-none focus:border-[#9d0b0f] transition-all font-bold text-[#3e2714]"
+                    placeholder="VD: Ô mai sấu bao tử"
                     value={formData.name}
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
+                    required
                   />
-                </div>
-                <div className="col-span-2 md:col-span-1">
-                  <label className="text-xs font-bold text-[#88694f] uppercase block mb-1">
-                    Slogan (Hương vị)
-                  </label>
-                  <input
-                    className="w-full p-3 rounded-xl border outline-none focus:border-[#f39200]"
-                    type="text"
-                    placeholder="VD: Chua, cay, ngọt, dẻo"
-                    value={formData.slogan}
-                    onChange={(e) =>
-                      setFormData({ ...formData, slogan: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="col-span-2 md:col-span-1">
-                  <label className="text-xs font-bold text-[#88694f] uppercase block mb-1">
-                    Danh mục
-                  </label>
-                  <select
-                    className="w-full p-3 rounded-xl border outline-none"
-                    value={formData.category}
-                    onChange={(e) =>
-                      setFormData({ ...formData, category: e.target.value })
-                    }
-                  >
-                    <option value="o-mai">Ô mai</option>
-                    <option value="mut-tet">Mứt Tết</option>
-                    <option value="banh-keo">Bánh kẹo</option>
-                    <option value="thuc-uong">Thức uống</option>
-                  </select>
                 </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black uppercase text-[#88694f] mb-1.5 ml-1">
+                      Danh mục
+                    </label>
+                    <select
+                      className="w-full bg-[#f7f4ef] border-2 border-stone-200 p-3.5 rounded-2xl outline-none focus:border-[#9d0b0f] transition-all font-bold text-[#3e2714]"
+                      value={formData.category}
+                      onChange={(e) =>
+                        setFormData({ ...formData, category: e.target.value })
+                      }
+                    >
+                      {categories.map((cat) => (
+                        <option key={cat._id} value={cat.name}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black uppercase text-[#88694f] mb-1.5 ml-1">
+                      Slogan / Mô tả ngắn
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full bg-[#f7f4ef] border-2 border-stone-200 p-3.5 rounded-2xl outline-none focus:border-[#9d0b0f] transition-all font-bold text-[#3e2714]"
+                      placeholder="VD: Vị chua cay đặc trưng"
+                      value={formData.slogan}
+                      onChange={(e) =>
+                        setFormData({ ...formData, slogan: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
                 {/* ===== PHẦN MÔ TẢ SẢN PHẨM MỚI THÊM ===== */}
                 <div className="col-span-2">
                   <label className="text-xs font-bold text-[#88694f] uppercase block mb-1 flex items-center gap-1">

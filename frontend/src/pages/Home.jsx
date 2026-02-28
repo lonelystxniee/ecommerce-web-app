@@ -23,82 +23,41 @@ const bannerImages = [
   "https://cdn.honglam.vn/honglam/Sac_Hoa_1_06cf1c5837.jpg",
 ];
 
-const products = [
-  {
-    id: 1,
-    name: "Mơ 5",
-    slogan: "Chua, cay, ngọt, dẻo",
-    price: 30000,
-    image: "https://cdn.honglam.vn/honglam/D_HL_5_1_f485410bab_7b43e4c182.png",
-  },
-  {
-    id: 2,
-    name: "Sấu bao tử",
-    slogan: "Chua, cay, giòn",
-    price: 55000,
-    image:
-      "https://cdn.honglam.vn/honglam/hong_lam_Sau_bao_tu_01_1_ed570b459b_1_38b07a16d4_1_eca889aad6.png",
-  },
-  {
-    id: 3,
-    name: "Mơ dẻo Chùa Hương",
-    slogan: "Chua, ngọt, dẻo, gừng",
-    price: 30000,
-    image:
-      "https://cdn.honglam.vn/honglam/D_Mo_chua_huong_337d43cd04_1eebaacf29.png",
-  },
-  {
-    id: 4,
-    name: "Mận dẻo đặc biệt",
-    slogan: "Chua, ngọt, dẻo",
-    price: 30000,
-    image:
-      "https://cdn.honglam.vn/honglam/D_Man_deo_DB_a49979c621_78a02f0269.png",
-  },
-  {
-    id: 5,
-    name: "Mơ dẻo Nam Định",
-    slogan: "Chua, ngọt, dẻo, gừng",
-    price: 30000,
-    image:
-      "https://cdn.honglam.vn/honglam/D_Mo_chua_huong_337d43cd04_1eebaacf29.png",
-  },
-  {
-    id: 6,
-    name: "Mơ dẻo chua",
-    slogan: "Chua, ngọt, dẻo, gừng",
-    price: 30000,
-    image:
-      "https://cdn.honglam.vn/honglam/D_Mo_chua_huong_337d43cd04_1eebaacf29.png",
-  },
-  {
-    id: 7,
-    name: "Mơ  5",
-    slogan: "Chua, cay, ngọt, dẻo",
-    price: 30000,
-    image: "https://cdn.honglam.vn/honglam/D_HL_5_1_f485410bab_7b43e4c182.png",
-  },
-  {
-    id: 8,
-    name: "Sấu bao tử",
-    slogan: "Chua, cay, giòn",
-    price: 55000,
-    image:
-      "https://cdn.honglam.vn/honglam/hong_lam_Sau_bao_tu_01_1_ed570b459b_1_38b07a16d4_1_eca889aad6.png",
-  },
-  {
-    id: 9,
-    name: "Mơ dẻo Chùa Hương",
-    slogan: "Chua, ngọt, dẻo, gừng",
-    price: 30000,
-    image:
-      "https://cdn.honglam.vn/honglam/D_Mo_chua_huong_337d43cd04_1eebaacf29.png",
-  },
-];
-
 const Home = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch("http://localhost:5175/api/products");
+        const data = await response.json();
+        if (data.success) {
+          // Map backend structure to frontend structure
+          const mappedProducts = data.products.map((p) => ({
+            id: p._id,
+            name: p.name,
+            slogan: p.slogan || "",
+            price: p.price || 0,
+            image: p.image || "https://via.placeholder.com/300",
+          }));
+          setProducts(mappedProducts);
+        } else {
+          setError(data.message || "Failed to fetch products");
+        }
+      } catch (err) {
+        setError("Error connecting to the server");
+        console.error("Fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const sliderImages = [...bannerImages, bannerImages[0]];
 
@@ -138,6 +97,28 @@ const Home = () => {
     const timer = setInterval(nextBanner, 4000);
     return () => clearInterval(timer);
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#f7f4ef]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#9d0b0f]"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#f7f4ef] text-[#9d0b0f]">
+        <p className="text-xl font-bold mb-4">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-6 py-2 bg-[#9d0b0f] text-white rounded-full hover:bg-[#800a0d] transition-colors"
+        >
+          Thử lại
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#f7f4ef] min-h-screen pb-20 font-sans">
@@ -241,11 +222,10 @@ const Home = () => {
                 {/* SLIDER */}
                 <div className="relative h-full bg-[#f7f4ef] overflow-hidden">
                   <div
-                    className={`flex h-full ${
-                      enableTransition
-                        ? "transition-transform duration-500 ease-in-out"
-                        : ""
-                    }`}
+                    className={`flex h-full ${enableTransition
+                      ? "transition-transform duration-500 ease-in-out"
+                      : ""
+                      }`}
                     style={{
                       transform: `translateX(-${bannerIndex * 100}%)`,
                     }}
@@ -358,65 +338,69 @@ const Home = () => {
         <div className="grid items-stretch grid-cols-1 grid-rows-2 gap-5 mt-8 md:grid-cols-3">
           {/* CỘT 1 - TRÊN (Sản phẩm 0) */}
           <div className="relative h-full">
-            <OrangeCard product={products[0]} />
+            {products[0] && <OrangeCard product={products[0]} />}
           </div>
 
           {/* GIỮA – CHIẾM 2 HÀNG (Sản phẩm index 1) */}
           <div className="relative h-full row-span-2 group">
-            {/* 4 góc trang trí - thêm pointer-events-none để không cản click */}
-            <span className="absolute -top-0.5 -left-0.5 w-3 h-3 border-t-2 border-l-2 border-[#d4a373] z-10 pointer-events-none" />
-            <span className="absolute -top-0.5 -right-0.5 w-3 h-3 border-t-2 border-r-2 border-[#d4a373] z-10 pointer-events-none" />
-            <span className="absolute -bottom-0.5 -left-0.5 w-3 h-3 border-b-2 border-l-2 border-[#d4a373] z-10 pointer-events-none" />
-            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 border-b-2 border-r-2 border-[#d4a373] z-10 pointer-events-none" />
+            {products[1] && (
+              <>
+                {/* 4 góc trang trí */}
+                <span className="absolute -top-0.5 -left-0.5 w-3 h-3 border-t-2 border-l-2 border-[#d4a373] z-10 pointer-events-none" />
+                <span className="absolute -top-0.5 -right-0.5 w-3 h-3 border-t-2 border-r-2 border-[#d4a373] z-10 pointer-events-none" />
+                <span className="absolute -bottom-0.5 -left-0.5 w-3 h-3 border-b-2 border-l-2 border-[#d4a373] z-10 pointer-events-none" />
+                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 border-b-2 border-r-2 border-[#d4a373] z-10 pointer-events-none" />
 
-            {/* KHỐI NỘI DUNG CHÍNH (Đã bỏ thẻ div rỗng gây lỗi) */}
-            <div
-              onClick={() => navigate(`/product/${products[1]?.id}`)} // CLICK VÀO ĐÂY LÀ SANG TRANG CHI TIẾT
-              className="bg-[#f39200] p-8 text-white flex flex-col items-center justify-center h-full shadow-md cursor-pointer hover:brightness-105 transition-all overflow-hidden"
-            >
-              <h3 className="mb-1 text-xl font-bold tracking-tight uppercase">
-                {products[1]?.name}
-              </h3>
-              <p className="mb-6 text-xs italic opacity-90">
-                {products[1]?.slogan}
-              </p>
+                <div
+                  onClick={() => navigate(`/product/${products[1]?.id}`)}
+                  className="bg-[#f39200] p-8 text-white flex flex-col items-center justify-center h-full shadow-md cursor-pointer hover:brightness-105 transition-all overflow-hidden"
+                >
+                  <h3 className="mb-1 text-xl font-bold tracking-tight uppercase">
+                    {products[1]?.name}
+                  </h3>
+                  <p className="mb-6 text-xs italic opacity-90">
+                    {products[1]?.slogan}
+                  </p>
 
-              <img
-                src={products[1]?.image}
-                className="object-contain w-56 h-56 mb-8 transition-transform duration-500 drop-shadow-2xl group-hover:scale-110"
-                alt=""
-              />
+                  <img
+                    src={products[1]?.image}
+                    className="object-contain w-56 h-56 mb-8 transition-transform duration-500 drop-shadow-2xl group-hover:scale-110"
+                    alt={products[1]?.name}
+                  />
 
-              <p className="mb-1 text-xs font-medium">Chỉ từ</p>
-              <p className="mb-6 text-3xl italic font-black">55.000đ</p>
+                  <p className="mb-1 text-xs font-medium">Chỉ từ</p>
+                  <p className="mb-6 text-3xl italic font-black">
+                    {products[1]?.price?.toLocaleString()}đ
+                  </p>
 
-              {/* NÚT MUA NGAY (Dẫn sang thanh toán) */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation(); // QUAN TRỌNG: Để khi bấm nút không bị nhảy vào trang chi tiết của thẻ cha
-                  addToCart(products[1]);
-                  navigate(`/product/${products[1]?.id}`); // MUA NGAY LÀ SANG THANH TOÁN
-                }}
-                className="border-2 border-white px-8 py-2 rounded-full text-xs font-bold uppercase hover:bg-white hover:text-[#f39200] transition-all active:scale-95 shadow-lg relative z-20"
-              >
-                Mua ngay
-              </button>
-            </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      addToCart(products[1]);
+                      navigate(`/product/${products[1]?.id}`);
+                    }}
+                    className="border-2 border-white px-8 py-2 rounded-full text-xs font-bold uppercase hover:bg-white hover:text-[#f39200] transition-all active:scale-95 shadow-lg relative z-20"
+                  >
+                    Mua ngay
+                  </button>
+                </div>
+              </>
+            )}
           </div>
 
           {/* CỘT 3 - TRÊN (Sản phẩm 2) */}
           <div className="relative h-full">
-            <OrangeCard product={products[2]} />
+            {products[2] && <OrangeCard product={products[2]} />}
           </div>
 
           {/* CỘT 1 - DƯỚI (Sản phẩm 3) */}
           <div className="relative h-full">
-            <OrangeCard product={products[3]} />
+            {products[3] && <OrangeCard product={products[3]} />}
           </div>
 
-          {/* CỘT 3 - DƯỚI (Sản phẩm 4 hoặc lấy lại 0) */}
+          {/* CỘT 3 - DƯỚI (Sản phẩm 4) */}
           <div className="relative h-full">
-            <OrangeCard product={products[4] || products[0]} />
+            {products[4] && <OrangeCard product={products[4]} />}
           </div>
         </div>
       </div>
@@ -834,24 +818,40 @@ const OrangeCard = ({ product }) => {
 
   return (
     <div
-      onClick={() => navigate(`/product/${product.id}`)}
+      onClick={() => navigate(`/product/${product?.id}`)}
       className="bg-[#f39200] p-4 text-white flex items-center justify-between shadow-sm hover:translate-x-1 transition-all cursor-pointer group h-full relative"
     >
+      {/* 4 góc trang trí */}
       <span className="absolute -top-0.5 -left-0.5 w-3 h-3 border-t-2 border-l-2 border-[#d4a373]" />
-      {/* ... giữ nguyên 3 góc còn lại ... */}
+      <span className="absolute -top-0.5 -right-0.5 w-3 h-3 border-t-2 border-r-2 border-[#d4a373]" />
+      <span className="absolute -bottom-0.5 -left-0.5 w-3 h-3 border-b-2 border-l-2 border-[#d4a373]" />
+      <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 border-b-2 border-r-2 border-[#d4a373]" />
 
       <div className="flex-1 text-left">
         <h3 className="font-bold text-sm mb-0.5 line-clamp-1">
           {product?.name}
         </h3>
-        {/* ... giữ nguyên slogan, giá ... */}
-        <button className="border border-white px-4 py-1 rounded-full text-[9px] font-bold uppercase group-hover:bg-white group-hover:text-[#f39200]">
+        <p className="text-[10px] italic opacity-90 mb-2 line-clamp-1">
+          {product?.slogan}
+        </p>
+        <p className="text-sm font-bold mb-3">
+          {product?.price?.toLocaleString()}đ
+        </p>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            addToCart(product);
+            navigate(`/product/${product?.id}`);
+          }}
+          className="border border-white px-4 py-1 rounded-full text-[9px] font-bold uppercase group-hover:bg-white group-hover:text-[#f39200] transition-colors"
+        >
           Mua ngay
         </button>
       </div>
       <img
         src={product?.image}
-        className="object-contain w-24 h-24 transition-transform drop-shadow-md group-hover:rotate-6"
+        alt={product?.name}
+        className="object-contain w-24 h-24 transition-transform drop-shadow-md group-hover:rotate-6 ml-2"
       />
     </div>
   );

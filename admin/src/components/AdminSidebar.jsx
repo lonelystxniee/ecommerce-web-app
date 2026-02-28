@@ -8,6 +8,7 @@ import {
   TicketPercent,
   LogOut,
   ShoppingBag,
+  Layers,
 } from "lucide-react";
 
 const AdminSidebar = () => {
@@ -25,6 +26,11 @@ const AdminSidebar = () => {
       path: "/promotions",
       icon: <TicketPercent size={20} />,
       label: "Quản lý khuyến mãi",
+    },
+    {
+      path: "/categories",
+      icon: <Layers size={20} />,
+      label: "Quản lý danh mục",
     },
   ];
 
@@ -56,10 +62,9 @@ const AdminSidebar = () => {
             key={item.path}
             to={item.path}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 ${
-                isActive
-                  ? "bg-[#f39200] text-white shadow-lg font-bold translate-x-2"
-                  : "hover:bg-[#9d0b0f] hover:translate-x-1 opacity-80 hover:opacity-100"
+              `flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 ${isActive
+                ? "bg-[#f39200] text-white shadow-lg font-bold translate-x-2"
+                : "hover:bg-[#9d0b0f] hover:translate-x-1 opacity-80 hover:opacity-100"
               }`
             }
           >
