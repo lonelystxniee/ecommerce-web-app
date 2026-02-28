@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { Truck, Headset, CreditCard, Gift, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
 
 import Hero from "./Hero";
 import CategorySection from "./CategorySection";
@@ -148,6 +149,38 @@ const cheTraProducts = [
 const Home = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch("http://localhost:5175/api/products");
+        const data = await response.json();
+        if (data.success) {
+          // Map backend structure to frontend structure
+          const mappedProducts = data.products.map((p) => ({
+            id: p._id,
+            name: p.name,
+            slogan: p.slogan || "",
+            price: p.price || 0,
+            image: p.image || "https://via.placeholder.com/300",
+          }));
+          setProducts(mappedProducts);
+        } else {
+          setError(data.message || "Failed to fetch products");
+        }
+      } catch (err) {
+        setError("Error connecting to the server");
+        console.error("Fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const [bannerIndex, setBannerIndex] = React.useState(0);
   const [, setEnableTransition] = React.useState(true);
@@ -174,6 +207,28 @@ const Home = () => {
     const timer = setInterval(nextBanner, 4000);
     return () => clearInterval(timer);
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#f7f4ef]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#9d0b0f]"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#f7f4ef] text-primary">
+        <p className="mb-4 text-xl font-bold">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-6 py-2 bg-primary text-white rounded-full hover:bg-[#800a0d] transition-colors"
+        >
+          Thử lại
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pb-20 bg-transparent">
@@ -277,7 +332,7 @@ const Home = () => {
         <div className="grid items-stretch grid-cols-2 grid-rows-3 gap-5 mt-8 md:grid-rows-2 md:grid-cols-3 max-h-112.5">
           {/* CỘT 1 - TRÊN (Sản phẩm 0) */}
           <div className="relative h-full">
-            <OrangeCard product={products[0]} />
+            {products[0] && <OrangeCard product={products[0]} />}
           </div>
 
           {/* GIỮA – CHIẾM 2 HÀNG (Sản phẩm index 1) */}
@@ -326,17 +381,17 @@ const Home = () => {
 
           {/* CỘT 3 - TRÊN (Sản phẩm 2) */}
           <div className="relative h-full">
-            <OrangeCard product={products[2]} />
+            {products[2] && <OrangeCard product={products[2]} />}
           </div>
 
           {/* CỘT 1 - DƯỚI (Sản phẩm 3) */}
           <div className="relative h-full">
-            <OrangeCard product={products[3]} />
+            {products[3] && <OrangeCard product={products[3]} />}
           </div>
 
-          {/* CỘT 3 - DƯỚI (Sản phẩm 4 hoặc lấy lại 0) */}
+          {/* CỘT 3 - DƯỚI (Sản phẩm 4) */}
           <div className="relative h-full">
-            <OrangeCard product={products[4] || products[0]} />
+            {products[4] && <OrangeCard product={products[4]} />}
           </div>
         </div>
       </div>

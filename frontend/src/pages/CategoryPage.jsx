@@ -54,7 +54,9 @@ const CategoryPage = () => {
     return item ? item.name : "Sản phẩm";
   };
 
-  const filteredProducts = products.filter((p) => p.category === slug);
+  const filteredProducts = products.filter((p) =>
+    p.categoryID?.some(cat => cat.name.toLowerCase() === slug.toLowerCase())
+  );
 
   return (
     <div className="bg-[url('https://honglam.vn/_next/static/media/bg-body.9bfd1cb8.png')] min-h-screen text-[#3e2714]">
@@ -139,11 +141,8 @@ const CategoryPage = () => {
           ) : filteredProducts.length > 0 ? (
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
               {filteredProducts.map((p) => {
-                // LOGIC SỬA LỖI: Lấy giá từ biến thể đầu tiên và ảnh từ mảng ảnh
-                const displayPrice =
-                  p.variants && p.variants.length > 0 ? p.variants[0].price : 0;
-                const displayImage =
-                  p.images && p.images.length > 0 ? p.images[0] : "";
+                const displayPrice = p.price || 0;
+                const displayImage = p.image || "";
 
                 return (
                   <div
