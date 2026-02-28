@@ -350,7 +350,7 @@ const ProductManagement = () => {
                   {p.name}
                 </h3>
                 <p className="text-[#9d0b0f] text-lg font-black mt-2">
-                  Chỉ từ {p.variants?.[0]?.price?.toLocaleString() || 0}đ
+                  Chỉ từ {p.price?.toLocaleString() || 0}đ
                 </p>
                 <div className="mt-4 flex justify-between items-center">
                   <span className="text-[10px] bg-red-50 text-[#9d0b0f] px-2 py-1 rounded-lg font-bold uppercase">
@@ -408,8 +408,8 @@ const ProductManagement = () => {
                     key={p}
                     onClick={() => setCurrentPage(p)}
                     className={`w-9 h-9 rounded-xl text-sm font-bold transition-all ${currentPage === p
-                        ? "bg-[#9d0b0f] text-white shadow-lg"
-                        : "border border-gray-200 hover:border-[#9d0b0f] hover:text-[#9d0b0f]"
+                      ? "bg-[#9d0b0f] text-white shadow-lg"
+                      : "border border-gray-200 hover:border-[#9d0b0f] hover:text-[#9d0b0f]"
                       }`}
                   >
                     {p}
