@@ -359,3 +359,65 @@ exports.searchProduct = async (req, res) => {
   }
 }
 
+// Search products with filters and pagination
+exports.searchProduct = async (req, res) => {
+  try {
+    const { q, categoryId, minPrice, maxPrice, sort, page = 1, limit = 12 } = req.query;
+
+    let query = {};
+
+    // Use MongoDB Text Search if keyword exists
+    if (q) {
+      query.$text = { $search: q };
+    }
+
+    // Filter by Category
+    if (categoryId) {
+      query.categoryID = categoryId;
+    }
+
+    // Filter by Price Range
+    if (minPrice || maxPrice) {
+      query.price = {};
+      if (minPrice) query.price.$gte = Number(minPrice);
+      if (maxPrice) query.price.$lte = Number(maxPrice);
+    }
+
+    // Sorting
+    let sortOptions = {};
+    if (q) {
+      // If searching, sort by text score by default unless another sort is specified
+      sortOptions = { score: { $meta: "textScore" } };
+    } else {
+      sortOptions = { createdAt: -1 };
+    }
+
+    if (sort === "price_asc") sortOptions = { price: 1 };
+    if (sort === "price_desc") sortOptions = { price: -1 };
+    if (sort === "newest") sortOptions = { createdAt: -1 };
+
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const products = await Product.find(query, q ? { score: { $meta: "textScore" } } : {})
+      .populate("categoryID")
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(Number(limit));
+
+    const totalProducts = await Product.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      products,
+      pagination: {
+        totalProducts,
+        currentPage: Number(page),
+        totalPages: Math.ceil(totalProducts / Number(limit)),
+        limit: Number(limit)
+      }
+    });
+  } catch (error) {
+    console.error("Search error:", error);
+    res.status(500).json({ success: false, message: "Lỗi khi tìm kiếm sản phẩm" });
+  }
+};

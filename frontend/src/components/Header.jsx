@@ -16,6 +16,7 @@ import toast from "react-hot-toast";
 
 import { useCart } from "../context/CartContext";
 import AuthForm from "./AuthForm";
+import SearchBar from "./SearchBar";
 import { CategoryDropdown } from "../pages/Home/CategoryDropdown";
 
 const Header = () => {
@@ -135,11 +136,10 @@ const Header = () => {
       </header>
 
       <div
-        className={`fixed top-0 left-0 w-full bg-white shadow-md z-100 transition-all duration-500 transform bg-[url('https://honglam.vn/_next/static/media/bg-body.9bfd1cb8.png')] ${
-          isScrolled
-            ? "translate-y-0 opacity-100"
-            : "-translate-y-full opacity-0 pointer-events-none"
-        }`}
+        className={`fixed top-0 left-0 w-full bg-white shadow-md z-100 transition-all duration-500 transform bg-[url('https://honglam.vn/_next/static/media/bg-body.9bfd1cb8.png')] ${isScrolled
+          ? "translate-y-0 opacity-100"
+          : "-translate-y-full opacity-0 pointer-events-none"
+          }`}
       >
         <div className="flex items-center gap-6 px-4 py-2 mx-auto max-w-300">
           <div className="flex-1 w-full">
@@ -165,33 +165,6 @@ const Header = () => {
   );
 };
 
-const SearchBar = ({ sticky }) => (
-  <form
-    className={`${sticky ? "flex" : "hidden lg:flex"} flex-1 relative group`}
-  >
-    <div
-      className="flex flex-1 px-px py-px overflow-hidden bg-white border-y border-secondary relative
-      before:bg-[url('https://honglam.vn/_next/static/media/bg-search-left.56be37b9.png')]
-      before:content-[''] before:absolute before:top-0 before:bottom-0 before:left-0 before:w-3 before:bg-no-repeat before:bg-contain
-      after:bg-[url('https://honglam.vn/_next/static/media/bg-search-right.02ad1c3a.png')]
-      after:content-[''] after:absolute after:top-0 after:bottom-0 after:right-0 after:w-3 after:bg-no-repeat after:bg-contain
-    "
-    >
-      <div className="flex items-center justify-center gap-3 px-6 text-sm cursor-pointer text-primary">
-        <span className="font-semibold">Tất cả</span>
-        <ChevronDown className="w-4 h-4" />
-      </div>
-      <input
-        type="text"
-        placeholder="Từ khóa tìm kiếm..."
-        className="flex-1 px-4 text-sm font-semibold outline-none h-9 placeholder:text-primary text-primary"
-      />
-      <button className="flex items-center gap-2 px-5 py-2 mr-2 text-sm font-semibold rounded-md bg-secondary text-primary">
-        <Search size={14} strokeWidth={3} /> Tìm kiếm
-      </button>
-    </div>
-  </form>
-);
 
 const AuthAndCart = ({
   totalItems,

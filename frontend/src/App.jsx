@@ -11,6 +11,7 @@ import CategoryPage from "./pages/CategoryPage";
 import ScrollToTop from "./components/ScrollToTop";
 import AccountPage from "./pages/AccountPage";
 import ResetPassword from "./pages/ResetPassword";
+import SearchPage from "./pages/SearchPage";
 import { Toaster } from "react-hot-toast";
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/product/:id" element={<ProductDetail />} />
+              <Route path="/search" element={<SearchPage />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/category/:slug" element={<CategoryPage />} />
