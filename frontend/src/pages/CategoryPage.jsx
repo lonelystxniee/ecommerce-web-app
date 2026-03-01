@@ -11,51 +11,60 @@ import { useCart } from "../context/CartContext";
 
 import toast from "react-hot-toast";
 
-const sidebarItems = [
-  { name: "Giải pháp quà tặng", slug: "giai-phap-qua-tang" },
-  { name: "Ô mai (xí muội)", slug: "o-mai" },
-  { name: "Mứt Tết", slug: "mut-tet" },
-  { name: "Bánh - Kẹo", slug: "banh-keo" },
-  { name: "Chè, Trà đặc sản", slug: "che-tra" },
-  { name: "Sản phẩm khác", slug: "san-pham-khac" },
-  { name: "Thức uống", slug: "thuc-uong" },
-];
-
 const CategoryPage = () => {
   const { slug } = useParams();
   const { addToCart } = useCart();
   const [isCatOpen, setIsCatOpen] = useState(true);
 
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchProducts = async () => {
+  const getSlug = (name) => {
+    return (name || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[đĐ]/g, "d")
+      .replace(/([^a-z0-9\s-]|(?<=\s)\s)/g, "")
+      .trim()
+      .replace(/\s+/g, "-");
+  };
+
+  const fetchInitialData = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5175/api/products");
-      const data = await response.json();
-      if (data.success) {
-        setProducts(data.products);
+      const [prodRes, catRes] = await Promise.all([
+        fetch("http://localhost:5175/api/products?limit=100"),
+        fetch("http://localhost:5175/api/category")
+      ]);
+
+      const prodData = await prodRes.json();
+      const catData = await catRes.json();
+
+      if (prodData.success) {
+        setProducts(prodData.products);
+      }
+      if (catData.success) {
+        setCategories(catData.categories);
       }
     } catch (error) {
-      console.error("Lỗi khi lấy sản phẩm:", error);
+      console.error("Lỗi khi lấy dữ liệu:", error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchProducts();
+    fetchInitialData();
     window.scrollTo(0, 0);
   }, [slug]);
 
-  const getCatName = (s) => {
-    const item = sidebarItems.find((i) => i.slug === s);
-    return item ? item.name : "Sản phẩm";
-  };
+  const currentCategory = categories.find(cat => getSlug(cat.name) === slug);
+  const catName = currentCategory ? currentCategory.name : "Sản phẩm";
 
   const filteredProducts = products.filter((p) =>
-    p.categoryID?.some(cat => cat.name.toLowerCase() === slug.toLowerCase())
+    p.categoryID?.some(cat => getSlug(cat.name) === slug)
   );
 
   return (
@@ -69,7 +78,7 @@ const CategoryPage = () => {
           <ChevronRight size={14} />
           <span>Sản phẩm</span>
           <ChevronRight size={14} />
-          <span className="text-primary">{getCatName(slug)}</span>
+          <span className="text-primary">{catName}</span>
         </div>
       </div>
 
@@ -100,16 +109,19 @@ const CategoryPage = () => {
                 className={`overflow-hidden transition-all duration-300 ${isCatOpen ? "max-h-100 opacity-100" : "max-h-0 opacity-0"}`}
               >
                 <ul className="px-4 pb-4 space-y-2 overflow-y-auto max-h-100 custom-scrollbar">
-                  {sidebarItems.map((item) => (
-                    <li key={item.slug}>
-                      <Link
-                        to={`/category/${item.slug}`}
-                        className={`text-[13px] block py-1.5 hover:text-primary transition-colors ${slug === item.slug ? "text-primary font-bold border-l-2 border-primary pl-2" : "text-gray-600 pl-2"}`}
-                      >
-                        {item.name}
-                      </Link>
-                    </li>
-                  ))}
+                  {categories.map((item) => {
+                    const itemSlug = getSlug(item.name);
+                    return (
+                      <li key={item._id}>
+                        <Link
+                          to={`/category/${itemSlug}`}
+                          className={`text-[13px] block py-1.5 hover:text-primary transition-colors ${slug === itemSlug ? "text-primary font-bold border-l-2 border-primary pl-2" : "text-gray-600 pl-2"}`}
+                        >
+                          {item.name}
+                        </Link>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             </div>
@@ -119,14 +131,14 @@ const CategoryPage = () => {
         <main className="flex-1">
           <div className="flex flex-col items-end justify-between gap-3 pb-3 mb-6 border-b sm:flex-row sm:items-center border-primary">
             <h2 className="text-2xl font-bold tracking-tighter uppercase text-primary">
-              {getCatName(slug)}
+              {catName}
               <span className="ml-2 text-sm font-normal text-gray-400 lowercase">
                 ({filteredProducts.length} sản phẩm)
               </span>
             </h2>
             <div className="flex items-center gap-4">
               <button
-                onClick={fetchProducts}
+                onClick={fetchInitialData}
                 className={`text-gray-400 hover:text-primary ${loading ? "animate-spin" : ""}`}
               >
                 <RefreshCcw size={18} />
@@ -142,7 +154,7 @@ const CategoryPage = () => {
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
               {filteredProducts.map((p) => {
                 const displayPrice = p.price || 0;
-                const displayImage = p.image || "";
+                const displayImage = p.images?.[0] || p.image || "";
 
                 return (
                   <div
@@ -156,7 +168,7 @@ const CategoryPage = () => {
                       <img
                         src={displayImage}
                         className="object-contain w-full transition-transform duration-500 aspect-square group-hover:scale-105"
-                        alt={p.name}
+                        alt={p.productName || p.name}
                       />
                     </Link>
                     <div className="flex flex-col flex-1 p-2 text-center">
@@ -164,27 +176,26 @@ const CategoryPage = () => {
                         to={`/product/${p._id}`}
                         className="font-bold text-sm text-[#3e2714] line-clamp-1 hover:text-primary transition-colors mb-1"
                       >
-                        {p.name}
+                        {p.productName || p.name}
                       </Link>
                       <p className="text-[11px] text-gray-400 italic mb-3 line-clamp-1">
                         {p.slogan || "Tinh hoa quà Việt"}
                       </p>
 
-                      {/* SỬA LỖI TẠI ĐÂY */}
                       <p className="mt-auto mb-4 text-base font-black text-primary">
                         Chỉ từ {displayPrice.toLocaleString()}đ
                       </p>
 
                       <button
                         onClick={() => {
-                          // Thêm vào giỏ hàng lấy biến thể đầu tiên làm mặc định
                           addToCart({
                             ...p,
                             id: `${p._id}-default`,
                             price: displayPrice,
                             image: displayImage,
+                            name: p.productName || p.name,
                           });
-                          toast.success(`Đã thêm ${p.name} vào giỏ!`);
+                          toast.success(`Đã thêm ${p.productName || p.name} vào giỏ!`);
                         }}
                         className="w-full border border-primary text-primary text-[11px] font-bold uppercase py-2 rounded-full hover:bg-primary hover:text-white transition-all active:scale-95 shadow-sm"
                       >

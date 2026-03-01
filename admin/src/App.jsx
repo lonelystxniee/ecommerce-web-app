@@ -8,6 +8,7 @@ import ProductManagement from "./pages/ProductManagement";
 import OrderManagement from "./pages/OrderManagement";
 import PromotionManagement from "./pages/PromotionManagement";
 import CategoryManagement from "./pages/CategoryManagement";
+import ReviewManagement from "./pages/ReviewManagement";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route path="orders" element={<OrderManagement />} />
           <Route path="promotions" element={<PromotionManagement />} />
           <Route path="categories" element={<CategoryManagement />} />
+          <Route path="reviews" element={<ReviewManagement />} />
         </Route>
       </Routes>
     </Router>

@@ -45,36 +45,38 @@ export const SectionHeading = ({ title, outlined }) => (
   </div>
 );
 
-const bannerImages = [
-  "https://cdn.honglam.vn/honglam/Tet_website_ab5d5cb5d1.jpg",
-  "https://cdn.honglam.vn/honglam/HL_5_04_1_91ecb38969.jpg",
-  "https://cdn.honglam.vn/honglam/Sac_Hoa_1_06cf1c5837.jpg",
-];
+
 
 const Home = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const [allProducts, setAllProducts] = useState([]);
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Helper: filter products by category name (case-insensitive substring)
-  const filterByCategory = (slug) =>
-    allProducts.filter((p) => {
-      const cats = p.categoryID || [];
-      return cats.some((c) =>
-        (c.name || "").toLowerCase().includes(slug.toLowerCase())
-      );
-    });
+  // Pagination states
+  const [paginatedProducts, setPaginatedProducts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isPaginatedLoading, setIsPaginatedLoading] = useState(false);
+
+
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchInitialData = async () => {
       try {
-        const response = await fetch("http://localhost:5175/api/products?limit=100");
-        const data = await response.json();
-        if (data.success) {
-          const mapped = data.products.map((p) => ({
+        const [prodRes, catRes] = await Promise.all([
+          fetch("http://localhost:5175/api/products?limit=100"),
+          fetch("http://localhost:5175/api/category")
+        ]);
+
+        const prodData = await prodRes.json();
+        const catData = await catRes.json();
+
+        if (prodData.success) {
+          const mapped = prodData.products.map((p) => ({
             ...p,
             id: p._id,
             name: p.productName || p.name,
@@ -82,8 +84,14 @@ const Home = () => {
           }));
           setAllProducts(mapped);
           setProducts(mapped);
-        } else {
-          setError(data.message || "Failed to fetch products");
+        }
+
+        if (catData.success) {
+          setCategories(catData.categories);
+        }
+
+        if (!prodData.success && !catData.success) {
+          setError("Failed to fetch data");
         }
       } catch (err) {
         setError("Error connecting to the server");
@@ -93,34 +101,37 @@ const Home = () => {
       }
     };
 
-    fetchProducts();
+    fetchInitialData();
   }, []);
 
-  const [bannerIndex, setBannerIndex] = React.useState(0);
-  const [, setEnableTransition] = React.useState(true);
-
-  const nextBanner = () => {
-    setBannerIndex((prev) => prev + 1);
+  const fetchPaginatedProducts = async (page = 1) => {
+    setIsPaginatedLoading(true);
+    try {
+      const response = await fetch(`http://localhost:5175/api/products?page=${page}&limit=12`);
+      const data = await response.json();
+      if (data.success) {
+        const mapped = data.products.map((p) => ({
+          ...p,
+          id: p._id,
+          name: p.productName || p.name,
+          image: (p.images && p.images.length > 0) ? p.images[0] : (p.image || "https://via.placeholder.com/300"),
+        }));
+        setPaginatedProducts(mapped);
+        setTotalPages(data.pagination.totalPages);
+        setCurrentPage(data.pagination.currentPage);
+      }
+    } catch (err) {
+      console.error("Fetch paginated products error:", err);
+    } finally {
+      setIsPaginatedLoading(false);
+    }
   };
 
-  const ITEMS_PER_SLIDE = 3;
+  useEffect(() => {
+    fetchPaginatedProducts(currentPage);
+  }, [currentPage]);
 
-  React.useEffect(() => {
-    if (bannerIndex === bannerImages.length) {
-      setTimeout(() => {
-        setEnableTransition(false);
-        setBannerIndex(0);
-      }, 500);
-    } else {
-      setEnableTransition(true);
-    }
-  }, [bannerIndex]);
 
-  // auto chạy
-  React.useEffect(() => {
-    const timer = setInterval(nextBanner, 4000);
-    return () => clearInterval(timer);
-  }, []);
 
   if (loading) {
     return (
@@ -147,7 +158,7 @@ const Home = () => {
   return (
     <div className="min-h-screen pb-20 bg-transparent">
       {/* HERO */}
-      <Hero />
+      <Hero categories={categories} />
       {/* SECTION 2: SERVICE BAR */}
       <div className="mx-auto mt-2.5 max-w-300 px-4">
         <div className="relative bg-[rgba(255,255,255,.6)]">
@@ -221,16 +232,16 @@ const Home = () => {
                 <div>
                   <img
                     src="https://honglam.vn/_next/static/media/menu-cs-4.ada696ef.png"
-                    alt="giai-phap-qua-tang"
+                    alt="giai-phap-tieu-dung"
                     className="w-full h-full"
                   />
                 </div>
                 <div className="text-secondary-2">
                   <h3 className="text-sm text-center md:text-left md:text-base md:font-bold text-text-primary">
-                    Giải pháp quà tặng
+                    Tiết kiệm tối ưu
                   </h3>
                   <p className="hidden text-[13px] md:block text-text-primary">
-                    Dành cho doanh nghiệp
+                    Ưu đãi cho đơn hàng lớn
                   </p>
                 </div>
               </div>
@@ -241,7 +252,7 @@ const Home = () => {
 
       {/* SECTION 3: SẢN PHẨM BÁN CHẠY */}
       <div className="px-4 mx-auto mt-10 text-center max-w-300 max-h-112.5">
-        <SectionHeading title="Sản phẩm bán chạy" outlined />
+        <SectionHeading title="Sản phẩm nổi bật" outlined />
 
         <div className="grid items-stretch grid-cols-2 grid-rows-3 gap-5 mt-8 md:grid-rows-2 md:grid-cols-3 max-h-112.5">
           {/* CỘT 1 - TRÊN (Sản phẩm 0) */}
@@ -310,33 +321,82 @@ const Home = () => {
         </div>
       </div>
 
+      {/* SECTION 8: TẤT CẢ SẢN PHẨM (PAGINATION) */}
+      <div className="px-4 mx-auto mt-20 max-w-300">
+        <SectionHeading title="Khám phá tất cả sản phẩm" />
+
+        {isPaginatedLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-4 mt-8 md:grid-cols-3 lg:grid-cols-4">
+              {paginatedProducts.map((p) => (
+                <ProductItemSmall key={p.id} product={p} />
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-12">
+                <button
+                  onClick={() => {
+                    setCurrentPage(prev => Math.max(1, prev - 1));
+                    window.scrollTo({ top: document.getElementById("all-products-section")?.offsetTop - 100, behavior: "smooth" });
+                  }}
+                  disabled={currentPage === 1}
+                  className={`px-4 py-2 rounded-lg border text-sm font-bold transition-all ${currentPage === 1 ? "text-gray-300 border-gray-100 cursor-not-allowed" : "text-primary border-gray-200 hover:bg-primary hover:text-white"}`}
+                >
+                  Trước
+                </button>
+
+                {[...Array(totalPages)].map((_, i) => (
+                  <button
+                    key={i + 1}
+                    onClick={() => {
+                      setCurrentPage(i + 1);
+                      window.scrollTo({ top: document.getElementById("all-products-section")?.offsetTop - 100, behavior: "smooth" });
+                    }}
+                    className={`w-10 h-10 rounded-lg border text-sm font-bold transition-all ${currentPage === i + 1 ? "bg-primary text-white border-primary" : "text-gray-500 border-gray-200 hover:border-primary hover:text-primary"}`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+
+                <button
+                  onClick={() => {
+                    setCurrentPage(prev => Math.min(totalPages, prev + 1));
+                    window.scrollTo({ top: document.getElementById("all-products-section")?.offsetTop - 100, behavior: "smooth" });
+                  }}
+                  disabled={currentPage === totalPages}
+                  className={`px-4 py-2 rounded-lg border text-sm font-bold transition-all ${currentPage === totalPages ? "text-gray-300 border-gray-100 cursor-not-allowed" : "text-primary border-gray-200 hover:bg-primary hover:text-white"}`}
+                >
+                  Sau
+                </button>
+              </div>
+            )}
+          </>
+        )}
+        <div id="all-products-section"></div>
+      </div>
+
       {/* SECTION 4: GIẢI PHÁP QUÀ TẶNG */}
       <div className="px-4 mx-auto text-center mt-30 max-w-300">
-        <SectionHeading title="Giải pháp quà tặng, quà biếu" />
+        <SectionHeading title="🍎 Thực phẩm tươi sạch" />
         <p className="text-secondary-2 my-5 hidden px-[12%] text-center text-sm lg:block text-gray-600 font-light leading-relaxed italic">
-          Bộ quà tặng Ô mai Hồng Lam là giải pháp quà Tết, quà Trung Thu, quà lễ
-          Tết,.. được lựa chọn để kết nối các mối quan hệ xã hội, kết nối tình
-          thân, vun đắp các mối quan hệ thêm bền chặt gắn kết.
+          ClickGo Mart cam kết cung cấp các loại thực phẩm tươi sạch mỗi ngày, đảm bảo an toàn vệ sinh và nguồn gốc rõ ràng cho bữa ăn gia đình bạn thêm trọn vẹn.
         </p>
         <div className="grid grid-cols-1 gap-8 mt-10 md:grid-cols-3">
-          <GiftCard
-            id={158}
-            title="Bộ quà Sắc Hoa"
-            price="605"
-            img="https://cdn.honglam.vn/honglam/Sac_Hoa_1_06cf1c5837.jpg"
-          />
-          <GiftCard
-            id={155}
-            title="Bộ quà Thịnh Vượng VIP"
-            price="1.465.000"
-            img="https://cdn.honglam.vn/honglam/Thinh_Vuong_1_80577e5604.jpg"
-          />
-          <GiftCard
-            id={156}
-            title="Bộ quà An Khang VIP"
-            price="1.215.000"
-            img="https://cdn.honglam.vn/honglam/An_Khang_1_f0039c4d01.jpg"
-          />
+          {products.slice(5, 8).map((p) => (
+            <GiftCard
+              key={p.id}
+              id={p.id}
+              title={p.name}
+              price={Math.floor(p.price / 1000)}
+              img={p.image}
+            />
+          ))}
         </div>
         <div className="flex justify-center mt-8">
           <Link
@@ -353,32 +413,43 @@ const Home = () => {
         </div>
       </div>
 
-      {/* SECTION 5: Ô MAI (XÍ MUỘI) */}
-      <CategorySection
-        title="Ô mai (xí muội)"
-        subtitle="Ô mai xí muội đặc sản Hà Nội"
-        bannerImage="https://cdn.honglam.vn/honglam/HL_5_04_1_91ecb38969.jpg"
-        products={filterByCategory("o-mai")}
-        categoryLink="/category/o-mai"
-      />
+      {/* DYNAMIC CATEGORY SECTIONS */}
+      {categories.slice(0, 4).map((cat, index) => {
+        const banners = [
+          "https://cdn.honglam.vn/honglam/HL_5_04_1_91ecb38969.jpg",
+          "https://cdn.honglam.vn/honglam/Anh_web_Banh_keo_2_d4d154866e.jpg",
+          "https://cdn.honglam.vn/honglam/Anh_web_Tra_1_a6f8a30e3a.jpg",
+          "https://cdn.honglam.vn/honglam/Tet_website_ab5d5cb5d1.jpg"
+        ];
 
-      {/* SECTION 5.1: BÁNH - KẸO */}
-      <CategorySection
-        title="Bánh - Kẹo"
-        subtitle="Bánh kẹo đặc sản truyền thống"
-        bannerImage="https://cdn.honglam.vn/honglam/Anh_web_Banh_keo_2_d4d154866e.jpg"
-        products={filterByCategory("banh")}
-        categoryLink="/category/banh-keo"
-      />
+        const getSlug = (name) => {
+          return (name || "")
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[đĐ]/g, "d")
+            .replace(/([^a-z0-9\s-]|(?<=\s)\s)/g, "")
+            .trim()
+            .replace(/\s+/g, "-");
+        };
 
-      {/* SECTION 5.2: CHÈ, TRÀ ĐẶC SẢN */}
-      <CategorySection
-        title="Chè, Trà đặc sản"
-        subtitle="Hương vị trà Việt tinh tế"
-        bannerImage="https://cdn.honglam.vn/honglam/Anh_web_Tra_1_a6f8a30e3a.jpg"
-        products={filterByCategory("tra")}
-        categoryLink="/category/che-tra"
-      />
+        const categoryProducts = allProducts.filter(p =>
+          (p.categoryID || []).some(c => c._id === cat._id || c.name === cat.name)
+        );
+
+        if (categoryProducts.length === 0) return null;
+
+        return (
+          <CategorySection
+            key={cat._id}
+            title={cat.name}
+            subtitle={cat.description || `Sản phẩm thuộc danh mục ${cat.name}`}
+            bannerImage={banners[index % banners.length]}
+            products={categoryProducts}
+            categoryLink={`/category/${getSlug(cat.name)}`}
+          />
+        );
+      })}
 
       {/* SECTION 6: TẠP CHÍ  */}
       <div className="px-4 mx-auto mt-20 max-w-300">
@@ -418,14 +489,11 @@ const Home = () => {
                 href="/nhin-lai-su-kien-ra-mat-bo-suu-tap-qua-tet-2026-ma-dao-khai-xuan-cua-o-mai-hong-lam"
                 className="text-base font-bold transition-all text-secondary-2 group-hover:text-primary line-clamp-2 md:text-lg"
               >
-                Nhìn lại sự kiện ra mắt bộ sưu tập quà Tết 2026 “Mã đáo khai
-                xuân”
+                Nhìn lại sự kiện ra mắt chi nhánh ClickGo Mart mới tại Hà Nội
               </a>
 
               <div className="mt-2 text-sm text-secondary-2 line-clamp-3">
-                Ngày 14/12 vừa qua, tại không gian cửa hàng Ô mai Hồng Lam Lạc
-                Long Quân, sự kiện ra mắt bộ sưu tập quà Tết 2026 đã diễn ra
-                trong không khí ấm cúng, gần gũi…
+                Ngày 14/12 vừa qua, ClickGo Mart chính thức khai trương chi nhánh mới tại khu vực Lạc Long Quân, mang đến không gian mua sắm hiện đại và tiện lợi cho người dân thủ đô…
               </div>
             </div>
           </div>
@@ -474,12 +542,11 @@ const Home = () => {
                 href="/hong-lam-chung-tay-ho-tro-truong-mam-non-kim-lu-thai-nguyen-sau-bao-lu"
                 className="text-base font-bold transition-all text-secondary-2 group-hover:text-primary line-clamp-2 md:text-lg"
               >
-                Hồng Lam chung tay hỗ trợ Trường Mầm non Kim Lư (Thái Nguyên)
+                ClickGo Mart đồng hành cùng cộng đồng trong các hoạt động an sinh xã hội
               </a>
 
               <div className="mt-2 text-sm text-secondary-2 line-clamp-3">
-                Sau đợt mưa lũ kéo dài tại miền núi phía Bắc, Hồng Lam đã tổ
-                chức hoạt động thiện nguyện nhằm hỗ trợ thầy cô và học sinh…
+                Không chỉ chú trọng vào chất lượng sản phẩm, ClickGo Mart còn luôn tích cực tham gia các hoạt động thiện nguyện, hỗ trợ những hoàn cảnh khó khăn tại nhiều địa phương…
               </div>
             </div>
           </div>
@@ -552,17 +619,6 @@ const Home = () => {
                   link: "/the-best-friends-cuoc-thi-lam-clip-on-thay-nghia-ban-o-mai-hong-lam",
                   img: "https://cdn.honglam.vn/honglam/hqdefault_f5fa524c39.jpg",
                 },
-                {
-                  title: '[ Trailer] Cuộc thi làm clip "Ơn thầy nghĩa bạn"',
-                  link: "/trailer-cuoc-thi-lam-clip-on-thay-nghia-ban-o-mai-hong-lam",
-                  img: "https://cdn.honglam.vn/honglam/hqdefault_4957fa2598.jpg",
-                },
-                {
-                  title:
-                    'Ô mai Click Go - Chương trình "Lửa thử vàng" - VTVCab15',
-                  link: "/o-mai-hong-lam-chuong-trinh-lua-thu-vang-vtvcab15",
-                  img: "https://cdn.honglam.vn/honglam/hqdefault_b09821392c.jpg",
-                },
               ].map((video, index) => (
                 <a
                   key={index}
@@ -598,6 +654,7 @@ const Home = () => {
           </div>
         </div>
       </div>
+
     </div>
   );
 };

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Menu, ChevronDown } from "lucide-react";
 import { MenuItem } from "./Hero";
 
-export const CategoryDropdown = ({ display }) => {
+export const CategoryDropdown = ({ display, categories }) => {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -38,7 +38,7 @@ export const CategoryDropdown = ({ display }) => {
             ${open ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"}
           `}
         >
-          <MenuItem />
+          <MenuItem categories={categories} />
         </div>
       )}
     </div>

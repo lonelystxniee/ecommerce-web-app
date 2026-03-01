@@ -23,7 +23,7 @@ const bannerImages = [
   "https://cdn.honglam.vn/honglam/Sac_Hoa_1_06cf1c5837.jpg",
 ];
 
-const Hero = () => {
+const Hero = ({ categories }) => {
   const sliderImages = [
     bannerImages[bannerImages.length - 1],
     ...bannerImages,
@@ -84,13 +84,13 @@ const Hero = () => {
                 </div>
 
                 {/* Menu */}
-                <MenuItem />
+                <MenuItem categories={categories} />
               </div>
             </div>
           </div>
 
           {/* Category Dropdown */}
-          <CategoryDropdown />
+          <CategoryDropdown categories={categories} />
 
           {/* BANNER */}
           <div className="flex-1 h-1/2 md:h-full">
@@ -98,11 +98,10 @@ const Hero = () => {
               {/* SLIDER */}
               <div className="relative h-full overflow-hidden">
                 <div
-                  className={`flex h-full ${
-                    enableTransition
-                      ? "transition-transform duration-500 ease-in-out"
-                      : ""
-                  }`}
+                  className={`flex h-full ${enableTransition
+                    ? "transition-transform duration-500 ease-in-out"
+                    : ""
+                    }`}
                   style={{
                     transform: `translateX(-${bannerIndex * 100}%)`,
                   }}
@@ -158,64 +157,47 @@ const Hero = () => {
   );
 };
 
-export const MenuItem = () => {
+export const MenuItem = ({ categories }) => {
+  const getIcon = (name) => {
+    const n = (name || "").toLowerCase();
+    if (n.includes("tươi") || n.includes("sống")) return <Clock className="w-4 h-4" />;
+    if (n.includes("nhu yếu") || n.includes("thiết yếu")) return <Package className="w-4 h-4" />;
+    if (n.includes("bánh mì") || n.includes("bơ sữa")) return <Sparkles className="w-4 h-4" />;
+    if (n.includes("ăn nhẹ") || n.includes("bánh kẹo")) return <Gift className="w-4 h-4" />;
+    if (n.includes("đồ uống") || n.includes("giải khát")) return <Cake className="w-4 h-4" />;
+    if (n.includes("gia vị")) return <Coffee className="w-4 h-4" />;
+    return <ShoppingBag className="w-4 h-4" />;
+  };
+
+  const getSlug = (name) => {
+    return (name || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[đĐ]/g, "d")
+      .replace(/([^a-z0-9\s-]|(?<=\s)\s)/g, "")
+      .trim()
+      .replace(/\s+/g, "-");
+  };
+
   return (
-    <div className="relative flex-1 text-white z-1">
-      <Link
-        to="/category/giai-phap-qua-tang"
-        className="flex h-11 items-center gap-2 px-4 border-b border-[#b30e0e] hover:bg-[rgba(0,0,0,.15)] cursor-pointer text-[15px]"
-      >
-        <Clock className="w-4 h-4" />
-        <span>Giải pháp quà tặng, quà biếu</span>
-      </Link>
-
-      <Link
-        to="/category/o-mai"
-        className="flex h-11 items-center gap-2 px-4 border-b border-[#b30e0e] hover:bg-[rgba(0,0,0,.15)] cursor-pointer text-[15px]"
-      >
-        <Package className="w-4 h-4" />
-        <span>Ô mai (xí muội)</span>
-      </Link>
-
-      <Link
-        to="/category/mut-tet"
-        className="flex h-11 items-center gap-2 px-4 border-b border-[#b30e0e] hover:bg-[rgba(0,0,0,.15)] cursor-pointer text-[15px]"
-      >
-        <Sparkles className="w-4 h-4" />
-        <span>Mứt Tết</span>
-      </Link>
-
-      <Link
-        to="/category/banh-keo"
-        className="flex h-11 items-center gap-2 px-4 border-b border-[#b30e0e] hover:bg-[rgba(0,0,0,.15)] cursor-pointer text-[15px]"
-      >
-        <Gift className="w-4 h-4" />
-        <span>Bánh - Kẹo</span>
-      </Link>
-
-      <Link
-        to="/category/che-tra"
-        className="flex h-11 items-center gap-2 px-4 border-b border-[#b30e0e] hover:bg-[rgba(0,0,0,.15)] cursor-pointer text-[15px]"
-      >
-        <Cake className="w-4 h-4" />
-        <span>Chè, Trà đặc sản</span>
-      </Link>
-
-      <Link
-        to="/category/san-pham-khac"
-        className="flex h-11 items-center gap-2 px-4 border-b border-[#b30e0e] hover:bg-[rgba(0,0,0,.15)] cursor-pointer text-[15px]"
-      >
-        <Coffee className="w-4 h-4" />
-        <span>Sản phẩm khác</span>
-      </Link>
-
-      <Link
-        to="/category/thuc-uong"
-        className="flex h-11 items-center gap-2 px-4 hover:bg-[rgba(0,0,0,.15)] cursor-pointer"
-      >
-        <Wine className="w-4 h-4" />
-        <span>Thức uống</span>
-      </Link>
+    <div className="relative flex-1 text-white z-1 overflow-y-auto max-h-[calc(100%-44px)] custom-scrollbar">
+      {categories && categories.length > 0 ? (
+        categories.map((cat, index) => (
+          <Link
+            key={cat._id}
+            to={`/category/${getSlug(cat.name)}`}
+            className={`flex h-11 items-center gap-2 px-4 border-b border-[#b30e0e] hover:bg-[rgba(0,0,0,.15)] cursor-pointer text-[15px] ${index === categories.length - 1 ? "border-b-0" : ""}`}
+          >
+            {getIcon(cat.name)}
+            <span className="truncate">{cat.name}</span>
+          </Link>
+        ))
+      ) : (
+        <div className="flex items-center justify-center h-full text-xs opacity-50">
+          Đang tải danh mục...
+        </div>
+      )}
     </div>
   );
 };

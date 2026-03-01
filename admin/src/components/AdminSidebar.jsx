@@ -9,6 +9,7 @@ import {
   LogOut,
   ShoppingBag,
   Layers,
+  MessageSquare,
 } from "lucide-react";
 
 const AdminSidebar = () => {
@@ -31,6 +32,11 @@ const AdminSidebar = () => {
       path: "/categories",
       icon: <Layers size={20} />,
       label: "Quản lý danh mục",
+    },
+    {
+      path: "/reviews",
+      icon: <MessageSquare size={20} />,
+      label: "Quản lý đánh giá",
     },
   ];
 
