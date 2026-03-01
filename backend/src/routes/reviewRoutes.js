@@ -15,7 +15,7 @@ router.get("/", adminMiddleware, reviewController.getAllReviewsAdmin);
 // Create a new review (Protected, User)
 router.post(
     "/",
-    adminMiddleware,
+    authMiddleware,
     upload.array("images", 10), // This will handle both images and videos
     reviewController.createReview
 );
