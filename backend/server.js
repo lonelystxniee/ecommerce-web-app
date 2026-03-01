@@ -5,6 +5,8 @@ const cors = require("cors");
 const connectDB = require("./src/config/db");
 const authRoutes = require("./src/routes/authRoutes");
 const orderRoutes = require("./src/routes/orderRoutes");
+const locationRoutes = require("./src/routes/locationRoutes");
+const shippingRoutes = require("./src/routes/shippingRoutes");
 
 const app = express();
 app.use(cors());
@@ -13,6 +15,8 @@ connectDB();
 
 app.use("/api/auth", authRoutes);
 app.use("/api/orders", orderRoutes);
+app.use('/api/locations', locationRoutes);
+app.use('/api/shipping', shippingRoutes);
 const PORT = process.env.PORT || 5175;
 
 connectDB().then(() => {

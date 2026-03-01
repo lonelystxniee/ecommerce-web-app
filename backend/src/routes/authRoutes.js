@@ -6,7 +6,6 @@ const { verifyToken } = require("../middlewares/authMiddleware");
 
 router.post("/register", authController.register);
 
-router.post("/register", authController.register); // Thêm route đăng ký
 router.post("/login", authController.login);
 
 router.put("/update-profile", verifyToken, authController.updateProfile);

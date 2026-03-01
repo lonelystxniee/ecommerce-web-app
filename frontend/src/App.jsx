@@ -10,6 +10,8 @@ import { CartProvider } from "./context/CartContext";
 import CategoryPage from "./pages/CategoryPage";
 import ScrollToTop from "./components/ScrollToTop";
 import AccountPage from "./pages/AccountPage";
+import OrderTracking from "./pages/OrderTracking";
+import AdminOrders from "./pages/AdminOrders";
 
 function App() {
   return (
@@ -26,6 +28,8 @@ function App() {
               <Route path="/category/:slug" element={<CategoryPage />} />
 
               <Route path="/account" element={<AccountPage />} />
+              <Route path="/order/:id" element={<OrderTracking />} />
+              <Route path="/admin/orders" element={<AdminOrders />} />
 
               <Route path="/profile" element={<AccountPage />} />
             </Routes>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { ChevronRight, CreditCard, Truck, Receipt } from "lucide-react";
@@ -19,6 +19,50 @@ const Checkout = () => {
     note: "",
     paymentMethod: "COD",
   });
+
+  // Location/Shipping state
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [wards, setWards] = useState([]);
+  const [locationSelection, setLocationSelection] = useState({ provinceId: '', districtId: '', wardCode: '' });
+  const [shippingFee, setShippingFee] = useState(null);
+
+  useEffect(() => {
+    fetch('/api/locations/provinces').then(r => r.json()).then(d => { if (d.success) setProvinces(d.provinces || d.provinces || d); }).catch(() => { });
+  }, []);
+
+  useEffect(() => {
+    if (locationSelection.provinceId) {
+      fetch(`/api/locations/districts?provinceId=${locationSelection.provinceId}`).then(r => r.json()).then(d => { if (d.success) setDistricts(d.districts || d); }).catch(() => { });
+    }
+  }, [locationSelection.provinceId]);
+
+  useEffect(() => {
+    if (locationSelection.districtId) {
+      fetch(`/api/locations/wards?districtId=${locationSelection.districtId}`).then(r => r.json()).then(d => { if (d.success) setWards(d.wards || d); }).catch(() => { });
+    }
+  }, [locationSelection.districtId]);
+
+  const handleLocationChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'provinceId') setLocationSelection({ provinceId: value, districtId: '', wardCode: '' });
+    else if (name === 'districtId') setLocationSelection((s) => ({ ...s, districtId: value, wardCode: '' }));
+    else setLocationSelection((s) => ({ ...s, [name]: value }));
+  };
+
+  const calculateShipping = async () => {
+    const weight = cartItems.reduce((sum, it) => sum + ((it.weight || 300) * (it.quantity || 1)), 0);
+    if (!locationSelection.districtId || !locationSelection.wardCode) return;
+    try {
+      const res = await fetch('/api/shipping/calculate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to_district_id: Number(locationSelection.districtId), to_ward_code: locationSelection.wardCode, weight }) });
+      const data = await res.json();
+      if (data.success && data.result) {
+        const raw = data.result.data || data.result;
+        if (Array.isArray(raw) && raw.length) setShippingFee(raw[0].total || raw[0].shipping_fee || 0);
+        else if (raw && raw.total) setShippingFee(raw.total);
+      }
+    } catch (e) { }
+  };
 
   // 3. Xử lý thay đổi input
   const handleChange = (e) => {
@@ -51,6 +95,14 @@ const Checkout = () => {
       items: cartItems,
       totalPrice: totalPrice,
       paymentMethod: formData.paymentMethod,
+      shippingInfo: {
+        province: provinces.find(p => String(p.ProvinceID || p.province_id) === String(locationSelection.provinceId)) || null,
+        district: districts.find(d => String(d.DistrictID || d.district_id) === String(locationSelection.districtId)) || null,
+        ward: wards.find(w => String(w.WardCode || w.code) === String(locationSelection.wardCode)) || null,
+        to_district_id: Number(locationSelection.districtId) || undefined,
+        to_ward_code: locationSelection.wardCode || undefined,
+        weight: cartItems.reduce((sum, it) => sum + ((it.weight || 300) * (it.quantity || 1)), 0),
+      }
     };
 
     try {
@@ -134,15 +186,38 @@ const Checkout = () => {
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-gray-500 mb-2 font-medium">
-                    Địa chỉ chi tiết <span className="text-red-500">*</span>
+                    Tỉnh/Thành <span className="text-red-500">*</span>
                   </label>
-                  <textarea
-                    name="address"
-                    value={formData.address}
-                    onChange={handleChange}
-                    placeholder="Số nhà, tên đường, phường/xã..."
-                    className="w-full border border-gray-200 p-3 rounded-lg h-24 outline-none focus:border-[#faa519] transition-all bg-gray-50/50"
-                  ></textarea>
+                  <select name="provinceId" value={locationSelection.provinceId} onChange={handleLocationChange} className="w-full border border-gray-200 p-3 rounded-lg outline-none">
+                    <option value="">Chọn tỉnh/thành</option>
+                    {provinces.map(p => <option key={p.ProvinceID || p.province_id} value={p.ProvinceID || p.province_id}>{p.ProvinceName || p.name}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-gray-500 mb-2 font-medium">Quận/Huyện <span className="text-red-500">*</span></label>
+                  <select name="districtId" value={locationSelection.districtId} onChange={handleLocationChange} className="w-full border border-gray-200 p-3 rounded-lg outline-none">
+                    <option value="">Chọn quận/huyện</option>
+                    {districts.map(d => <option key={d.DistrictID || d.district_id} value={d.DistrictID || d.district_id}>{d.DistrictName || d.name}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-gray-500 mb-2 font-medium">Xã/Phường <span className="text-red-500">*</span></label>
+                  <select name="wardCode" value={locationSelection.wardCode} onChange={handleLocationChange} className="w-full border border-gray-200 p-3 rounded-lg outline-none">
+                    <option value="">Chọn xã/phường</option>
+                    {wards.map(w => <option key={w.WardCode || w.code} value={w.WardCode || w.code}>{w.WardName || w.name}</option>)}
+                  </select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-gray-500 mb-2 font-medium">Địa chỉ chi tiết <span className="text-red-500">*</span></label>
+                  <textarea name="address" value={formData.address} onChange={handleChange} placeholder="Số nhà, tên đường, phường/xã..." className="w-full border border-gray-200 p-3 rounded-lg h-24 outline-none focus:border-[#faa519] transition-all bg-gray-50/50"></textarea>
+                </div>
+
+                <div className="md:col-span-2">
+                  <button type="button" onClick={calculateShipping} className="px-4 py-2 bg-[#9d0b0f] text-white rounded">Tính phí vận chuyển</button>
+                  {shippingFee !== null && <div className="mt-2 text-sm">Phí vận chuyển ước tính: <strong>{shippingFee.toLocaleString()}đ</strong></div>}
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-gray-500 mb-2 font-medium">
