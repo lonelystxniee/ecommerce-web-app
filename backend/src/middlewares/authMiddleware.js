@@ -5,7 +5,9 @@ const verifyToken = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ success: false, message: "Không tìm thấy token xác thực!" });
+      return res
+        .status(401)
+        .json({ success: false, message: "Không tìm thấy token xác thực!" });
     }
 
     const token = authHeader.split(" ")[1];
@@ -13,14 +15,18 @@ const verifyToken = async (req, res, next) => {
 
     const user = await User.findById(decoded.id);
     if (!user) {
-      return res.status(401).json({ success: false, message: "Người dùng không tồn tại!" });
+      return res
+        .status(401)
+        .json({ success: false, message: "Người dùng không tồn tại!" });
     }
 
     req.user = user;
     next();
   } catch (error) {
     console.error("Auth Middleware Error:", error.message);
-    return res.status(401).json({ success: false, message: "Token không hợp lệ hoặc đã hết hạn!" });
+    return res
+      .status(401)
+      .json({ success: false, message: "Token không hợp lệ hoặc đã hết hạn!" });
   }
 };
 

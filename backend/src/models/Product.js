@@ -42,6 +42,17 @@ const productSchema = new mongoose.Schema(
                 ref: "Category",
                 required: true
             }
+        ],
+        slogan: {
+            type: String,
+            default: ""
+        },
+        variants: [
+            {
+                label: String, // e.g., "200g", "500g"
+                price: Number,
+                stock: Number
+            }
         ]
     },
     { timestamps: true }

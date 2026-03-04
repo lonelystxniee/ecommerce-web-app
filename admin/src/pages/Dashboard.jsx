@@ -15,10 +15,15 @@ const Dashboard = () => {
     userCount: 0,
   });
 
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch("http://localhost:5175/api/orders/all");
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${API_URL}/api/orders/all`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
         const json = await res.json();
         if (json.success) {
           const total = json.orders.reduce(

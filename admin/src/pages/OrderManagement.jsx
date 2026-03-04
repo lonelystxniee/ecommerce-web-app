@@ -24,11 +24,13 @@ const OrderManagement = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
+
   const fetchOrders = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:5175/api/orders/all", {
+      const response = await fetch(`${API_URL}/api/orders/all`, {
         headers: {
           "Authorization": `Bearer ${token}`
         }
@@ -52,7 +54,7 @@ const OrderManagement = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:5175/api/orders/status/${orderId}`,
+        `${API_URL}/api/orders/status/${orderId}`,
         {
           method: "PUT",
           headers: {

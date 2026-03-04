@@ -21,6 +21,7 @@ import { CategoryDropdown } from "../pages/Home/CategoryDropdown";
 
 const Header = () => {
   const { totalItems } = useCart();
+  const [categories, setCategories] = useState([]);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [user, setUser] = useState(null);
@@ -28,6 +29,21 @@ const Header = () => {
 
   const mainDropdownRef = useRef(null);
   const stickyDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch("http://localhost:5175/api/category");
+        const data = await response.json();
+        if (data.success) {
+          setCategories(data.categories);
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
@@ -143,7 +159,7 @@ const Header = () => {
       >
         <div className="flex items-center gap-6 px-4 py-2 mx-auto max-w-300">
           <div className="flex-1 w-full">
-            <CategoryDropdown display />
+            <CategoryDropdown display categories={categories} />
           </div>
           <div className="hidden flex-2 lg:block">
             <SearchBar />

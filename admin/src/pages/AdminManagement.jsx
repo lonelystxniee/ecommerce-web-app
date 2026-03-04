@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import {
   Search,
@@ -10,14 +11,14 @@ import {
   Shield,
   Phone,
   Mail,
-  Users,
+  UserPlus,
   CheckCircle,
   AlertCircle,
   Lock,
   Unlock,
 } from "lucide-react";
 
-const UserManagement = () => {
+const AdminManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -33,7 +34,7 @@ const UserManagement = () => {
     email: "",
     phone: "",
     password: "",
-    role: "CUSTOMER",
+    role: "ADMIN",
     status: "ACTIVE",
   });
 
@@ -43,26 +44,22 @@ const UserManagement = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      if (!token) {
-        alert("Bạn chưa đăng nhập! Vui lòng đăng nhập với quyền Admin.");
-        setLoading(false);
-        return;
-      }
+      if (!token) return;
 
       const response = await fetch(`${API_URL}/api/auth/users`, {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
       const data = await response.json();
+      // Lọc chỉ lấy ADMIN và STAFF
       if (data.success) {
-        setUsers(data.users);
-      } else {
-        alert(`Lỗi: ${data.message || "Không thể lấy danh sách người dùng"}`);
+        setUsers(
+          data.users.filter((u) => u.role === "ADMIN" || u.role === "STAFF"),
+        );
       }
     } catch (error) {
       console.error(error);
-      alert("Lỗi kết nối server hoặc bạn không có quyền Admin!");
     } finally {
       setLoading(false);
     }
@@ -70,6 +67,7 @@ const UserManagement = () => {
 
   useEffect(() => {
     fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleOpenAddModal = () => {
@@ -79,7 +77,7 @@ const UserManagement = () => {
       email: "",
       phone: "",
       password: "",
-      role: "CUSTOMER", // Default for new users or STAFF/ADMIN as chosen
+      role: "ADMIN",
       status: "ACTIVE",
     });
     setIsModalOpen(true);
@@ -119,14 +117,14 @@ const UserManagement = () => {
         method,
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (data.success) {
         alert(
-          editMode ? "Cập nhật thành công!" : "Tạo người dùng thành công!",
+          editMode ? "Cập nhật thành công!" : "Tạo quản trị viên thành công!",
         );
         setIsModalOpen(false);
         fetchUsers();
@@ -144,14 +142,18 @@ const UserManagement = () => {
     const newStatus = user.status === "ACTIVE" ? "LOCKED" : "ACTIVE";
     const actionText = newStatus === "LOCKED" ? "khóa" : "mở khóa";
 
-    if (window.confirm(`Bạn có chắc chắn muốn ${actionText} tài khoản này?`)) {
+    if (
+      window.confirm(
+        `Bạn có chắc chắn muốn ${actionText} tài khoản quản trị này?`,
+      )
+    ) {
       try {
         const token = localStorage.getItem("token");
         const res = await fetch(`${API_URL}/api/auth/users/${user._id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ status: newStatus }),
         });
@@ -169,33 +171,32 @@ const UserManagement = () => {
   };
 
   const handleDeleteUser = async (id) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
+    if (window.confirm("Xóa quyền quản trị của người dùng này?")) {
       try {
         const token = localStorage.getItem("token");
         const res = await fetch(`${API_URL}/api/auth/users/${id}`, {
           method: "DELETE",
           headers: {
-            "Authorization": `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         });
         const data = await res.json();
         if (data.success) {
           alert("Xóa thành công!");
           fetchUsers();
         } else {
-          alert(data.message || "Lỗi khi xóa người dùng!");
+          alert(data.message || "Lỗi khi xóa!");
         }
       } catch (error) {
-        alert("Lỗi khi xóa người dùng!");
+        alert("Lỗi kết nối server!");
       }
     }
   };
 
   const filteredUsers = users.filter(
     (user) =>
-      user.role === "CUSTOMER" && (
-        user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()))
+      user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
@@ -204,10 +205,10 @@ const UserManagement = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-2 border-[#9d0b0f] pb-4">
         <div>
           <h2 className="text-3xl font-black text-[#9d0b0f] uppercase tracking-tighter">
-            Quản lý khách hàng
+            Đội ngũ Quản trị
           </h2>
           <p className="text-[#88694f] font-medium italic">
-            Danh sách thành viên mua sắm tại Hồng Lam
+            Quản lý tài khoản Admin và Nhân viên hệ thống
           </p>
         </div>
         <div className="flex gap-2">
@@ -217,50 +218,57 @@ const UserManagement = () => {
           >
             <RefreshCcw size={20} className={loading ? "animate-spin" : ""} />
           </button>
+          <button
+            onClick={handleOpenAddModal}
+            className="bg-[#9d0b0f] text-white px-6 py-3 rounded-2xl font-bold text-sm flex items-center gap-2 hover:bg-[#f39200] transition-all shadow-lg"
+          >
+            <UserPlus size={20} /> Thêm Quản trị viên
+          </button>
         </div>
       </div>
 
       {/* Stats Quick View */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="bg-blue-50 p-4 rounded-2xl text-blue-600">
-            <Users size={24} />
-          </div>
-          <div>
-            <p className="text-[10px] font-black uppercase text-gray-400">Tổng khách hàng</p>
-            <h3 className="text-2xl font-black text-[#3e2714]">{users.filter(u => u.role === "CUSTOMER").length}</h3>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="bg-green-50 p-4 rounded-2xl text-green-600">
-            <CheckCircle size={24} />
-          </div>
-          <div>
-            <p className="text-[10px] font-black uppercase text-gray-400">Hoạt động</p>
-            <h3 className="text-2xl font-black text-[#3e2714]">{users.filter(u => u.role === "CUSTOMER" && u.status === "ACTIVE").length}</h3>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="bg-yellow-50 p-4 rounded-2xl text-yellow-600">
-            <AlertCircle size={24} />
-          </div>
-          <div>
-            <p className="text-[10px] font-black uppercase text-gray-400">Tạm khóa</p>
-            <h3 className="text-2xl font-black text-[#3e2714]">{users.filter(u => u.role === "CUSTOMER" && u.status === "LOCKED").length}</h3>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="bg-red-50 p-4 rounded-2xl text-red-600">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="flex items-center gap-4 p-6 bg-white border border-gray-100 shadow-sm rounded-4xl">
+          <div className="bg-red-50 p-4 rounded-2xl text-[#9d0b0f]">
             <Shield size={24} />
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase text-gray-400">Cấp quản trị</p>
-            <h3 className="text-2xl font-black text-[#3e2714]">{users.filter(u => u.role !== "CUSTOMER").length}</h3>
+            <p className="text-[10px] font-black uppercase text-gray-400">
+              Tổng Quản trị
+            </p>
+            <h3 className="text-2xl font-black text-[#3e2714]">
+              {users.length}
+            </h3>
+          </div>
+        </div>
+        <div className="flex items-center gap-4 p-6 bg-white border border-gray-100 shadow-sm rounded-4xl">
+          <div className="p-4 text-green-600 bg-green-50 rounded-2xl">
+            <CheckCircle size={24} />
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase text-gray-400">
+              Đang hoạt động
+            </p>
+            <h3 className="text-2xl font-black text-[#3e2714]">
+              {users.filter((u) => u.status === "ACTIVE").length}
+            </h3>
+          </div>
+        </div>
+        <div className="flex items-center gap-4 p-6 bg-white border border-gray-100 shadow-sm rounded-4xl">
+          <div className="p-4 text-yellow-600 bg-yellow-50 rounded-2xl">
+            <AlertCircle size={24} />
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase text-gray-400">
+              Đang bị khóa
+            </p>
+            <h3 className="text-2xl font-black text-[#3e2714]">
+              {users.filter((u) => u.status === "LOCKED").length}
+            </h3>
           </div>
         </div>
       </div>
-
-      {/* Tìm kiếm */}
 
       {/* Tìm kiếm */}
       <div className="bg-white/80 p-6 rounded-3xl shadow-sm border border-[#9d0b0f]/10">
@@ -271,7 +279,7 @@ const UserManagement = () => {
           />
           <input
             type="text"
-            placeholder="Tìm nhanh người dùng theo tên hoặc email..."
+            placeholder="Tìm kiếm quản trị viên..."
             className="w-full pl-12 pr-4 py-3.5 bg-[#f7f4ef] rounded-2xl outline-none focus:border-[#f39200] border-2 border-transparent transition-all"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -285,7 +293,7 @@ const UserManagement = () => {
           <table className="w-full text-left">
             <thead className="bg-[#9d0b0f] text-white text-[10px] uppercase font-bold tracking-widest">
               <tr>
-                <th className="px-8 py-5">Người dùng</th>
+                <th className="px-8 py-5">Thành viên</th>
                 <th className="px-8 py-5">Liên hệ</th>
                 <th className="px-8 py-5 text-center">Vai trò</th>
                 <th className="px-8 py-5 text-center">Trạng thái</th>
@@ -295,24 +303,20 @@ const UserManagement = () => {
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="px-8 py-20 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <RefreshCcw
-                        className="animate-spin text-[#9d0b0f]"
-                        size={40}
-                      />
-                      <p className="text-[#88694f] font-medium">
-                        Đang tải dữ liệu...
-                      </p>
-                    </div>
+                  <td
+                    colSpan="5"
+                    className="px-8 py-20 text-center text-[#88694f]"
+                  >
+                    Đang tải...
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-8 py-20 text-center">
-                    <p className="text-[#88694f] font-medium">
-                      Không tìm thấy người dùng nào
-                    </p>
+                  <td
+                    colSpan="5"
+                    className="px-8 py-20 text-center text-[#88694f]"
+                  >
+                    Không tìm thấy quản trị viên nào
                   </td>
                 </tr>
               ) : (
@@ -323,16 +327,15 @@ const UserManagement = () => {
                   >
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-[#f39200] to-[#faa519] text-white flex items-center justify-center font-bold shadow-md group-hover:scale-110 transition-transform">
+                        <div className="w-12 h-12 rounded-2xl bg-[#9d0b0f] text-white flex items-center justify-center font-bold shadow-md">
                           {user.fullName.charAt(0).toUpperCase()}
                         </div>
                         <div>
                           <p className="font-bold text-[#3e2714]">
                             {user.fullName}
                           </p>
-                          <p className="text-[10px] text-[#88694f] flex items-center gap-1">
-                            <UserIcon size={10} /> ID:{" "}
-                            {user._id.substring(0, 8)}...
+                          <p className="text-[10px] text-[#88694f] uppercase tracking-widest font-bold">
+                            Admin ID: {user._id.substring(0, 8)}
                           </p>
                         </div>
                       </div>
@@ -353,27 +356,26 @@ const UserManagement = () => {
                     </td>
                     <td className="px-8 py-6 text-center">
                       <span
-                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold flex items-center justify-center gap-1 mx-auto w-fit ${user.role === "ADMIN"
-                          ? "bg-red-100 text-red-600 border border-red-200"
-                          : user.role === "STAFF"
-                            ? "bg-blue-100 text-blue-600 border border-blue-200"
-                            : "bg-gray-100 text-gray-600 border border-gray-200"
-                          }`}
+                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1 ${
+                          user.role === "ADMIN"
+                            ? "bg-red-100 text-red-600"
+                            : "bg-blue-100 text-blue-600"
+                        }`}
                       >
-                        <Shield size={12} />
-                        {user.role}
+                        <Shield size={12} /> {user.role}
                       </span>
                     </td>
                     <td className="px-8 py-6 text-center">
                       <span
-                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold mx-auto w-fit block ${user.status === "ACTIVE"
-                          ? "bg-green-100 text-green-600 border border-green-200"
-                          : "bg-yellow-100 text-yellow-600 border border-yellow-200"
-                          }`}
+                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold ${
+                          user.status === "ACTIVE"
+                            ? "bg-green-100 text-green-600"
+                            : "bg-yellow-100 text-yellow-600"
+                        }`}
                       >
                         {user.status === "ACTIVE"
                           ? "ĐANG HOẠT ĐỘNG"
-                          : "BỊ KHÓA"}
+                          : "TẠM KHÓA"}
                       </span>
                     </td>
                     <td className="px-8 py-6 text-right">
@@ -381,26 +383,33 @@ const UserManagement = () => {
                         <button
                           onClick={() => handleOpenEditModal(user)}
                           className="p-2 text-blue-500 transition-all hover:bg-blue-50 rounded-xl"
-                          title="Chỉnh sửa"
                         >
                           <Edit2 size={18} />
                         </button>
                         <button
                           onClick={() => handleDeleteUser(user._id)}
                           className="p-2 text-red-500 transition-all hover:bg-red-50 rounded-xl"
-                          title="Xóa"
                         >
                           <Trash2 size={18} />
                         </button>
                         <button
                           onClick={() => handleToggleStatus(user)}
-                          className={`p-2 transition-all rounded-xl ${user.status === "ACTIVE"
-                            ? "text-orange-500 hover:bg-orange-50"
-                            : "text-green-500 hover:bg-green-50"
-                            }`}
-                          title={user.status === "ACTIVE" ? "Khóa tài khoản" : "Mở khóa tài khoản"}
+                          className={`p-2 transition-all rounded-xl ${
+                            user.status === "ACTIVE"
+                              ? "text-orange-500 hover:bg-orange-50"
+                              : "text-green-500 hover:bg-green-50"
+                          }`}
+                          title={
+                            user.status === "ACTIVE"
+                              ? "Khóa tài khoản"
+                              : "Mở khóa tài khoản"
+                          }
                         >
-                          {user.status === "ACTIVE" ? <Lock size={18} /> : <Unlock size={18} />}
+                          {user.status === "ACTIVE" ? (
+                            <Lock size={18} />
+                          ) : (
+                            <Unlock size={18} />
+                          )}
                         </button>
                       </div>
                     </td>
@@ -412,35 +421,29 @@ const UserManagement = () => {
         </div>
       </div>
 
-      {/* MODAL THÊM / SỬA NGƯỜI DÙNG */}
+      {/* MODAL THÊM / SỬA */}
       {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-100">
+        <div className="fixed inset-0 flex items-center justify-center p-4 z-200">
           <div
-            className="absolute inset-0 transition-opacity bg-black/60 backdrop-blur-md"
+            className="absolute inset-0 bg-black/60 backdrop-blur-md"
             onClick={() => setIsModalOpen(false)}
           ></div>
-
-          <div className="relative bg-[#f7f4ef] w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden animate-zoomIn border-4 border-[#9d0b0f]/10 translate-y-0">
+          <div className="relative bg-[#f7f4ef] w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden animate-zoomIn border-4 border-[#9d0b0f]/10">
             <div className="bg-[#9d0b0f] p-8 text-white flex justify-between items-center">
               <div>
                 <h3 className="text-2xl font-black tracking-tighter uppercase">
-                  {editMode ? "Cập nhật thông tin" : "Thêm quản trị viên mới"}
+                  {editMode ? "Cập nhật Admin" : "Thêm Admin mới"}
                 </h3>
-                <p className="h-4 mt-1 text-xs font-medium text-white/70">
-                  {editMode
-                    ? `Đang chỉnh sửa cho ID: ${selectedUserId.substring(0, 10)}...`
-                    : "Tạo tài khoản quản trị hệ thống"}
-                </p>
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-2 transition-colors rounded-full bg-white/20 hover:bg-white/40"
+                className="p-2 tracking-tighter rounded-full bg-white/20 hover:bg-white/40 opacity-80"
               >
                 <X size={24} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-10 space-y-5">
+            <form onSubmit={handleSubmit} className="p-8 space-y-5">
               <div className="space-y-4">
                 <div>
                   <label className="block text-[10px] font-black text-[#9d0b0f] uppercase mb-2 tracking-widest">
@@ -448,114 +451,69 @@ const UserManagement = () => {
                   </label>
                   <input
                     required
-                    className="w-full px-5 py-4 bg-white rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all shadow-sm font-medium"
-                    type="text"
-                    placeholder="Nguyễn Văn A"
+                    className="w-full px-5 py-4 bg-white rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all"
                     value={formData.fullName}
                     onChange={(e) =>
                       setFormData({ ...formData, fullName: e.target.value })
                     }
                   />
                 </div>
-
                 <div>
                   <label className="block text-[10px] font-black text-[#9d0b0f] uppercase mb-2 tracking-widest">
-                    Email đăng nhập
+                    Email
                   </label>
                   <input
                     required
-                    className="w-full px-5 py-4 bg-white rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all shadow-sm font-medium"
+                    className="w-full px-5 py-4 bg-white rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all"
                     type="email"
-                    placeholder="example@gmail.com"
                     value={formData.email}
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
                     }
                   />
                 </div>
-
-                <div className="grid grid-cols-2 gap-5">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] font-black text-[#9d0b0f] uppercase mb-2 tracking-widest">
-                      Số điện thoại
-                    </label>
-                    <input
-                      className="w-full px-5 py-4 bg-white rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all shadow-sm font-medium"
-                      type="text"
-                      placeholder="0123..."
-                      value={formData.phone}
-                      onChange={(e) =>
-                        setFormData({ ...formData, phone: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-[#9d0b0f] uppercase mb-2 tracking-widest">
-                      {editMode ? "Mật khẩu mới (nếu cần)" : "Mật khẩu"}
+                      Mật khẩu
                     </label>
                     <input
                       required={!editMode}
-                      className="w-full px-5 py-4 bg-white rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all shadow-sm font-medium"
+                      className="w-full px-5 py-4 bg-white rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all"
                       type="password"
-                      placeholder="******"
                       value={formData.password}
                       onChange={(e) =>
                         setFormData({ ...formData, password: e.target.value })
                       }
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-5 pt-2">
                   <div>
                     <label className="block text-[10px] font-black text-[#9d0b0f] uppercase mb-2 tracking-widest">
-                      Vai trò hệ thống
+                      Vai trò
                     </label>
                     <select
-                      className="w-full px-5 py-4 bg-white rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all shadow-sm font-bold text-[#3e2714]"
+                      className="w-full px-5 py-4 bg-white rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all font-bold"
                       value={formData.role}
                       onChange={(e) =>
                         setFormData({ ...formData, role: e.target.value })
                       }
                     >
-                      <option value="CUSTOMER">Khách hàng</option>
-                      <option value="STAFF">Nhân viên</option>
-                      <option value="ADMIN">Quản trị viên</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-[#9d0b0f] uppercase mb-2 tracking-widest">
-                      Trạng thái
-                    </label>
-                    <select
-                      className="w-full px-5 py-4 bg-white rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all shadow-sm font-bold text-[#3e2714]"
-                      value={formData.status}
-                      onChange={(e) =>
-                        setFormData({ ...formData, status: e.target.value })
-                      }
-                    >
-                      <option value="ACTIVE">Hoạt động</option>
-                      <option value="LOCKED">Tạm khóa</option>
+                      <option value="ADMIN">ADMIN</option>
+                      <option value="STAFF">STAFF</option>
                     </select>
                   </div>
                 </div>
               </div>
-
               <button
                 disabled={submitting}
                 type="submit"
-                className="w-full bg-[#9d0b0f] text-white py-5 rounded-[20px] font-black uppercase tracking-widest hover:bg-[#f39200] transition-all shadow-xl hover:shadow-[#f39200]/40 mt-6 disabled:bg-gray-400 flex items-center justify-center gap-2"
+                className="w-full bg-[#9d0b0f] text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-[#f39200] transition-all shadow-xl mt-4"
               >
-                {submitting ? (
-                  <>
-                    <RefreshCcw className="animate-spin" size={20} />
-                    Đang xử lý...
-                  </>
-                ) : editMode ? (
-                  "Cập nhật ngay"
-                ) : (
-                  "Tạo quản trị viên"
-                )}
+                {submitting
+                  ? "Đang xử lý..."
+                  : editMode
+                    ? "Cập nhật"
+                    : "Tạo ngay"}
               </button>
             </form>
           </div>
@@ -565,4 +523,4 @@ const UserManagement = () => {
   );
 };
 
-export default UserManagement;
+export default AdminManagement;

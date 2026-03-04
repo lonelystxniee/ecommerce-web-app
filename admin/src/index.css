@@ -1,1 +1,6 @@
+@import url("https://fonts.googleapis.com/css2?family=Momo+Trust+Sans:wght@200..800&display=swap");
 @import "tailwindcss";
+
+html {
+  font-family: "Momo Trust Sans", sans-serif;
+}

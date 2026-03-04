@@ -57,17 +57,32 @@ exports.createProduct = async (req, res) => {
       if (fallbackCat) categoryIds.push(fallbackCat._id);
     }
 
-    const product = await Product.create({
-      productName: req.body.name || req.body.productName, // Map 'name' from frontend to 'productName'
-      productCode, // Map 'productCode' for unique identification
-      price: req.body.price,
+    // 4️⃣ Parse variants if present
+    let variants = [];
+    if (req.body.variants) {
+      try {
+        variants = typeof req.body.variants === 'string'
+          ? JSON.parse(req.body.variants)
+          : req.body.variants;
+      } catch (e) {
+        console.error("Error parsing variants:", e);
+      }
+    }
+
+    const productData = {
+      productName: req.body.name || req.body.productName,
+      productCode,
+      price: req.body.price || (variants[0]?.price || 0),
       description: req.body.description || "",
       images: imageUrls,
-      quantity: req.body.quantity || 0,
+      quantity: req.body.quantity || (variants.reduce((acc, v) => acc + (v.stock || 0), 0) || 0),
       status: req.body.status || "active",
       categoryID: categoryIds,
-      slogan: req.body.slogan || ""
-    });
+      slogan: req.body.slogan || "",
+      variants: variants
+    };
+
+    const product = await Product.create(productData);
 
     res.status(201).json({ success: true, product });
 
@@ -339,25 +354,6 @@ exports.updateProduct = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
-// Search product
-exports.searchProduct = async (req, res) => {
-  try {
-    const { query } = req.query;
-    const products = await Product.find({
-      productName: { $regex: query, $options: "i" }
-    });
-    const mappedProducts = products.map(p => ({
-      ...p.toObject(),
-      name: p.productName
-    }));
-    res.json({ success: true, products: mappedProducts });
-  }
-  catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-}
 
 // Search products with filters and pagination
 exports.searchProduct = async (req, res) => {

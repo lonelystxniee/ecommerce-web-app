@@ -3,9 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { Truck, Headset, CreditCard, Gift, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useRef } from "react";
 
 import Hero from "./Hero";
 import CategorySection from "./CategorySection";
+import { ProductItemSmall } from "./ProductItemSmall";
 
 export const SectionHeading = ({ title, outlined }) => (
   <div className="relative flex items-center justify-center my-10 z-1">
@@ -35,7 +37,7 @@ export const SectionHeading = ({ title, outlined }) => (
       />
       <div className="px-6 flex items-center justify-center min-w-50 md:min-w-77.5 h-10">
         <h3
-          className={`${outlined ? "text-primary" : "text-white"} text-xl md:text-2xl lg:text-[30px] font-seagull font-bold tracking-tighter leading-none flex items-center`}
+          className={`${outlined ? "text-primary" : "text-white"} text-xl md:text-2xl lg:text-[30px] capitalize font-seagull font-bold tracking-tighter leading-none flex items-center`}
         >
           {title}
         </h3>
@@ -44,8 +46,6 @@ export const SectionHeading = ({ title, outlined }) => (
     <hr className="flex-1 h-px ml-3 border-primary" />
   </div>
 );
-
-
 
 const Home = () => {
   const navigate = useNavigate();
@@ -62,14 +62,14 @@ const Home = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [isPaginatedLoading, setIsPaginatedLoading] = useState(false);
 
-
+  const allProductRef = useRef();
 
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
         const [prodRes, catRes] = await Promise.all([
           fetch("http://localhost:5175/api/products?limit=100"),
-          fetch("http://localhost:5175/api/category")
+          fetch("http://localhost:5175/api/category"),
         ]);
 
         const prodData = await prodRes.json();
@@ -80,7 +80,10 @@ const Home = () => {
             ...p,
             id: p._id,
             name: p.productName || p.name,
-            image: (p.images && p.images.length > 0) ? p.images[0] : (p.image || "https://via.placeholder.com/300"),
+            image:
+              p.images && p.images.length > 0
+                ? p.images[0]
+                : p.image || "https://via.placeholder.com/300",
           }));
           setAllProducts(mapped);
           setProducts(mapped);
@@ -107,14 +110,19 @@ const Home = () => {
   const fetchPaginatedProducts = async (page = 1) => {
     setIsPaginatedLoading(true);
     try {
-      const response = await fetch(`http://localhost:5175/api/products?page=${page}&limit=12`);
+      const response = await fetch(
+        `http://localhost:5175/api/products?page=${page}&limit=12`,
+      );
       const data = await response.json();
       if (data.success) {
         const mapped = data.products.map((p) => ({
           ...p,
           id: p._id,
           name: p.productName || p.name,
-          image: (p.images && p.images.length > 0) ? p.images[0] : (p.image || "https://via.placeholder.com/300"),
+          image:
+            p.images && p.images.length > 0
+              ? p.images[0]
+              : p.image || "https://via.placeholder.com/300",
         }));
         setPaginatedProducts(mapped);
         setTotalPages(data.pagination.totalPages);
@@ -127,23 +135,28 @@ const Home = () => {
     }
   };
 
+  const scrollIntoAllProducts = () => {
+    allProductRef.current.scrollIntoView({
+      block: "start",
+      behavior: "smooth",
+    });
+  };
+
   useEffect(() => {
     fetchPaginatedProducts(currentPage);
   }, [currentPage]);
 
-
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#f7f4ef]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#9d0b0f]"></div>
+      <div className="flex items-center justify-center min-h-screen bg-transparent">
+        <div className="w-12 h-12 border-t-2 border-b-2 rounded-full animate-spin border-primary"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#f7f4ef] text-primary">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-transparent text-primary">
         <p className="mb-4 text-xl font-bold">{error}</p>
         <button
           onClick={() => window.location.reload()}
@@ -322,70 +335,74 @@ const Home = () => {
       </div>
 
       {/* SECTION 8: TẤT CẢ SẢN PHẨM (PAGINATION) */}
-      <div className="px-4 mx-auto mt-20 max-w-300">
+      <div ref={allProductRef} className="px-4 mx-auto mt-20 max-w-300">
         <SectionHeading title="Khám phá tất cả sản phẩm" />
 
-        {isPaginatedLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 gap-4 mt-8 md:grid-cols-3 lg:grid-cols-4">
-              {paginatedProducts.map((p) => (
-                <ProductItemSmall key={p.id} product={p} />
-              ))}
+        <div className="transition-all duration-300 min-h-200 md:min-h-250">
+          {isPaginatedLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="w-8 h-8 border-t-2 border-b-2 rounded-full animate-spin border-primary"></div>
             </div>
-
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-12">
-                <button
-                  onClick={() => {
-                    setCurrentPage(prev => Math.max(1, prev - 1));
-                    window.scrollTo({ top: document.getElementById("all-products-section")?.offsetTop - 100, behavior: "smooth" });
-                  }}
-                  disabled={currentPage === 1}
-                  className={`px-4 py-2 rounded-lg border text-sm font-bold transition-all ${currentPage === 1 ? "text-gray-300 border-gray-100 cursor-not-allowed" : "text-primary border-gray-200 hover:bg-primary hover:text-white"}`}
-                >
-                  Trước
-                </button>
-
-                {[...Array(totalPages)].map((_, i) => (
-                  <button
-                    key={i + 1}
-                    onClick={() => {
-                      setCurrentPage(i + 1);
-                      window.scrollTo({ top: document.getElementById("all-products-section")?.offsetTop - 100, behavior: "smooth" });
-                    }}
-                    className={`w-10 h-10 rounded-lg border text-sm font-bold transition-all ${currentPage === i + 1 ? "bg-primary text-white border-primary" : "text-gray-500 border-gray-200 hover:border-primary hover:text-primary"}`}
-                  >
-                    {i + 1}
-                  </button>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-4 mt-8 md:grid-cols-3 lg:grid-cols-4">
+                {paginatedProducts.map((p) => (
+                  <ProductItemSmall key={p.id} product={p} />
                 ))}
-
-                <button
-                  onClick={() => {
-                    setCurrentPage(prev => Math.min(totalPages, prev + 1));
-                    window.scrollTo({ top: document.getElementById("all-products-section")?.offsetTop - 100, behavior: "smooth" });
-                  }}
-                  disabled={currentPage === totalPages}
-                  className={`px-4 py-2 rounded-lg border text-sm font-bold transition-all ${currentPage === totalPages ? "text-gray-300 border-gray-100 cursor-not-allowed" : "text-primary border-gray-200 hover:bg-primary hover:text-white"}`}
-                >
-                  Sau
-                </button>
               </div>
-            )}
-          </>
-        )}
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-12">
+                  <button
+                    onClick={() => {
+                      setCurrentPage((prev) => Math.max(1, prev - 1));
+                      scrollIntoAllProducts();
+                    }}
+                    disabled={currentPage === 1}
+                    className={`px-4 py-2 rounded-lg border text-sm font-bold cursor-pointer transition-all ${currentPage === 1 ? "text-gray-300 border-gray-100 cursor-not-allowed" : "text-primary border-gray-200 hover:bg-primary hover:text-white"}`}
+                  >
+                    Trước
+                  </button>
+
+                  {[...Array(totalPages)].map((_, i) => (
+                    <button
+                      key={i + 1}
+                      onClick={() => {
+                        setCurrentPage(i + 1);
+                        scrollIntoAllProducts();
+                      }}
+                      className={`w-10 h-10 cursor-pointer rounded-lg border text-sm font-bold transition-all ${currentPage === i + 1 ? "bg-primary text-white border-primary" : "text-gray-500 border-gray-200 hover:border-primary hover:text-primary"}`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => {
+                      setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+                      scrollIntoAllProducts();
+                    }}
+                    disabled={currentPage === totalPages}
+                    className={`px-4 py-2 rounded-lg cursor-pointer border text-sm font-bold transition-all ${currentPage === totalPages ? "text-gray-300 border-gray-100 cursor-not-allowed" : "text-primary border-gray-200 hover:bg-primary hover:text-white"}`}
+                  >
+                    Sau
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
         <div id="all-products-section"></div>
       </div>
 
       {/* SECTION 4: GIẢI PHÁP QUÀ TẶNG */}
       <div className="px-4 mx-auto text-center mt-30 max-w-300">
-        <SectionHeading title="🍎 Thực phẩm tươi sạch" />
+        <SectionHeading title="Thực phẩm tươi sạch" />
         <p className="text-secondary-2 my-5 hidden px-[12%] text-center text-sm lg:block text-gray-600 font-light leading-relaxed italic">
-          ClickGo Mart cam kết cung cấp các loại thực phẩm tươi sạch mỗi ngày, đảm bảo an toàn vệ sinh và nguồn gốc rõ ràng cho bữa ăn gia đình bạn thêm trọn vẹn.
+          ClickGo Mart cam kết cung cấp các loại thực phẩm tươi sạch mỗi ngày,
+          đảm bảo an toàn vệ sinh và nguồn gốc rõ ràng cho bữa ăn gia đình bạn
+          thêm trọn vẹn.
         </p>
         <div className="grid grid-cols-1 gap-8 mt-10 md:grid-cols-3">
           {products.slice(5, 8).map((p) => (
@@ -419,7 +436,7 @@ const Home = () => {
           "https://cdn.honglam.vn/honglam/HL_5_04_1_91ecb38969.jpg",
           "https://cdn.honglam.vn/honglam/Anh_web_Banh_keo_2_d4d154866e.jpg",
           "https://cdn.honglam.vn/honglam/Anh_web_Tra_1_a6f8a30e3a.jpg",
-          "https://cdn.honglam.vn/honglam/Tet_website_ab5d5cb5d1.jpg"
+          "https://cdn.honglam.vn/honglam/Tet_website_ab5d5cb5d1.jpg",
         ];
 
         const getSlug = (name) => {
@@ -433,8 +450,10 @@ const Home = () => {
             .replace(/\s+/g, "-");
         };
 
-        const categoryProducts = allProducts.filter(p =>
-          (p.categoryID || []).some(c => c._id === cat._id || c.name === cat.name)
+        const categoryProducts = allProducts.filter((p) =>
+          (p.categoryID || []).some(
+            (c) => c._id === cat._id || c.name === cat.name,
+          ),
         );
 
         if (categoryProducts.length === 0) return null;
@@ -493,7 +512,9 @@ const Home = () => {
               </a>
 
               <div className="mt-2 text-sm text-secondary-2 line-clamp-3">
-                Ngày 14/12 vừa qua, ClickGo Mart chính thức khai trương chi nhánh mới tại khu vực Lạc Long Quân, mang đến không gian mua sắm hiện đại và tiện lợi cho người dân thủ đô…
+                Ngày 14/12 vừa qua, ClickGo Mart chính thức khai trương chi
+                nhánh mới tại khu vực Lạc Long Quân, mang đến không gian mua sắm
+                hiện đại và tiện lợi cho người dân thủ đô…
               </div>
             </div>
           </div>
@@ -542,11 +563,14 @@ const Home = () => {
                 href="/hong-lam-chung-tay-ho-tro-truong-mam-non-kim-lu-thai-nguyen-sau-bao-lu"
                 className="text-base font-bold transition-all text-secondary-2 group-hover:text-primary line-clamp-2 md:text-lg"
               >
-                ClickGo Mart đồng hành cùng cộng đồng trong các hoạt động an sinh xã hội
+                ClickGo Mart đồng hành cùng cộng đồng trong các hoạt động an
+                sinh xã hội
               </a>
 
               <div className="mt-2 text-sm text-secondary-2 line-clamp-3">
-                Không chỉ chú trọng vào chất lượng sản phẩm, ClickGo Mart còn luôn tích cực tham gia các hoạt động thiện nguyện, hỗ trợ những hoàn cảnh khó khăn tại nhiều địa phương…
+                Không chỉ chú trọng vào chất lượng sản phẩm, ClickGo Mart còn
+                luôn tích cực tham gia các hoạt động thiện nguyện, hỗ trợ những
+                hoàn cảnh khó khăn tại nhiều địa phương…
               </div>
             </div>
           </div>
@@ -654,7 +678,6 @@ const Home = () => {
           </div>
         </div>
       </div>
-
     </div>
   );
 };
@@ -776,37 +799,6 @@ const GiftCard = ({ id, title, price, img }) => {
           Mua ngay <ChevronRight size={14} />
         </button>
       </div>
-    </div>
-  );
-};
-
-const ProductItemSmall = ({ product }) => {
-  // const { addToCart } = useCart();
-  return (
-    <div className="h-full bg-white p-1 text-center shadow-[0_3px_10px_rgba(0,0,0,.04)] transition-all flex flex-col group border hover:border-[#faa51980]">
-      {/* Bọc toàn bộ bằng Link */}
-      <Link to={`/product/${product.id}`} className="flex flex-col h-full">
-        <div className="h-40 overflow-hidden lg:h-60">
-          <img
-            src={product.images?.[0] || product.image}
-            className="object-cover w-full h-full transition-transform duration-500 hover:scale-105"
-          />
-        </div>
-        <div className="flex flex-col items-center flex-1 p-3">
-          <h3 className="text-base font-bold text-gray-800 transition-colors line-clamp-1 group-hover:text-primary">
-            {product.name}
-          </h3>
-          <p className="mb-4 text-[13px] text-[#88694f] italic">
-            {product.slogan}
-          </p>
-          <p className="mt-auto mb-3 font-bold text-primary">
-            {product.price.toLocaleString()}đ
-          </p>
-          <div className="inline-flex items-center justify-center whitespace-nowrap text-sm font-bold border border-gray-200 shadow-sm rounded-[20px] px-6.25 py-1.5 text-primary hover:bg-primary hover:text-white transition-all">
-            Mua nhanh
-          </div>
-        </div>
-      </Link>
     </div>
   );
 };

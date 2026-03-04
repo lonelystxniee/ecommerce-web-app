@@ -2,35 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { SectionHeading } from "./Home";
-
-const ProductItemSmall = ({ product }) => (
-  <div
-    className="flex flex-col items-center p-1 pb-4 bg-white transition-all duration-300 cursor-pointer h-full
-        relative before:content-[''] before:absolute before:bg-transparent before:border before:border-gray-300 
-        before:top-1/2 before:left-1/2 before:-translate-1/2 before:w-[calc(100%-8px)] before:h-[calc(100%-8px)] before:z-0 before:pointer-events-none
-  "
-  >
-    <div className="relative w-full mb-4 overflow-hidden">
-      <img
-        src={product.images?.[0] || product.image}
-        alt={product.name}
-        className="object-contain w-full h-full transition-transform duration-700 ease-out group-hover:scale-110"
-      />
-    </div>
-    <Link
-      to={`/product/${product.id}`}
-      className="text-[15px] font-bold text-text-primary line-clamp-2 mb-1 hover:text-primary transition-colors text-center h-11 flex items-center justify-center leading-tight relative z-1"
-    >
-      {product.name}
-    </Link>
-    <p className="text-[13px] text-text-primary mb-4 text-center line-clamp-1 italic font-medium relative z-1">
-      {product.slogan}
-    </p>
-    <button className="text-primary border border-gray-300 px-6 py-1.5 rounded-[30px] text-sm font-bold hover:rounded-lg cursor-pointer transition-all duration-300 relative z-1 bg-white">
-      Mua nhanh
-    </button>
-  </div>
-);
+import { ProductItemSmall } from "./ProductItemSmall";
 
 const CategorySection = ({
   title,
@@ -58,7 +30,6 @@ const CategorySection = ({
   const totalSlides = Math.ceil(products.length / itemsPerSlide);
   const [slideIndex, setSlideIndex] = useState(0);
 
-  // Reset slide index if it becomes invalid after resize
   React.useEffect(() => {
     if (slideIndex >= totalSlides && totalSlides > 0) {
       setSlideIndex(totalSlides - 1);
@@ -152,7 +123,7 @@ const CategorySection = ({
 
           {/* Pagination Dots */}
           {totalSlides > 1 && (
-            <div className="flex justify-center gap-3 mt-8">
+            <div className="absolute flex justify-center gap-3 mt-8 -translate-x-1/2 -bottom-8 left-1/2">
               {Array.from({ length: totalSlides }).map((_, i) => (
                 <button
                   key={i}
@@ -176,7 +147,7 @@ const CategorySection = ({
       </div>
 
       {/* View All Link */}
-      <div className="flex justify-center mt-8">
+      <div className="flex justify-center mt-12">
         <Link
           to={categoryLink}
           className="hover:text-primary group inline-flex items-center gap-2 text-base text-[#917359] font-bold transition-all underline-offset-4"

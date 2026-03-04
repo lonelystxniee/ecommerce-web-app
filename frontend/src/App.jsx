@@ -12,6 +12,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import AccountPage from "./pages/AccountPage";
 import ResetPassword from "./pages/ResetPassword";
 import SearchPage from "./pages/SearchPage";
+import ForgotPassword from "./pages/ForgotPassword";
 import { Toaster } from "react-hot-toast";
 
 function App() {
@@ -32,7 +33,7 @@ function App() {
               <Route path="/account" element={<AccountPage />} />
 
               <Route path="/profile" element={<AccountPage />} />
-
+              <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
             </Routes>
           </main>

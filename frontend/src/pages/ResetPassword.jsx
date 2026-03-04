@@ -1,7 +1,35 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import {
+    ChevronRight,
+    KeyRound,
+    Eye,
+    EyeOff,
+    ArrowLeft,
+    Loader2,
+    CheckCircle2,
+    XCircle,
+    ShieldCheck,
+} from "lucide-react";
+import toast from "react-hot-toast";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
+
+// ─── Helpers độ mạnh mật khẩu ─────────────────────────────────────────────
+function getStrength(password) {
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+    return score;
+}
+const STRENGTH_CONFIG = [
+    { label: "Rất yếu", color: "bg-red-500", textColor: "text-red-500", width: "w-1/5" },
+    { label: "Yếu", color: "bg-orange-500", textColor: "text-orange-500", width: "w-2/5" },
+    { label: "Trung bình", color: "bg-yellow-500", textColor: "text-yellow-600", width: "w-3/5" },
+    { label: "Mạnh", color: "bg-green-500", textColor: "text-green-600", width: "w-full" },
+];
 
 export default function ResetPassword() {
     const navigate = useNavigate();
@@ -9,6 +37,7 @@ export default function ResetPassword() {
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showPass, setShowPass] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
     const [status, setStatus] = useState("idle"); // idle | loading | success | error | invalid
     const [message, setMessage] = useState("");
 
@@ -50,6 +79,7 @@ export default function ResetPassword() {
             if (data.success) {
                 setStatus("success");
                 setMessage(data.message);
+                toast.success("Đặt lại mật khẩu thành công!");
                 setTimeout(() => navigate("/"), 3000);
             } else {
                 setStatus("error");
@@ -61,322 +91,210 @@ export default function ResetPassword() {
         }
     };
 
-    // Không có token → hiển thị lỗi
+    const strength = newPassword ? getStrength(newPassword) : -1;
+    const strengthInfo = strength >= 0 ? STRENGTH_CONFIG[strength] : null;
+    const passwordsMatch = confirmPassword && newPassword === confirmPassword;
+    const passwordsMismatch = confirmPassword && newPassword !== confirmPassword;
+
+    // ─── Token không hợp lệ ──────────────────────────────────────────────────
     if (status === "invalid") {
         return (
-            <div style={styles.wrapper}>
-                <div style={styles.card}>
-                    <div style={{ ...styles.iconWrapper, background: "#fef2f2", color: "#ef4444" }}>
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="15" y1="9" x2="9" y2="15"></line>
-                            <line x1="9" y1="9" x2="15" y2="15"></line>
-                        </svg>
+            <div className="h-auto pt-4 pb-20 bg-[url('https://honglam.vn/_next/static/media/bg-body.9bfd1cb8.png')] min-h-[70vh]">
+                {/* Breadcrumb */}
+                <div className="flex items-center gap-2 px-4 mx-auto mb-10 font-bold text-[#88694f] text-xs max-w-300">
+                    <Link to="/" className="hover:text-[#800a0d] transition-colors">Trang chủ</Link>
+                    <ChevronRight size={12} />
+                    <span className="text-[#800a0d]">Đặt lại mật khẩu</span>
+                </div>
+
+                <div className="max-w-md px-6 py-12 mx-auto bg-white border border-gray-100 shadow-2xl rounded-3xl animate-zoomIn text-center">
+                    <div className="inline-flex items-center justify-center w-16 h-16 mb-6 rounded-full bg-red-50 text-red-500">
+                        <XCircle size={36} />
                     </div>
-                    <h1 style={styles.title}>Link không hợp lệ</h1>
-                    <p style={styles.subtitle}>Link đặt lại mật khẩu không đúng hoặc đã hết hạn (15 phút).</p>
-                    <a href="/forgot-password" style={styles.primaryLink}>Yêu cầu link mới</a>
+                    <h1 className="text-2xl font-black text-[#800a0d] tracking-tight mb-3">
+                        Link không hợp lệ
+                    </h1>
+                    <p className="text-gray-500 text-sm italic font-medium mb-8">
+                        Link đặt lại mật khẩu không đúng hoặc đã hết hạn (15 phút).
+                    </p>
+                    <Link
+                        to="/forgot-password"
+                        className="inline-block w-full bg-[#800a0d] text-white py-4 rounded-[30px] font-black text-sm shadow-xl shadow-red-900/10 hover:rounded-sm transition-all text-center"
+                    >
+                        Yêu cầu link mới
+                    </Link>
+                    <div className="mt-8 pt-6 border-t border-gray-100">
+                        <Link
+                            to="/"
+                            className="inline-flex items-center gap-2 text-[#88694f] text-sm font-bold hover:text-[#800a0d] transition-colors"
+                        >
+                            <ArrowLeft size={16} />
+                            Quay lại trang chủ
+                        </Link>
+                    </div>
                 </div>
             </div>
         );
     }
 
+    // ─── Form chính ──────────────────────────────────────────────────────────
     return (
-        <div style={styles.wrapper}>
-            <div style={styles.card}>
-                {/* Icon */}
-                <div style={styles.iconWrapper}>
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
-                </div>
-
-                {status === "success" ? (
-                    <>
-                        <h1 style={styles.title}>Thành công! 🎉</h1>
-                        <div style={styles.successBox}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}>
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                            </svg>
-                            <div>
-                                <p style={styles.successText}>{message}</p>
-                                <p style={{ ...styles.successText, opacity: 0.7, marginTop: 4 }}>
-                                    Đang chuyển về trang chủ sau 3 giây...
-                                </p>
-                            </div>
-                        </div>
-                    </>
-                ) : (
-                    <>
-                        <h1 style={styles.title}>Đặt lại mật khẩu</h1>
-                        <p style={styles.subtitle}>Nhập mật khẩu mới cho tài khoản của bạn.</p>
-
-                        <form onSubmit={handleSubmit} style={styles.form}>
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label} htmlFor="new-password">Mật khẩu mới</label>
-                                <div style={styles.passwordWrapper}>
-                                    <input
-                                        id="new-password"
-                                        type={showPass ? "text" : "password"}
-                                        required
-                                        placeholder="Ít nhất 6 ký tự"
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
-                                        style={styles.input}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPass(!showPass)}
-                                        style={styles.eyeButton}
-                                        aria-label="Toggle password visibility"
-                                    >
-                                        {showPass ? (
-                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                                                <line x1="1" y1="1" x2="23" y2="23"></line>
-                                            </svg>
-                                        ) : (
-                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                                <circle cx="12" cy="12" r="3"></circle>
-                                            </svg>
-                                        )}
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label} htmlFor="confirm-password">Xác nhận mật khẩu</label>
-                                <input
-                                    id="confirm-password"
-                                    type={showPass ? "text" : "password"}
-                                    required
-                                    placeholder="Nhập lại mật khẩu mới"
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    style={styles.input}
-                                />
-                            </div>
-
-                            {/* Password strength bar */}
-                            {newPassword && (
-                                <div>
-                                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                                        <span style={{ fontSize: 12, color: "#9ca3af" }}>Độ mạnh:</span>
-                                        <span style={{ fontSize: 12, fontWeight: 600, color: getStrengthColor(newPassword) }}>
-                                            {getStrengthLabel(newPassword)}
-                                        </span>
-                                    </div>
-                                    <div style={{ height: 4, borderRadius: 4, background: "#e5e7eb", overflow: "hidden" }}>
-                                        <div style={{
-                                            height: "100%",
-                                            width: `${getStrengthWidth(newPassword)}%`,
-                                            background: getStrengthColor(newPassword),
-                                            borderRadius: 4,
-                                            transition: "width 0.3s",
-                                        }} />
-                                    </div>
-                                </div>
-                            )}
-
-                            {status === "error" && (
-                                <p style={styles.errorText}>{message}</p>
-                            )}
-
-                            <button
-                                type="submit"
-                                disabled={status === "loading"}
-                                style={{
-                                    ...styles.button,
-                                    opacity: status === "loading" ? 0.7 : 1,
-                                    cursor: status === "loading" ? "not-allowed" : "pointer",
-                                }}
-                            >
-                                {status === "loading" ? (
-                                    <span style={styles.spinner}></span>
-                                ) : (
-                                    "Đặt lại mật khẩu"
-                                )}
-                            </button>
-                        </form>
-                    </>
-                )}
-
-                <a href="/" style={styles.backLink}>← Quay lại trang chủ</a>
+        <div className="h-auto pt-4 pb-20 bg-[url('https://honglam.vn/_next/static/media/bg-body.9bfd1cb8.png')] min-h-[70vh]">
+            {/* Breadcrumb */}
+            <div className="flex items-center gap-2 px-4 mx-auto mb-10 font-bold text-[#88694f] text-xs max-w-300">
+                <Link to="/" className="hover:text-[#800a0d] transition-colors">Trang chủ</Link>
+                <ChevronRight size={12} />
+                <span className="text-[#800a0d]">Đặt lại mật khẩu</span>
             </div>
 
-            <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        @keyframes spin { to { transform: rotate(360deg); } }
-      `}</style>
+            <div className="max-w-md px-6 py-12 mx-auto bg-white border border-gray-100 shadow-2xl rounded-3xl animate-zoomIn">
+                <div className="mb-8 text-center">
+                    <div className="inline-flex items-center justify-center w-16 h-16 mb-6 rounded-full bg-red-50 text-[#800a0d]">
+                        {status === "success" ? <CheckCircle2 size={32} /> : <ShieldCheck size={32} />}
+                    </div>
+                    <h1 className="text-2xl font-black text-[#800a0d] tracking-tight mb-3">
+                        {status === "success" ? "Thành công! 🎉" : "Đặt lại mật khẩu"}
+                    </h1>
+                    <p className="text-gray-500 text-sm italic font-medium">
+                        {status === "success"
+                            ? "Mật khẩu của bạn đã được cập nhật thành công."
+                            : "Nhập mật khẩu mới để hoàn tất quá trình đặt lại."}
+                    </p>
+                </div>
+
+                {/* Trạng thái thành công */}
+                {status === "success" ? (
+                    <div className="space-y-6 text-center">
+                        <div className="p-4 bg-green-50 border border-green-100 rounded-2xl">
+                            <p className="text-green-700 text-sm font-bold leading-relaxed">{message}</p>
+                            <p className="text-green-600 text-xs mt-2 opacity-80">
+                                Đang chuyển về trang chủ sau 3 giây...
+                            </p>
+                        </div>
+                        <Link
+                            to="/"
+                            className="inline-flex items-center gap-2 text-[#88694f] text-sm font-bold hover:text-[#800a0d] transition-colors"
+                        >
+                            <ArrowLeft size={16} />
+                            Về trang chủ ngay
+                        </Link>
+                    </div>
+                ) : (
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        {/* Mật khẩu mới */}
+                        <div className="space-y-2">
+                            <label className="block pl-1 text-[13px] font-black text-text-primary uppercase tracking-wider">
+                                Mật khẩu mới
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type={showPass ? "text" : "password"}
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    placeholder="Ít nhất 6 ký tự"
+                                    className="w-full px-5 py-4 pr-12 bg-[#fdfaf5] border border-gray-100 rounded-2xl outline-none focus:border-[#800a0d] focus:bg-white transition-all font-bold text-[#3e2714]"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPass(!showPass)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#800a0d] transition-colors"
+                                    aria-label="Toggle password visibility"
+                                >
+                                    {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
+
+                            {/* Thanh độ mạnh mật khẩu */}
+                            {newPassword && strengthInfo && (
+                                <div className="space-y-1 px-1">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-[11px] text-gray-400 font-semibold">Độ mạnh:</span>
+                                        <span className={`text-[11px] font-black ${strengthInfo.textColor}`}>
+                                            {strengthInfo.label}
+                                        </span>
+                                    </div>
+                                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                        <div
+                                            className={`h-full rounded-full transition-all duration-300 ${strengthInfo.color} ${strengthInfo.width}`}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Xác nhận mật khẩu */}
+                        <div className="space-y-2">
+                            <label className="block pl-1 text-[13px] font-black text-text-primary uppercase tracking-wider">
+                                Xác nhận mật khẩu
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type={showConfirm ? "text" : "password"}
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    placeholder="Nhập lại mật khẩu mới"
+                                    className={`w-full px-5 py-4 pr-12 bg-[#fdfaf5] border rounded-2xl outline-none transition-all font-bold text-[#3e2714] ${passwordsMatch
+                                            ? "border-green-400 focus:border-green-500"
+                                            : passwordsMismatch
+                                                ? "border-red-400 focus:border-red-500"
+                                                : "border-gray-100 focus:border-[#800a0d]"
+                                        } focus:bg-white`}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirm(!showConfirm)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#800a0d] transition-colors"
+                                    aria-label="Toggle confirm password visibility"
+                                >
+                                    {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                                {passwordsMatch && (
+                                    <CheckCircle2 size={16} className="absolute right-12 top-1/2 -translate-y-1/2 text-green-500" />
+                                )}
+                            </div>
+                            {passwordsMismatch && (
+                                <p className="text-red-500 text-[12px] font-bold pl-1">
+                                    Mật khẩu xác nhận không khớp
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Thông báo lỗi */}
+                        {status === "error" && message && (
+                            <div className="p-3 bg-red-50 border border-red-100 rounded-xl">
+                                <p className="text-red-600 text-sm font-bold text-center">{message}</p>
+                            </div>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={status === "loading"}
+                            className="w-full bg-[#800a0d] text-white py-4 rounded-[30px] font-black text-sm shadow-xl shadow-red-900/10 hover:rounded-sm transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed mt-2"
+                        >
+                            {status === "loading" ? (
+                                <Loader2 className="animate-spin" size={20} />
+                            ) : (
+                                <>
+                                    <KeyRound size={16} />
+                                    Đặt lại mật khẩu
+                                </>
+                            )}
+                        </button>
+                    </form>
+                )}
+
+                <div className="mt-10 pt-6 border-t border-gray-100 text-center">
+                    <Link
+                        to="/"
+                        className="inline-flex items-center gap-2 text-[#88694f] text-sm font-bold hover:text-[#800a0d] transition-colors"
+                    >
+                        <ArrowLeft size={16} />
+                        Quay lại trang chủ
+                    </Link>
+                </div>
+            </div>
         </div>
     );
 }
-
-// ─── Helpers độ mạnh mật khẩu ────────────────────────────────────────────────
-function getStrength(password) {
-    let score = 0;
-    if (password.length >= 8) score++;
-    if (/[A-Z]/.test(password)) score++;
-    if (/[0-9]/.test(password)) score++;
-    if (/[^A-Za-z0-9]/.test(password)) score++;
-    return score;
-}
-function getStrengthWidth(p) { return [20, 40, 70, 100][getStrength(p)] || 20; }
-function getStrengthColor(p) { return ["#ef4444", "#f97316", "#eab308", "#16a34a"][getStrength(p)] || "#ef4444"; }
-function getStrengthLabel(p) { return ["Rất yếu", "Yếu", "Trung bình", "Mạnh"][getStrength(p)] || "Rất yếu"; }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-const styles = {
-    wrapper: {
-        minHeight: "calc(100vh - 120px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "40px 16px",
-        fontFamily: "'Inter', sans-serif",
-    },
-    card: {
-        background: "#fff",
-        borderRadius: "16px",
-        boxShadow: "0 4px 40px rgba(0,0,0,0.10)",
-        padding: "48px 40px",
-        width: "100%",
-        maxWidth: "420px",
-        textAlign: "center",
-        border: "1px solid #f0f0f0",
-    },
-    iconWrapper: {
-        width: "72px",
-        height: "72px",
-        borderRadius: "50%",
-        background: "#f3f4f6",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        margin: "0 auto 24px",
-        color: "#111",
-    },
-    title: {
-        fontSize: "26px",
-        fontWeight: 700,
-        color: "#111",
-        margin: "0 0 10px",
-    },
-    subtitle: {
-        fontSize: "15px",
-        color: "#6b7280",
-        margin: "0 0 28px",
-        lineHeight: 1.6,
-    },
-    form: {
-        display: "flex",
-        flexDirection: "column",
-        gap: "16px",
-        textAlign: "left",
-    },
-    inputGroup: {
-        display: "flex",
-        flexDirection: "column",
-        gap: "6px",
-    },
-    label: {
-        fontSize: "14px",
-        fontWeight: 600,
-        color: "#374151",
-    },
-    input: {
-        width: "100%",
-        padding: "12px 16px",
-        borderRadius: "10px",
-        border: "1.5px solid #e5e7eb",
-        fontSize: "15px",
-        outline: "none",
-        fontFamily: "inherit",
-        boxSizing: "border-box",
-    },
-    passwordWrapper: {
-        position: "relative",
-    },
-    eyeButton: {
-        position: "absolute",
-        right: "12px",
-        top: "50%",
-        transform: "translateY(-50%)",
-        background: "none",
-        border: "none",
-        cursor: "pointer",
-        padding: "4px",
-        display: "flex",
-        alignItems: "center",
-    },
-    button: {
-        padding: "13px",
-        borderRadius: "10px",
-        border: "none",
-        background: "#111",
-        color: "#fff",
-        fontSize: "15px",
-        fontWeight: 600,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "8px",
-        fontFamily: "inherit",
-        marginTop: "4px",
-        transition: "background 0.2s",
-    },
-    spinner: {
-        width: "18px",
-        height: "18px",
-        border: "2.5px solid rgba(255,255,255,0.35)",
-        borderTopColor: "#fff",
-        borderRadius: "50%",
-        display: "inline-block",
-        animation: "spin 0.7s linear infinite",
-    },
-    errorText: {
-        color: "#ef4444",
-        fontSize: "14px",
-        margin: "0",
-        textAlign: "center",
-    },
-    successBox: {
-        background: "#f0fdf4",
-        border: "1.5px solid #bbf7d0",
-        borderRadius: "10px",
-        padding: "16px",
-        display: "flex",
-        alignItems: "flex-start",
-        gap: "10px",
-        textAlign: "left",
-        margin: "8px 0 16px",
-    },
-    successText: {
-        color: "#15803d",
-        fontSize: "14px",
-        margin: 0,
-        lineHeight: 1.6,
-    },
-    backLink: {
-        display: "inline-block",
-        marginTop: "24px",
-        fontSize: "14px",
-        color: "#6b7280",
-        textDecoration: "none",
-        fontWeight: 500,
-    },
-    primaryLink: {
-        display: "inline-block",
-        marginTop: "20px",
-        padding: "12px 28px",
-        borderRadius: "10px",
-        background: "#111",
-        color: "#fff",
-        fontWeight: 600,
-        fontSize: "15px",
-        textDecoration: "none",
-        fontFamily: "inherit",
-    },
-};
