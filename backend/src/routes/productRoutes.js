@@ -13,14 +13,12 @@ router.get("/:id", productController.getProductById);
 
 router.post(
     "/",
-    authMiddleware,
     adminMiddleware,
     upload.array("images", 10),
     productController.createProduct
 );
 router.post(
     "/import-excel",
-    authMiddleware,
     adminMiddleware,
     upload.single("file"),
     productController.importExcel
