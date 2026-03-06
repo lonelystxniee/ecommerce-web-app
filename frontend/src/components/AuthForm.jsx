@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { X, Eye, EyeOff, Check } from "lucide-react";
+import { X, Eye, EyeOff, Check, ChevronDown } from "lucide-react";
 import { GoogleLogin } from "@react-oauth/google";
 import { validateLogin, validateRegister } from "../helpers/validate";
 import toast from "react-hot-toast";
 
 const AuthForm = ({ isOpen, onClose }) => {
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
   const [viewMode, setViewMode] = useState("login");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -24,6 +25,8 @@ const AuthForm = ({ isOpen, onClose }) => {
     phone: "",
     password: "",
     confirmPassword: "",
+    gender: "",
+    birthday: "",
   });
 
   useEffect(() => {
@@ -41,6 +44,8 @@ const AuthForm = ({ isOpen, onClose }) => {
       phone: "",
       password: "",
       confirmPassword: "",
+      gender: "",
+      birthday: "",
     });
     setLoginErrors({});
     setRegisterErrors({});
@@ -68,7 +73,7 @@ const AuthForm = ({ isOpen, onClose }) => {
   const handleLoginPasswordChange = (e) => {
     const value = e.target.value;
     setPassword(value);
-    const errors = validateLogin({ email, password: value });
+    const errors = validateLogin({ email, password: value.trim() });
     setLoginErrors(errors);
   };
 
@@ -78,14 +83,11 @@ const AuthForm = ({ isOpen, onClose }) => {
     setForgotMessage("");
 
     try {
-      const res = await fetch(
-        "http://localhost:5175/api/auth/forgot-password",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        },
-      );
+      const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
 
       const data = await res.json();
       if (data.success) {
@@ -111,8 +113,8 @@ const AuthForm = ({ isOpen, onClose }) => {
 
     const url =
       viewMode === "login"
-        ? "http://localhost:5175/api/auth/login"
-        : "http://localhost:5175/api/auth/register";
+        ? `${API_URL}/api/auth/login`
+        : `${API_URL}/api/auth/register`;
 
     const body = viewMode === "login" ? { email, password } : registerData;
 
@@ -169,7 +171,7 @@ const AuthForm = ({ isOpen, onClose }) => {
   const handleGoogleSuccess = async (credentialResponse) => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5175/api/auth/google", {
+      const response = await fetch(`${API_URL}/api/auth/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: credentialResponse.credential }),
@@ -269,12 +271,12 @@ const AuthForm = ({ isOpen, onClose }) => {
                     <button
                       type="submit"
                       disabled={forgotStatus === "loading"}
-                      className="w-full bg-[#800a0d] text-white py-3 rounded-lg font-bold shadow-md active:scale-95 disabled:bg-gray-400 mt-2 flex justify-center items-center"
+                      className="w-full bg-[#800a0d] text-sm text-white py-2 rounded-lg font-bold shadow-md active:scale-95 disabled:bg-gray-400 mt-2 flex justify-center items-center"
                     >
                       {forgotStatus === "loading" ? (
                         <span className="w-5 h-5 border-2 rounded-full border-white/30 border-t-white animate-spin"></span>
                       ) : (
-                        "GỬI LINK ĐẶT LẠI"
+                        "Gửi link đặt lại mật khẩu"
                       )}
                     </button>
                   </>
@@ -387,6 +389,35 @@ const AuthForm = ({ isOpen, onClose }) => {
                   error={registerErrors.phone}
                   success={registerData.phone !== "" && !registerErrors.phone}
                 />
+
+                <div>
+                  <label className="text-sm font-bold text-[#5c4033] block mb-1.5">
+                    Giới tính
+                  </label>
+                  <div className="relative">
+                    <select
+                      name="gender"
+                      value={registerData.gender}
+                      onChange={handleRegisterChange}
+                      className="w-full appearance-none bg-white border border-gray-300 rounded-lg py-2 px-3 text-sm outline-none transition-all focus:border-[#800a0d]"
+                    >
+                      <option value="">Chọn giới tính</option>
+                      <option value="Nam">Nam</option>
+                      <option value="Nữ">Nữ</option>
+                      <option value="Khác">Khác</option>
+                    </select>
+                    <ChevronDown className="absolute w-4 h-4 text-gray-400 -translate-y-1/2 pointer-events-none right-3 top-1/2" />
+                  </div>
+                </div>
+
+                <InputGroup
+                  label="Ngày sinh"
+                  name="birthday"
+                  type="date"
+                  value={registerData.birthday}
+                  onChange={handleRegisterChange}
+                />
+
                 <InputGroup
                   label="Mật khẩu"
                   name="password"
@@ -465,12 +496,13 @@ const InputGroup = ({ label, error, success, doubleRight, ...props }) => (
     </label>
     <div className="relative">
       <input
-        className={`w-full bg-white border rounded-lg py-2 px-3 text-sm outline-none transition-all ${error
-          ? "border-red-500 bg-red-50"
-          : success
-            ? "border-green-500"
-            : "border-gray-300 focus:border-[#800a0d]"
-          }`}
+        className={`w-full bg-white border rounded-lg py-2 px-3 text-sm outline-none transition-all ${
+          error
+            ? "border-red-500 bg-red-50"
+            : success
+              ? "border-green-500"
+              : "border-gray-300 focus:border-[#800a0d]"
+        }`}
         {...props}
       />
 

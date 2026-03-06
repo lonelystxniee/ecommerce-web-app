@@ -23,9 +23,16 @@ const CategoryManagement = () => {
         description: "",
     });
 
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
+
     const fetchCategories = async () => {
         try {
-            const res = await fetch("http://localhost:5175/api/category");
+            const token = localStorage.getItem("token");
+            const res = await fetch(`${API_URL}/api/category`, {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
             const data = await res.json();
             if (data.success) {
                 setCategories(data.categories || data.data || []);
@@ -43,8 +50,8 @@ const CategoryManagement = () => {
         e.preventDefault();
         try {
             const url = isEditMode
-                ? `http://localhost:5175/api/category/${editingCategoryId}`
-                : "http://localhost:5175/api/category";
+                ? `${API_URL}/api/category/${editingCategoryId}`
+                : `${API_URL}/api/category`;
             const method = isEditMode ? "PUT" : "POST";
             const token = localStorage.getItem("token");
             const headers = {
@@ -101,7 +108,7 @@ const CategoryManagement = () => {
     const handleDelete = async (id) => {
         if (window.confirm("Xóa danh mục này?")) {
             const token = localStorage.getItem("token");
-            const res = await fetch(`http://localhost:5175/api/category/${id}`, {
+            const res = await fetch(`${API_URL}/api/category/${id}`, {
                 method: "DELETE",
                 headers: {
                     "Authorization": `Bearer ${token}`
@@ -207,8 +214,8 @@ const CategoryManagement = () => {
                                 key={p}
                                 onClick={() => setCurrentPage(p)}
                                 className={`w-9 h-9 rounded-xl text-sm font-bold transition-all ${currentPage === p
-                                        ? "bg-[#9d0b0f] text-white shadow-lg"
-                                        : "border border-gray-200 hover:border-[#9d0b0f] hover:text-[#9d0b0f]"
+                                    ? "bg-[#9d0b0f] text-white shadow-lg"
+                                    : "border border-gray-200 hover:border-[#9d0b0f] hover:text-[#9d0b0f]"
                                     }`}
                             >
                                 {p}

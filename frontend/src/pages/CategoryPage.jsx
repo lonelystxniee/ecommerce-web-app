@@ -13,12 +13,31 @@ import toast from "react-hot-toast";
 
 const CategoryPage = () => {
   const { slug } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const { addToCart } = useCart();
   const [isCatOpen, setIsCatOpen] = useState(true);
+  const [isPriceOpen, setIsPriceOpen] = useState(true);
 
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentCategory, setCurrentCategory] = useState(null);
+
+  const [filters, setFilters] = useState({
+    minPrice: searchParams.get("minPrice") || "",
+    maxPrice: searchParams.get("maxPrice") || "",
+    sort: searchParams.get("sort") || "newest",
+  });
+
+  // Sync local filters with URL when URL changes
+  useEffect(() => {
+    setFilters({
+      minPrice: searchParams.get("minPrice") || "",
+      maxPrice: searchParams.get("maxPrice") || "",
+      sort: searchParams.get("sort") || "newest",
+    });
+  }, [searchParams]);
 
   const getSlug = (name) => {
     return (name || "")
@@ -31,41 +50,60 @@ const CategoryPage = () => {
       .replace(/\s+/g, "-");
   };
 
-  const fetchInitialData = async () => {
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch("http://localhost:5175/api/category");
+        const data = await response.json();
+        if (data.success) {
+          setCategories(data.categories);
+        }
+      } catch (error) {
+        console.error("Lỗi khi lấy danh mục:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    if (categories.length > 0) {
+      const found = categories.find(cat => getSlug(cat.name) === slug);
+      setCurrentCategory(found);
+    }
+  }, [slug, categories]);
+
+  const fetchData = async () => {
+    if (!currentCategory) return;
     setLoading(true);
     try {
-      const [prodRes, catRes] = await Promise.all([
-        fetch("http://localhost:5175/api/products?limit=100"),
-        fetch("http://localhost:5175/api/category")
-      ]);
+      const params = new URLSearchParams(searchParams);
+      params.append("categoryId", currentCategory._id);
 
-      const prodData = await prodRes.json();
-      const catData = await catRes.json();
-
-      if (prodData.success) {
-        setProducts(prodData.products);
-      }
-      if (catData.success) {
-        setCategories(catData.categories);
+      const response = await fetch(`http://localhost:5175/api/products/search?${params.toString()}`);
+      const data = await response.json();
+      if (data.success) {
+        setProducts(data.products);
       }
     } catch (error) {
-      console.error("Lỗi khi lấy dữ liệu:", error);
+      console.error("Lỗi khi lấy sản phẩm:", error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchInitialData();
+    fetchData();
     window.scrollTo(0, 0);
-  }, [slug]);
+  }, [currentCategory, searchParams]); // Trigger on category change or URL change
 
-  const currentCategory = categories.find(cat => getSlug(cat.name) === slug);
+  const handleFilterChange = (name, value) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (value) newParams.set(name, value);
+    else newParams.delete(name);
+    setSearchParams(newParams);
+  };
+
   const catName = currentCategory ? currentCategory.name : "Sản phẩm";
-
-  const filteredProducts = products.filter((p) =>
-    p.categoryID?.some(cat => getSlug(cat.name) === slug)
-  );
 
   return (
     <div className="bg-[url('https://honglam.vn/_next/static/media/bg-body.9bfd1cb8.png')] min-h-screen text-[#3e2714]">
@@ -93,6 +131,7 @@ const CategoryPage = () => {
               </h3>
             </div>
 
+            {/* Category Filter */}
             <div className="p-0 border-b border-gray-100">
               <button
                 onClick={() => setIsCatOpen(!isCatOpen)}
@@ -108,7 +147,7 @@ const CategoryPage = () => {
               <div
                 className={`overflow-hidden transition-all duration-300 ${isCatOpen ? "max-h-100 opacity-100" : "max-h-0 opacity-0"}`}
               >
-                <ul className="px-4 pb-4 space-y-2 overflow-y-auto max-h-100 custom-scrollbar">
+                <ul className="px-4 pb-4 space-y-2 overflow-y-auto max-h-60 custom-scrollbar">
                   {categories.map((item) => {
                     const itemSlug = getSlug(item.name);
                     return (
@@ -125,23 +164,80 @@ const CategoryPage = () => {
                 </ul>
               </div>
             </div>
+
+            {/* Price Filter */}
+            <div className="p-0 border-b border-gray-100">
+              <button
+                onClick={() => setIsPriceOpen(!isPriceOpen)}
+                className="flex items-center justify-between w-full p-4 font-bold text-[13px] uppercase hover:bg-gray-50 transition-all cursor-pointer text-[#3e2714]"
+              >
+                Khoảng giá (VNĐ)
+                <ChevronDown
+                  size={16}
+                  className={`transition-transform duration-300 ${isPriceOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              <div
+                className={`overflow-hidden transition-all duration-300 ${isPriceOpen ? "max-h-100 opacity-100" : "max-h-0 opacity-0"}`}
+              >
+                <div className="px-4 pb-6 space-y-3">
+                  <input
+                    type="number"
+                    placeholder="Từ"
+                    value={filters.minPrice}
+                    onChange={(e) => handleFilterChange("minPrice", e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-primary"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Đến"
+                    value={filters.maxPrice}
+                    onChange={(e) => handleFilterChange("maxPrice", e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4">
+              <button
+                onClick={() => {
+                  setFilters({ minPrice: "", maxPrice: "", sort: "newest" });
+                  setSearchParams({});
+                }}
+                className="w-full py-2 text-[11px] font-bold text-gray-500 border border-gray-200 rounded hover:bg-gray-50 transition-all uppercase"
+              >
+                Thiết lập lại
+              </button>
+            </div>
           </div>
         </aside>
 
         <main className="flex-1">
-          <div className="flex flex-col items-end justify-between gap-3 pb-3 mb-6 border-b sm:flex-row sm:items-center border-primary">
+          <div className="flex flex-col items-start justify-between gap-3 pb-3 mb-6 border-b sm:flex-row sm:items-center border-primary">
             <h2 className="text-2xl font-bold tracking-tighter uppercase text-primary">
               {catName}
               <span className="ml-2 text-sm font-normal text-gray-400 lowercase">
-                ({filteredProducts.length} sản phẩm)
+                ({products.length} sản phẩm)
               </span>
             </h2>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={fetchInitialData}
-                className={`text-gray-400 hover:text-primary ${loading ? "animate-spin" : ""}`}
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-bold text-gray-500 uppercase">Sắp xếp:</span>
+              <select
+                value={filters.sort}
+                onChange={(e) => handleFilterChange("sort", e.target.value)}
+                className="bg-white border border-gray-200 rounded px-3 py-1.5 text-xs outline-none focus:border-primary font-bold"
               >
-                <RefreshCcw size={18} />
+                <option value="newest">Mới nhất</option>
+                <option value="price_asc">Giá tăng dần</option>
+                <option value="price_desc">Giá giảm dần</option>
+              </select>
+              <button
+                onClick={fetchData}
+                className={`text-gray-300 hover:text-primary transition-colors ${loading ? "animate-spin" : ""}`}
+              >
+                <RefreshCcw size={16} />
               </button>
             </div>
           </div>
@@ -150,9 +246,9 @@ const CategoryPage = () => {
             <div className="flex flex-col items-center py-20">
               <div className="w-10 h-10 border-4 rounded-full border-primary border-t-transparent animate-spin"></div>
             </div>
-          ) : filteredProducts.length > 0 ? (
+          ) : products.length > 0 ? (
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
-              {filteredProducts.map((p) => {
+              {products.map((p) => {
                 const displayPrice = p.price || 0;
                 const displayImage = p.images?.[0] || p.image || "";
 
@@ -207,9 +303,18 @@ const CategoryPage = () => {
               })}
             </div>
           ) : (
-            <div className="py-32 text-center text-gray-400 bg-white border border-dashed rounded-lg">
-              <ShoppingBag size={48} className="mx-auto mb-4 opacity-20" />
-              <p>Hiện chưa có sản phẩm nào trong danh mục này.</p>
+            <div className="py-32 text-center text-gray-400 bg-white border border-dashed rounded-lg border-gray-200">
+              <ShoppingBag size={48} className="mx-auto mb-4 opacity-10" />
+              <p className="text-sm">Hiện chưa có sản phẩm nào phù hợp với bộ lọc.</p>
+              <button
+                onClick={() => {
+                  setFilters({ minPrice: "", maxPrice: "", sort: "newest" });
+                  setSearchParams({});
+                }}
+                className="mt-4 text-xs font-bold text-primary underline underline-offset-4"
+              >
+                Xem tất cả sản phẩm
+              </button>
             </div>
           )}
         </main>

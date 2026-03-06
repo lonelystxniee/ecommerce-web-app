@@ -10,6 +10,7 @@ import {
   ShoppingBag,
   Layers,
   MessageSquare,
+  Shield,
 } from "lucide-react";
 
 const AdminSidebar = () => {
@@ -17,6 +18,7 @@ const AdminSidebar = () => {
   const menuItems = [
     { path: "/", icon: <LayoutDashboard size={20} />, label: "Dashboard" },
     { path: "/users", icon: <Users size={20} />, label: "Quản lý người dùng" },
+    { path: "/admins", icon: <Shield size={20} />, label: "Quản trị viên" },
     { path: "/products", icon: <Box size={20} />, label: "Quản lý sản phẩm" },
     {
       path: "/orders",

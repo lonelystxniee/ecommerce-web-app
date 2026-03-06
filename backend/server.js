@@ -28,7 +28,6 @@ connectDB()
   .then(() => {
     app.listen(PORT, () => {
       console.log(`Server đang chạy ở cổng ${PORT}`);
-      console.log(`Giới hạn dữ liệu: 100mb (đã fix lỗi Payload Too Large)`);
     });
   })
   .catch((err) => {

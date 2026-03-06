@@ -13,6 +13,8 @@ const UserSchema = new mongoose.Schema(
     googleId: { type: String, default: null },
     authProvider: { type: String, enum: ["LOCAL", "GOOGLE"], default: "LOCAL" },
     avatar: { type: String, default: null },
+    gender: { type: String, enum: ["Nam", "Nữ", "Khác"], default: null },
+    birthday: { type: Date, default: null },
   },
   { timestamps: true }
 );

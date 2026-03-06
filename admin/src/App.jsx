@@ -9,20 +9,27 @@ import OrderManagement from "./pages/OrderManagement";
 import PromotionManagement from "./pages/PromotionManagement";
 import CategoryManagement from "./pages/CategoryManagement";
 import ReviewManagement from "./pages/ReviewManagement";
+import AdminManagement from "./pages/AdminManagement";
+import LoginPage from "./pages/LoginPage";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<AdminLayout />}>
-          <Route index element={<Dashboard />} />
+        <Route path="/login" element={<LoginPage />} />
 
-          <Route path="users" element={<UserManagement />} />
-          <Route path="products" element={<ProductManagement />} />
-          <Route path="orders" element={<OrderManagement />} />
-          <Route path="promotions" element={<PromotionManagement />} />
-          <Route path="categories" element={<CategoryManagement />} />
-          <Route path="reviews" element={<ReviewManagement />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/" element={<AdminLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="users" element={<UserManagement />} />
+            <Route path="admins" element={<AdminManagement />} />
+            <Route path="products" element={<ProductManagement />} />
+            <Route path="orders" element={<OrderManagement />} />
+            <Route path="promotions" element={<PromotionManagement />} />
+            <Route path="categories" element={<CategoryManagement />} />
+            <Route path="reviews" element={<ReviewManagement />} />
+          </Route>
         </Route>
       </Routes>
     </Router>

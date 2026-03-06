@@ -13,6 +13,7 @@ import {
   Headset,
   CreditCard,
   ChevronDown,
+  Monitor,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { CategoryDropdown } from "./CategoryDropdown";
@@ -98,10 +99,11 @@ const Hero = ({ categories }) => {
               {/* SLIDER */}
               <div className="relative h-full overflow-hidden">
                 <div
-                  className={`flex h-full ${enableTransition
-                    ? "transition-transform duration-500 ease-in-out"
-                    : ""
-                    }`}
+                  className={`flex h-full ${
+                    enableTransition
+                      ? "transition-transform duration-500 ease-in-out"
+                      : ""
+                  }`}
                   style={{
                     transform: `translateX(-${bannerIndex * 100}%)`,
                   }}
@@ -160,12 +162,18 @@ const Hero = ({ categories }) => {
 export const MenuItem = ({ categories }) => {
   const getIcon = (name) => {
     const n = (name || "").toLowerCase();
-    if (n.includes("tươi") || n.includes("sống")) return <Clock className="w-4 h-4" />;
-    if (n.includes("nhu yếu") || n.includes("thiết yếu")) return <Package className="w-4 h-4" />;
-    if (n.includes("bánh mì") || n.includes("bơ sữa")) return <Sparkles className="w-4 h-4" />;
-    if (n.includes("ăn nhẹ") || n.includes("bánh kẹo")) return <Gift className="w-4 h-4" />;
-    if (n.includes("đồ uống") || n.includes("giải khát")) return <Cake className="w-4 h-4" />;
+    if (n.includes("tươi") || n.includes("sống"))
+      return <Clock className="w-4 h-4" />;
+    if (n.includes("nhu yếu") || n.includes("thiết yếu"))
+      return <Package className="w-4 h-4" />;
+    if (n.includes("bánh mì") || n.includes("bơ sữa"))
+      return <Sparkles className="w-4 h-4" />;
+    if (n.includes("ăn nhẹ") || n.includes("bánh kẹo"))
+      return <Gift className="w-4 h-4" />;
+    if (n.includes("đồ uống") || n.includes("giải khát"))
+      return <Cake className="w-4 h-4" />;
     if (n.includes("gia vị")) return <Coffee className="w-4 h-4" />;
+    if (n.includes("điện tử")) return <Monitor className="w-4 h-4" />;
     return <ShoppingBag className="w-4 h-4" />;
   };
 
@@ -190,7 +198,7 @@ export const MenuItem = ({ categories }) => {
             className={`flex h-11 items-center gap-2 px-4 border-b border-[#b30e0e] hover:bg-[rgba(0,0,0,.15)] cursor-pointer text-[15px] ${index === categories.length - 1 ? "border-b-0" : ""}`}
           >
             {getIcon(cat.name)}
-            <span className="truncate">{cat.name}</span>
+            <span className="text-sm truncate">{cat.name}</span>
           </Link>
         ))
       ) : (
