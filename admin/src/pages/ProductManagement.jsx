@@ -10,6 +10,7 @@ import {
   Edit2,
   ChevronLeft,
   ChevronRight,
+  Search,
 } from "lucide-react";
 
 const ProductManagement = () => {
@@ -20,6 +21,9 @@ const ProductManagement = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({ totalPages: 1, totalProducts: 0 });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
+  const [sort, setSort] = useState("newest");
   const LIMIT = 12;
 
   // Khởi tạo form
@@ -49,10 +53,24 @@ const ProductManagement = () => {
     }
   };
 
-  const fetchProducts = async (page = currentPage) => {
+  const fetchProducts = async (page = currentPage, search = searchTerm, categoryId = filterCategory, sortOrder = sort) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:5175/api/products?page=${page}&limit=${LIMIT}`, {
+      let url = `http://localhost:5175/api/products?page=${page}&limit=${LIMIT}`;
+
+      const hasFilters = search.trim() || categoryId || sortOrder !== "newest";
+      if (hasFilters) {
+        const queryParams = new URLSearchParams({
+          page,
+          limit: LIMIT,
+          ...(search.trim() && { q: search.trim() }),
+          ...(categoryId && { categoryId }),
+          ...(sortOrder && { sort: sortOrder }),
+        });
+        url = `http://localhost:5175/api/products/search?${queryParams.toString()}`;
+      }
+
+      const res = await fetch(url, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       const data = await res.json();
@@ -67,10 +85,19 @@ const ProductManagement = () => {
     }
   };
 
+  // Debounced search
   useEffect(() => {
-    fetchProducts(currentPage);
+    const timer = setTimeout(() => {
+      fetchProducts(1, searchTerm, filterCategory, sort);
+      setCurrentPage(1);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    fetchProducts(currentPage, searchTerm, filterCategory, sort);
     fetchCategories();
-  }, [currentPage]);
+  }, [currentPage, filterCategory, sort]);
 
   // --- XỬ LÝ BIẾN THỂ ---
   const handleAddVariant = () => {
@@ -280,7 +307,46 @@ const ProductManagement = () => {
             Cập nhật kho hàng Ô mai Hồng Lam
           </p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="text"
+              placeholder="Tìm tên hoặc mã..."
+              className="pl-10 pr-4 py-2 border-2 border-gray-100 rounded-2xl outline-none focus:border-[#9d0b0f] transition-all w-48 md:w-64"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <select
+            value={filterCategory}
+            onChange={(e) => {
+              setFilterCategory(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="bg-white border-2 border-gray-100 rounded-2xl px-4 py-2 text-sm outline-none focus:border-[#9d0b0f] transition-all font-bold text-[#3e2714] min-w-[140px]"
+          >
+            <option value="">Tất cả danh mục</option>
+            {categories.map((cat) => (
+              <option key={cat._id} value={cat._id}>{cat.name}</option>
+            ))}
+          </select>
+
+          <select
+            value={sort}
+            onChange={(e) => {
+              setSort(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="bg-white border-2 border-gray-100 rounded-2xl px-4 py-2 text-sm outline-none focus:border-[#9d0b0f] transition-all font-bold text-[#3e2714] min-w-[140px]"
+          >
+            <option value="newest">Mới nhất</option>
+            <option value="price_asc">Giá tăng dần</option>
+            <option value="price_desc">Giá giảm dần</option>
+            <option value="oldest">Cũ nhất</option>
+          </select>
+
           <label className="bg-green-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-green-700 transition-all shadow-lg cursor-pointer">
             <Upload size={20} /> Nhập Excel
             <input

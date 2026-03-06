@@ -6,8 +6,10 @@ import {
     Edit2,
     Layers,
     FileText,
+    Upload,
     ChevronLeft,
     ChevronRight,
+    Search,
 } from "lucide-react";
 
 const CategoryManagement = () => {
@@ -16,6 +18,10 @@ const CategoryManagement = () => {
     const [isEditMode, setIsEditMode] = useState(false);
     const [editingCategoryId, setEditingCategoryId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [sort, setSort] = useState("newest");
+    const [isLoading, setIsLoading] = useState(false);
     const LIMIT = 9;
 
     const [formData, setFormData] = useState({
@@ -28,7 +34,11 @@ const CategoryManagement = () => {
     const fetchCategories = async () => {
         try {
             const token = localStorage.getItem("token");
-            const res = await fetch(`${API_URL}/api/category`, {
+            const params = new URLSearchParams();
+            if (debouncedSearch) params.append("q", debouncedSearch);
+            if (sort) params.append("sort", sort);
+
+            const res = await fetch(`${API_URL}/api/category?${params.toString()}`, {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
@@ -42,9 +52,60 @@ const CategoryManagement = () => {
         }
     };
 
+    const handleImportExcel = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (!window.confirm(`Bạn có chắc muốn nhập danh mục từ tệp ${file.name}?`)) return;
+
+        try {
+            setIsLoading(true);
+            const token = localStorage.getItem("token");
+            const data = new FormData();
+            data.append("file", file);
+
+            const res = await fetch(`${API_URL}/api/category/import-excel`, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                },
+                body: data
+            });
+
+            const result = await res.json();
+
+            if (res.ok && result.success) {
+                let msg = `✅ Đã nhập thành công ${result.insertedCount} danh mục!`;
+                if (result.failedCount > 0) {
+                    msg += `\n⚠️ ${result.failedCount} dòng gặp lỗi.`;
+                    result.errors.slice(0, 3).forEach(err => {
+                        msg += `\n- Dòng ${err.row}: ${err.message}`;
+                    });
+                }
+                alert(msg);
+                fetchCategories();
+            } else {
+                alert(result.message || "Lỗi khi nhập Excel!");
+            }
+        } catch (error) {
+            alert("Lỗi kết nối server!");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Debounce search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+            setCurrentPage(1);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
     useEffect(() => {
         fetchCategories();
-    }, []);
+    }, [debouncedSearch, sort]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -144,16 +205,61 @@ const CategoryManagement = () => {
                         Quản lý các loại sản phẩm Ô mai Hồng Lam
                     </p>
                 </div>
-                <button
-                    onClick={() => {
-                        setIsEditMode(false);
-                        setIsModalOpen(true);
-                    }}
-                    className="bg-[#9d0b0f] text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-[#f39200] transition-all shadow-lg"
-                >
-                    <Plus size={20} /> Thêm danh mục mới
-                </button>
+                <div className="flex flex-wrap items-center gap-4">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <input
+                            type="text"
+                            placeholder="Tìm tên hoặc mô tả..."
+                            className="pl-10 pr-4 py-2 border-2 border-gray-100 rounded-2xl outline-none focus:border-[#9d0b0f] transition-all w-48 md:w-64"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+
+                    <select
+                        value={sort}
+                        onChange={(e) => {
+                            setSort(e.target.value);
+                            setCurrentPage(1);
+                        }}
+                        className="bg-white border-2 border-gray-100 rounded-2xl px-4 py-2 text-sm outline-none focus:border-[#9d0b0f] transition-all font-bold text-[#3e2714] min-w-[140px]"
+                    >
+                        <option value="newest">Mới nhất</option>
+                        <option value="name_asc">Tên (A-Z)</option>
+                        <option value="name_desc">Tên (Z-A)</option>
+                        <option value="oldest">Cũ nhất</option>
+                    </select>
+
+                    <label className="bg-green-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-green-700 transition-all shadow-lg cursor-pointer">
+                        <Upload size={20} /> Nhập Excel
+                        <input
+                            type="file"
+                            className="hidden"
+                            accept=".xlsx, .xls"
+                            onChange={handleImportExcel}
+                        />
+                    </label>
+                    <button
+                        onClick={() => {
+                            setIsEditMode(false);
+                            setIsModalOpen(true);
+                        }}
+                        className="bg-[#9d0b0f] text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-[#f39200] transition-all shadow-lg"
+                    >
+                        <Plus size={20} /> Thêm danh mục mới
+                    </button>
+                </div>
             </div>
+
+            {isLoading && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/20 backdrop-blur-[2px]">
+                    <div className="bg-white p-8 rounded-[32px] shadow-2xl flex flex-col items-center gap-4 border-2 border-[#9d0b0f]">
+                        <div className="w-12 h-12 border-4 border-[#9d0b0f] border-t-transparent rounded-full animate-spin"></div>
+                        <p className="font-bold text-[#9d0b0f] animate-pulse">Đang nhập danh mục...</p>
+                    </div>
+                </div>
+            )}
 
             {/* Danh sách danh mục */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

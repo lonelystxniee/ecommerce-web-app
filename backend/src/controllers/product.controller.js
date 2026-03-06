@@ -3,6 +3,7 @@ const Product = require("../models/product");
 const Category = require("../models/category");
 const uploadToCloudinary = require("../../utils/uploadToCloudinary");
 const XLSX = require("xlsx");
+const activityController = require("./activityController");
 
 // Create product
 exports.createProduct = async (req, res) => {
@@ -83,6 +84,9 @@ exports.createProduct = async (req, res) => {
     };
 
     const product = await Product.create(productData);
+
+    // Ghi log
+    await activityController.createLog(req.user.id, "Tạo sản phẩm", `Đã tạo sản phẩm: ${productData.productName} (${productData.productCode})`, req);
 
     res.status(201).json({ success: true, product });
 
@@ -192,6 +196,8 @@ exports.importExcel = async (req, res) => {
         insertedProducts = await Product.insertMany(productsToInsert, {
           ordered: false
         });
+        // Ghi log nhập thành công
+        await activityController.createLog(req.user.id, "Nhập Excel sản phẩm", `Đã nhập thành công ${insertedProducts.length} sản phẩm từ Excel`, req);
       } catch (insertError) {
         // Handle bulk insert errors (e.g., duplicate productCode if not caught earlier)
         if (insertError.writeErrors) {
@@ -267,6 +273,9 @@ exports.deleteProduct = async (req, res) => {
     if (!deleted) {
       return res.status(404).json({ success: false, message: "Product not found" });
     }
+    // Ghi log
+    await activityController.createLog(req.user.id, "Xóa sản phẩm", `Đã xóa sản phẩm: ${deleted.productName} (${deleted.productCode})`, req);
+
     res.json({ success: true, message: "Product deleted successfully" });
   } catch (error) {
     console.error(error);
@@ -346,6 +355,9 @@ exports.updateProduct = async (req, res) => {
     if (!updated) {
       return res.status(404).json({ success: false, message: "Product not found" });
     }
+
+    // Ghi log
+    await activityController.createLog(req.user.id, "Cập nhật sản phẩm", `Đã cập nhật sản phẩm: ${updated.productName} (${updated.productCode})`, req);
 
     res.json({ success: true, product: { ...updated.toObject(), name: updated.productName } });
 

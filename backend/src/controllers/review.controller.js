@@ -1,5 +1,6 @@
 const Review = require("../models/Review");
 const uploadToCloudinary = require("../../utils/uploadToCloudinary");
+const activityController = require("./activityController");
 
 // Create or Update a review (Upsert)
 exports.createReview = async (req, res) => {
@@ -135,6 +136,10 @@ exports.deleteReviewAdmin = async (req, res) => {
         if (!review) {
             return res.status(404).json({ success: false, message: "Không tìm thấy đánh giá!" });
         }
+
+        // Ghi log
+        await activityController.createLog(req.user.id, "Xóa đánh giá", `Đã xóa đánh giá của người dùng ${review.userID} cho sản phẩm ${review.productID}`, req);
+
         res.status(200).json({ success: true, message: "Đã xóa đánh giá thành công!" });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

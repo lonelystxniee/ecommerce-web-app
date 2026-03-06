@@ -10,6 +10,7 @@ import PromotionManagement from "./pages/PromotionManagement";
 import CategoryManagement from "./pages/CategoryManagement";
 import ReviewManagement from "./pages/ReviewManagement";
 import AdminManagement from "./pages/AdminManagement";
+import ActivityLogs from "./pages/ActivityLogs";
 import LoginPage from "./pages/LoginPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -29,6 +30,7 @@ function App() {
             <Route path="promotions" element={<PromotionManagement />} />
             <Route path="categories" element={<CategoryManagement />} />
             <Route path="reviews" element={<ReviewManagement />} />
+            <Route path="activities" element={<ActivityLogs />} />
           </Route>
         </Route>
       </Routes>

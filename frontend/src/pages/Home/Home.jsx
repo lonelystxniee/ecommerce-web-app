@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
-import { Truck, Headset, CreditCard, Gift, ChevronRight } from "lucide-react";
+import { Truck, Headset, CreditCard, Gift, ChevronRight, Filter, SlidersHorizontal } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRef } from "react";
 
@@ -56,11 +56,17 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Pagination states
+  // Pagination and Filter states
   const [paginatedProducts, setPaginatedProducts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isPaginatedLoading, setIsPaginatedLoading] = useState(false);
+  const [filters, setFilters] = useState({
+    categoryId: "",
+    minPrice: "",
+    maxPrice: "",
+    sort: "newest",
+  });
 
   const allProductRef = useRef();
 
@@ -110,9 +116,22 @@ const Home = () => {
   const fetchPaginatedProducts = async (page = 1) => {
     setIsPaginatedLoading(true);
     try {
-      const response = await fetch(
-        `http://localhost:5175/api/products?page=${page}&limit=12`,
-      );
+      let url = `http://localhost:5175/api/products?page=${page}&limit=12`;
+
+      const { categoryId, minPrice, maxPrice, sort } = filters;
+      if (categoryId || minPrice || maxPrice || sort !== "newest") {
+        const queryParams = new URLSearchParams({
+          page,
+          limit: 12,
+          ...(categoryId && { categoryId }),
+          ...(minPrice && { minPrice }),
+          ...(maxPrice && { maxPrice }),
+          ...(sort && { sort }),
+        });
+        url = `http://localhost:5175/api/products/search?${queryParams.toString()}`;
+      }
+
+      const response = await fetch(url);
       const data = await response.json();
       if (data.success) {
         const mapped = data.products.map((p) => ({
@@ -144,7 +163,7 @@ const Home = () => {
 
   useEffect(() => {
     fetchPaginatedProducts(currentPage);
-  }, [currentPage]);
+  }, [currentPage, filters]);
 
   if (loading) {
     return (
@@ -337,6 +356,72 @@ const Home = () => {
       {/* SECTION 8: TẤT CẢ SẢN PHẨM (PAGINATION) */}
       <div ref={allProductRef} className="px-4 mx-auto mt-20 max-w-300">
         <SectionHeading title="Khám phá tất cả sản phẩm" />
+
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8 bg-white/50 p-6 rounded-[32px] border border-[#e0be91]/30 backdrop-blur-sm">
+          <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-black uppercase text-[#88694f] ml-1 tracking-widest">Danh mục</span>
+              <select
+                value={filters.categoryId}
+                onChange={(e) => {
+                  setFilters({ ...filters, categoryId: e.target.value });
+                  setCurrentPage(1);
+                }}
+                className="bg-white border border-[#e0be91] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary min-w-48"
+              >
+                <option value="">Tất cả sản phẩm</option>
+                {categories.map((cat) => (
+                  <option key={cat._id} value={cat._id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-black uppercase text-[#88694f] ml-1 tracking-widest">Giá từ</span>
+              <input
+                type="number"
+                placeholder="0"
+                value={filters.minPrice}
+                onChange={(e) => {
+                  setFilters({ ...filters, minPrice: e.target.value });
+                  setCurrentPage(1);
+                }}
+                className="bg-white border border-[#e0be91] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary w-32"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-black uppercase text-[#88694f] ml-1 tracking-widest">Đến</span>
+              <input
+                type="number"
+                placeholder="999,999"
+                value={filters.maxPrice}
+                onChange={(e) => {
+                  setFilters({ ...filters, maxPrice: e.target.value });
+                  setCurrentPage(1);
+                }}
+                className="bg-white border border-[#e0be91] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary w-32"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1 w-full md:w-auto">
+            <span className="text-[10px] font-black uppercase text-[#88694f] ml-1 tracking-widest">Sắp xếp</span>
+            <select
+              value={filters.sort}
+              onChange={(e) => {
+                setFilters({ ...filters, sort: e.target.value });
+                setCurrentPage(1);
+              }}
+              className="bg-white border border-[#e0be91] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary min-w-40"
+            >
+              <option value="newest">Mới nhất</option>
+              <option value="price_asc">Giá tăng dần</option>
+              <option value="price_desc">Giá giảm dần</option>
+              <option value="oldest">Cũ nhất</option>
+            </select>
+          </div>
+        </div>
 
         <div className="transition-all duration-300 min-h-200 md:min-h-250">
           {isPaginatedLoading ? (

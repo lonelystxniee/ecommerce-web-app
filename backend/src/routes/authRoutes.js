@@ -22,5 +22,8 @@ router.put("/users/:id", verifyToken, adminMiddleware, authController.updateUser
 router.delete("/users/:id", verifyToken, adminMiddleware, authController.deleteUser);
 router.post("/google", authController.googleLogin);
 
+// Admin Activities Log
+router.get("/admin-activities", verifyToken, adminMiddleware, activityController.getAllActivities);
+
 
 module.exports = router;

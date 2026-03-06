@@ -11,6 +11,7 @@ import {
   Layers,
   MessageSquare,
   Shield,
+  ClipboardList,
 } from "lucide-react";
 
 const AdminSidebar = () => {
@@ -39,6 +40,11 @@ const AdminSidebar = () => {
       path: "/reviews",
       icon: <MessageSquare size={20} />,
       label: "Quản lý đánh giá",
+    },
+    {
+      path: "/activities",
+      icon: <ClipboardList size={20} />,
+      label: "Nhật ký hệ thống",
     },
   ];
 

@@ -30,6 +30,7 @@ const LoginPage = () => {
             });
             const data = await res.json();
             if (data.success) {
+                console.log(data.user.role);
                 if (data.user.role === "ADMIN") {
                     localStorage.setItem("token", data.token);
                     localStorage.setItem("user", JSON.stringify(data.user));
