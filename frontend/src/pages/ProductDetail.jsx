@@ -26,6 +26,8 @@ const ProductDetail = () => {
   const { id } = useParams();
   const { addToCart } = useCart();
 
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
+
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeImg, setActiveImg] = useState(0);
@@ -35,7 +37,7 @@ const ProductDetail = () => {
     const fetchProduct = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`http://localhost:5175/api/products/${id}`);
+        const res = await fetch(`${API_URL}/api/products/${id}`);
         const data = await res.json();
         if (data.success) {
           setProduct(data.product);
@@ -81,7 +83,7 @@ const ProductDetail = () => {
 
   const fetchReviews = async (page = 1) => {
     try {
-      const res = await fetch(`http://localhost:5175/api/reviews/${id}?page=${page}&limit=5`);
+      const res = await fetch(`${API_URL}/api/reviews/${id}?page=${page}&limit=5`);
       const data = await res.json();
       if (data.success) {
         setReviews(data.reviews);
@@ -157,7 +159,7 @@ const ProductDetail = () => {
     });
 
     try {
-      const res = await fetch("http://localhost:5175/api/reviews", {
+      const res = await fetch(`${API_URL}/api/reviews`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

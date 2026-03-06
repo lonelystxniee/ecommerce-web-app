@@ -1,13 +1,15 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
-import { Truck, Headset, CreditCard, Gift, ChevronRight, Filter, SlidersHorizontal } from "lucide-react";
+import { Truck, Headset, CreditCard, Gift, ChevronRight, Filter, SlidersHorizontal, Trophy } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRef } from "react";
 
 import Hero from "./Hero";
 import CategorySection from "./CategorySection";
 import { ProductItemSmall } from "./ProductItemSmall";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
 
 export const SectionHeading = ({ title, outlined }) => (
   <div className="relative flex items-center justify-center my-10 z-1">
@@ -74,8 +76,8 @@ const Home = () => {
     const fetchInitialData = async () => {
       try {
         const [prodRes, catRes] = await Promise.all([
-          fetch("http://localhost:5175/api/products?limit=100"),
-          fetch("http://localhost:5175/api/category"),
+          fetch(`${API_URL}/api/products?limit=100`),
+          fetch(`${API_URL}/api/category`),
         ]);
 
         const prodData = await prodRes.json();
@@ -888,4 +890,34 @@ const GiftCard = ({ id, title, price, img }) => {
   );
 };
 
-export default Home;
+{/* FLOATING LUCKY WHEEL BUTTON */ }
+const LuckyWheelButton = () => {
+  return (
+    <Link
+      to="/lucky-wheel"
+      className="fixed bottom-24 right-6 z-[100] flex flex-col items-center group"
+    >
+      <div className="relative">
+        <div className="absolute inset-0 bg-[#f39200] rounded-full blur-lg opacity-40 group-hover:opacity-70 animate-pulse"></div>
+        <div className="relative bg-gradient-to-br from-[#9d0b0f] to-[#f39200] p-4 rounded-full shadow-2xl border-4 border-white transform group-hover:scale-110 transition-all duration-300 active:scale-95">
+          <Trophy className="text-white w-8 h-8 md:w-10 md:h-10 animate-bounce" />
+        </div>
+        <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-white px-4 py-2 rounded-xl shadow-xl border border-[#9d0b0f]/20 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0 pointer-events-none">
+          <p className="text-[#9d0b0f] font-black text-xs uppercase tracking-widest">
+            Săn Voucher 🎁
+          </p>
+          <div className="absolute top-1/2 -right-2 -translate-y-1/2 w-4 h-4 bg-white rotate-45 border-r border-t border-[#9d0b0f]/20"></div>
+        </div>
+      </div>
+    </Link>
+  );
+};
+
+const HomeWithButton = () => (
+  <>
+    <Home />
+    <LuckyWheelButton />
+  </>
+);
+
+export default HomeWithButton;

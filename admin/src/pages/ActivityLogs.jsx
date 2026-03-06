@@ -78,7 +78,9 @@ const ActivityLogs = () => {
     const actions = [
         "Tạo sản phẩm", "Cập nhật sản phẩm", "Xóa sản phẩm", "Nhập Excel sản phẩm",
         "Tạo danh mục", "Cập nhật danh mục", "Xóa danh mục", "Nhập Excel danh mục",
-        "Xóa đánh giá", "Đăng nhập", "Cập nhật hồ sơ"
+        "Xóa đánh giá", "Xác nhận đơn hàng", "Đóng gói đơn hàng", "Bàn giao đơn hàng",
+        "Cập nhật đơn hàng", "Tạo mã giảm giá", "Cập nhật mã giảm giá", "Xóa mã giảm giá",
+        "Đăng nhập", "Cập nhật hồ sơ"
     ];
 
     return (
@@ -169,18 +171,18 @@ const ActivityLogs = () => {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-xl bg-[#f7f4ef] flex items-center justify-center text-[#9d0b0f] font-bold">
-                                                    {log.userId?.name?.charAt(0) || "U"}
+                                                    {log.userId?.fullName?.charAt(0) || "U"}
                                                 </div>
                                                 <div>
-                                                    <p className="font-bold text-[#3e2714] text-sm">{log.userId?.name || "N/A"}</p>
+                                                    <p className="font-bold text-[#3e2714] text-sm">{log.userId?.fullName || "N/A"}</p>
                                                     <p className="text-[10px] text-[#88694f]">{log.userId?.email || "No email"}</p>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight ${log.action.includes("Xóa") ? "bg-red-50 text-red-600" :
-                                                    log.action.includes("Tạo") ? "bg-green-50 text-green-600" :
-                                                        "bg-blue-50 text-blue-600"
+                                                log.action.includes("Tạo") ? "bg-green-50 text-green-600" :
+                                                    "bg-blue-50 text-blue-600"
                                                 }`}>
                                                 {log.action}
                                             </span>
@@ -232,6 +234,39 @@ const ActivityLogs = () => {
                             >
                                 <ChevronLeft size={18} />
                             </button>
+
+                            {/* Numeric Pages */}
+                            <div className="hidden md:flex items-center gap-1 mx-2">
+                                {[...Array(pagination.totalPages)].map((_, i) => {
+                                    const pageNum = i + 1;
+                                    // Logic to show a few pages around current, plus first and last
+                                    if (
+                                        pageNum === 1 ||
+                                        pageNum === pagination.totalPages ||
+                                        (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                                    ) {
+                                        return (
+                                            <button
+                                                key={pageNum}
+                                                onClick={() => setCurrentPage(pageNum)}
+                                                className={`w-9 h-9 rounded-xl border-2 text-xs font-black transition-all ${currentPage === pageNum
+                                                        ? "bg-[#9d0b0f] text-white border-[#9d0b0f] shadow-md shadow-red-100"
+                                                        : "bg-white text-[#3e2714] border-stone-100 hover:border-[#9d0b0f] hover:text-[#9d0b0f]"
+                                                    }`}
+                                            >
+                                                {pageNum}
+                                            </button>
+                                        );
+                                    } else if (
+                                        (pageNum === currentPage - 2 && pageNum > 1) ||
+                                        (pageNum === currentPage + 2 && pageNum < pagination.totalPages)
+                                    ) {
+                                        return <span key={pageNum} className="text-[#88694f] font-bold px-1">...</span>;
+                                    }
+                                    return null;
+                                })}
+                            </div>
+
                             <button
                                 onClick={() => setCurrentPage(p => Math.min(pagination.totalPages, p + 1))}
                                 disabled={currentPage === pagination.totalPages || loading}

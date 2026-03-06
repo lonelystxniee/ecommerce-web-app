@@ -22,10 +22,12 @@ const ReviewManagement = () => {
         totalReviews: 0
     });
 
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
+
     const fetchReviews = async (page = 1) => {
         setLoading(true);
         try {
-            const response = await fetch(`http://localhost:5175/api/reviews?page=${page}&limit=10&search=${searchTerm}`);
+            const response = await fetch(`${API_URL}/api/reviews?page=${page}&limit=10&search=${searchTerm}`);
             const data = await response.json();
             if (data.success) {
                 setReviews(data.reviews);
@@ -51,7 +53,7 @@ const ReviewManagement = () => {
         }
 
         try {
-            const response = await fetch(`http://localhost:5175/api/reviews/${id}`, {
+            const response = await fetch(`${API_URL}/api/reviews/${id}`, {
                 method: "DELETE",
                 headers: {
                     "Authorization": `Bearer ${localStorage.getItem("token")}`

@@ -24,6 +24,8 @@ const CategoryPage = () => {
   const [loading, setLoading] = useState(true);
   const [currentCategory, setCurrentCategory] = useState(null);
 
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
+
   const [filters, setFilters] = useState({
     minPrice: searchParams.get("minPrice") || "",
     maxPrice: searchParams.get("maxPrice") || "",
@@ -53,7 +55,7 @@ const CategoryPage = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch("http://localhost:5175/api/category");
+        const response = await fetch(`${API_URL}/api/category`);
         const data = await response.json();
         if (data.success) {
           setCategories(data.categories);
@@ -79,7 +81,7 @@ const CategoryPage = () => {
       const params = new URLSearchParams(searchParams);
       params.append("categoryId", currentCategory._id);
 
-      const response = await fetch(`http://localhost:5175/api/products/search?${params.toString()}`);
+      const response = await fetch(`${API_URL}/api/products/search?${params.toString()}`);
       const data = await response.json();
       if (data.success) {
         setProducts(data.products);

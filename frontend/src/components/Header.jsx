@@ -11,6 +11,7 @@ import {
   User,
   Heart,
   LogOut,
+  Trophy,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -30,10 +31,12 @@ const Header = () => {
   const mainDropdownRef = useRef(null);
   const stickyDropdownRef = useRef(null);
 
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch("http://localhost:5175/api/category");
+        const response = await fetch(`${API_URL}/api/category`);
         const data = await response.json();
         if (data.success) {
           setCategories(data.categories);
@@ -251,6 +254,17 @@ const AuthAndCart = ({
               className="text-primary group-hover:text-[#ce450a]"
             />{" "}
             Quản lý đơn hàng
+          </Link>
+          <Link
+            to="/lucky-wheel"
+            onClick={() => setIsDropdownOpen(false)}
+            className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[#ce450a] animate-pulse group"
+          >
+            <Trophy
+              size={18}
+              className="text-[#faa519]"
+            />{" "}
+            Vòng quay may mắn
           </Link>
           <Link
             to="/account?tab=favorites"

@@ -13,6 +13,8 @@ const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get("q") || "";
 
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
+
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,7 +42,7 @@ const SearchPage = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch("http://localhost:5175/api/category");
+        const response = await fetch(`${API_URL}/api/category`);
         const data = await response.json();
         if (data.success) setCategories(data.categories);
       } catch (error) {
@@ -57,7 +59,7 @@ const SearchPage = () => {
       // Ensure q is present if it's in the state but maybe not in searchParams (though here we use searchParams as source)
 
       const response = await fetch(
-        `http://localhost:5175/api/products/search?${params.toString()}`,
+        `${API_URL}/api/products/search?${params.toString()}`,
       );
       const data = await response.json();
       if (data.success) {

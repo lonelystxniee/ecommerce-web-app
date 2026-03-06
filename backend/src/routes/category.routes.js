@@ -10,18 +10,18 @@ const upload = require("../middlewares/upload.middleware");
 router.get("/", categoryController.getAllCategories);
 
 // POST /api/category - Tạo mới (chỉ admin)
-router.post("/", adminMiddleware, categoryController.createCategory);
+router.post("/", authMiddleware, adminMiddleware, categoryController.createCategory);
 
 // POST /api/category/import-excel - Nhập từ Excel (chỉ admin)
-router.post("/import-excel", adminMiddleware, upload.single("file"), categoryController.importCategories);
+router.post("/import-excel", authMiddleware, adminMiddleware, upload.single("file"), categoryController.importCategories);
 //test
 //router.post("/", categoryController.createCategory);
 // PUT /api/category/:id - Cập nhật (chỉ admin)
-router.put("/:id", adminMiddleware, categoryController.updateCategory);
+router.put("/:id", authMiddleware, adminMiddleware, categoryController.updateCategory);
 // test
 //router.put("/:id", categoryController.updateCategory);
 // DELETE /api/category/:id - Xóa (chỉ admin)
-router.delete("/:id", adminMiddleware, categoryController.deleteCategory);
+router.delete("/:id", authMiddleware, adminMiddleware, categoryController.deleteCategory);
 // test
 //router.delete("/:id", categoryController.deleteCategory);
 module.exports = router;

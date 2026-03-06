@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 const ProductManagement = () => {
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
   const [products, setProducts] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -43,7 +44,7 @@ const ProductManagement = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch("http://localhost:5175/api/category");
+      const res = await fetch(`${API_URL}/api/category`);
       const data = await res.json();
       if (data.success) {
         setCategories(data.categories || data.data || []);
@@ -56,7 +57,7 @@ const ProductManagement = () => {
   const fetchProducts = async (page = currentPage, search = searchTerm, categoryId = filterCategory, sortOrder = sort) => {
     try {
       const token = localStorage.getItem("token");
-      let url = `http://localhost:5175/api/products?page=${page}&limit=${LIMIT}`;
+      let url = `${API_URL}/api/products?page=${page}&limit=${LIMIT}`;
 
       const hasFilters = search.trim() || categoryId || sortOrder !== "newest";
       if (hasFilters) {
@@ -67,7 +68,7 @@ const ProductManagement = () => {
           ...(categoryId && { categoryId }),
           ...(sortOrder && { sort: sortOrder }),
         });
-        url = `http://localhost:5175/api/products/search?${queryParams.toString()}`;
+        url = `${API_URL}/api/products/search?${queryParams.toString()}`;
       }
 
       const res = await fetch(url, {
@@ -151,8 +152,8 @@ const ProductManagement = () => {
 
     try {
       const url = isEditMode
-        ? `http://localhost:5175/api/products/${editingProductId}`
-        : "http://localhost:5175/api/products";
+        ? `${API_URL}/api/products/${editingProductId}`
+        : `${API_URL}/api/products`;
       const method = isEditMode ? "PUT" : "POST";
       const token = localStorage.getItem("token");
 
@@ -212,7 +213,7 @@ const ProductManagement = () => {
       const token = localStorage.getItem("token");
 
       console.log("Đang tải tệp lên server...");
-      const res = await fetch("http://localhost:5175/api/products/import-excel", {
+      const res = await fetch(`${API_URL}/api/products/import-excel`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -280,7 +281,7 @@ const ProductManagement = () => {
   const handleDelete = async (id) => {
     if (window.confirm("Xóa sản phẩm này?")) {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:5175/api/products/${id}`, {
+      const res = await fetch(`${API_URL}/api/products/${id}`, {
         method: "DELETE",
         headers: {
           "Authorization": `Bearer ${token}`

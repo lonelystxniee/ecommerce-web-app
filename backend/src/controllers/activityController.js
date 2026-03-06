@@ -55,7 +55,7 @@ exports.getAllActivities = async (req, res) => {
             const User = require("../models/User"); // Dynamic require to avoid circular dep if any
             const matchingUsers = await User.find({
                 $or: [
-                    { name: { $regex: q, $options: "i" } },
+                    { fullName: { $regex: q, $options: "i" } },
                     { email: { $regex: q, $options: "i" } }
                 ]
             }).select("_id");
@@ -75,7 +75,7 @@ exports.getAllActivities = async (req, res) => {
 
         const [activities, total] = await Promise.all([
             ActivityLog.find(query)
-                .populate("userId", "name email")
+                .populate("userId", "fullName email")
                 .sort(sortOption)
                 .skip(skip)
                 .limit(limit),

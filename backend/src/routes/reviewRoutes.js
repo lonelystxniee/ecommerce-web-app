@@ -10,17 +10,16 @@ const adminMiddleware = require("../middlewares/admin.middleware");
 router.get("/:productID", reviewController.getProductReviews);
 
 // Admin: Get all reviews (Protected, Admin)
-router.get("/", adminMiddleware, reviewController.getAllReviewsAdmin);
+router.get("/", reviewController.getAllReviewsAdmin);
 
 // Create a new review (Protected, User)
 router.post(
     "/",
-    authMiddleware,
     upload.array("images", 10), // This will handle both images and videos
     reviewController.createReview
 );
 
 // Admin: Delete a review (Protected, Admin)
-router.delete("/:id", adminMiddleware, reviewController.deleteReviewAdmin);
+router.delete("/:id", reviewController.deleteReviewAdmin);
 
 module.exports = router;

@@ -7,18 +7,20 @@ const upload = require("../middlewares/upload.middleware");
 
 router.get("/search", productController.searchProduct);
 router.get("/", productController.getAllProducts);
-router.delete("/:id", productController.deleteProduct);
-router.put("/:id", upload.array("images", 10), productController.updateProduct);
+router.delete("/:id", authMiddleware, productController.deleteProduct);
+router.put("/:id", authMiddleware, upload.array("images", 10), productController.updateProduct);
 router.get("/:id", productController.getProductById);
 
 router.post(
     "/",
+    authMiddleware,
     adminMiddleware,
     upload.array("images", 10),
     productController.createProduct
 );
 router.post(
     "/import-excel",
+    authMiddleware,
     adminMiddleware,
     upload.single("file"),
     productController.importExcel
