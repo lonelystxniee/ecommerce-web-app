@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { ChevronRight, CreditCard, Truck, Receipt, Tag } from "lucide-react";
@@ -28,22 +28,47 @@ const Checkout = () => {
   const [discount, setDiscount] = useState(0);
   const [appliedCode, setAppliedCode] = useState("");
   const [isApplying, setIsApplying] = useState(false);
+  const [availablePromos, setAvailablePromos] = useState([]);
+
+  useEffect(() => {
+    const fetchPromos = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/promotions/active-banner`);
+        const data = await res.json();
+        if (data.success) {
+          setAvailablePromos(data.promos);
+        }
+      } catch (error) {
+        console.error("Lỗi lấy danh sách khuyến mãi:", error);
+      }
+    };
+    fetchPromos();
+  }, []);
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
 
-  const handleApplyPromo = async () => {
-    if (!promoCode.trim()) return;
+  const handleApplyPromo = async (codeOverride) => {
+    const codeToApply = codeOverride || promoCode;
+    if (!codeToApply.trim()) return;
+
+    // Nếu mã đang click là mã đã áp dụng -> Huỷ bỏ
+    if (appliedCode === codeToApply) {
+      handleCancelPromo();
+      return;
+    }
+
     setIsApplying(true);
     try {
       const res = await fetch(`${API_URL}/api/promotions/check`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: promoCode, orderValue: totalPrice }),
+        body: JSON.stringify({ code: codeToApply, orderValue: totalPrice }),
       });
       const data = await res.json();
       if (data.success) {
         setDiscount(data.discountAmount);
         setAppliedCode(data.code);
+        setPromoCode(data.code);
         toast.success(
           `Áp dụng mã thành công! Bạn được giảm ${data.discountAmount.toLocaleString()}đ`,
         );
@@ -57,6 +82,13 @@ const Checkout = () => {
     } finally {
       setIsApplying(false);
     }
+  };
+
+  const handleCancelPromo = () => {
+    setDiscount(0);
+    setAppliedCode("");
+    setPromoCode("");
+    toast.success("Đã huỷ bỏ mã giảm giá");
   };
 
   // --- TỔNG TIỀN SAU GIẢM GIÁ ---
@@ -307,17 +339,64 @@ const Checkout = () => {
                       className="flex-1 p-2 rounded-lg border border-gray-300 text-xs outline-none uppercase font-bold focus:border-[#9d0b0f]"
                     />
                     <button
-                      onClick={handleApplyPromo}
+                      onClick={() => handleApplyPromo()}
                       disabled={isApplying}
-                      className="bg-[#9d0b0f] text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase hover:bg-black transition-all disabled:bg-gray-400"
+                      className={`${appliedCode && promoCode === appliedCode ? "bg-stone-500" : "bg-[#9d0b0f]"} text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase hover:bg-black transition-all disabled:bg-gray-400`}
                     >
-                      {isApplying ? "..." : "ÁP DỤNG"}
+                      {isApplying ? "..." : (appliedCode && promoCode === appliedCode ? "HUỶ BỎ" : "ÁP DỤNG")}
                     </button>
                   </div>
                   {discount > 0 && (
                     <p className="text-[10px] text-green-600 font-bold mt-2 italic flex items-center gap-1 animate-pulse">
                       ✓ Đã giảm: -{discount.toLocaleString()}đ ({appliedCode})
                     </p>
+                  )}
+
+                  {/* DANH SÁCH MÃ GIẢM GIÁ KHẢ DỤNG */}
+                  {availablePromos.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-dashed border-gray-200">
+                      <p className="text-[9px] font-black text-[#88694f] uppercase mb-3 text-center">
+                        Mã giảm giá dành cho bạn
+                      </p>
+                      <div className="space-y-2">
+                        {availablePromos.map((promo) => (
+                          <div
+                            key={promo._id}
+                            onClick={() => handleApplyPromo(promo.code)}
+                            className={`p-3 rounded-xl border-2 transition-all cursor-pointer group flex items-center justify-between ${appliedCode === promo.code
+                              ? "border-[#9d0b0f] bg-red-50"
+                              : "border-white bg-white hover:border-[#faa519] shadow-sm"
+                              }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-[#9d0b0f]/10 flex items-center justify-center text-[#9d0b0f]">
+                                <Tag size={16} />
+                              </div>
+                              <div>
+                                <p className="text-[11px] font-black text-[#9d0b0f] uppercase">
+                                  {promo.code}
+                                </p>
+                                <p className="text-[9px] font-bold text-gray-500 line-clamp-1">
+                                  {promo.description}
+                                </p>
+                              </div>
+                            </div>
+                            <div
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleApplyPromo(promo.code);
+                              }}
+                              className={`text-[9px] font-black px-3 py-1 rounded-full transition-all ${appliedCode === promo.code
+                                ? "bg-[#9d0b0f] text-white"
+                                : "bg-gray-100 text-[#88694f] group-hover:bg-[#faa519] group-hover:text-white"
+                                }`}
+                            >
+                              {appliedCode === promo.code ? "ĐÃ ÁP DỤNG" : "ÁP DỤNG"}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
 

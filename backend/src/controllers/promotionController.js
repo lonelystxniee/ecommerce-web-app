@@ -108,3 +108,18 @@ exports.checkCode = async (req, res) => {
         res.status(500).json({ success: false });
     }
 };
+
+// 6. Lấy các mã đang chạy Banner/Popup (User)
+exports.getActiveBanner = async (req, res) => {
+    try {
+        const activePromos = await Promotion.find({
+            status: "ACTIVE",
+            $or: [{ isBannerActive: true }, { isPopupActive: true }],
+            endDate: { $gt: new Date() }
+        }).sort({ updatedAt: -1 });
+
+        res.json({ success: true, promos: activePromos });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};

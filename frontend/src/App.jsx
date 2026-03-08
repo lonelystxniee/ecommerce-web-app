@@ -13,7 +13,6 @@ import AccountPage from "./pages/AccountPage";
 import ResetPassword from "./pages/ResetPassword";
 import SearchPage from "./pages/SearchPage";
 import ForgotPassword from "./pages/ForgotPassword";
-import LuckyWheel from "./pages/LuckyWheel";
 import OrderTracking from "./pages/OrderTracking";
 import VnpayReturn from "./pages/VnpayReturn";
 import { Toaster } from "react-hot-toast";
@@ -38,7 +37,6 @@ function App() {
               <Route path="/profile" element={<AccountPage />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/lucky-wheel" element={<LuckyWheel />} />
               <Route path="/order-tracking/:id" element={<OrderTracking />} />
               <Route path="/vnpay-return" element={<VnpayReturn />} />
             </Routes>

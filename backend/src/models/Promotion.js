@@ -13,6 +13,12 @@ const PromotionSchema = new mongoose.Schema(
         usageLimit: Number, // Tổng lượt sử dụng
         usedCount: { type: Number, default: 0 },
         status: { type: String, default: "ACTIVE" }, // ACTIVE, EXPIRED, INACTIVE
+
+        // Banner & Popup fields
+        isBannerActive: { type: Boolean, default: false },
+        bannerText: String,
+        bannerColor: { type: String, default: "linear-gradient(90deg, #FF416C 0%, #FF4B2B 100%)" },
+        isPopupActive: { type: Boolean, default: false },
     },
     { timestamps: true },
 );

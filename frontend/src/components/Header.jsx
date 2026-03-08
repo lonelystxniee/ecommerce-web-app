@@ -155,10 +155,11 @@ const Header = () => {
       </header>
 
       <div
-        className={`fixed top-0 left-0 w-full bg-white shadow-md z-100 transition-all duration-500 transform bg-[url('https://honglam.vn/_next/static/media/bg-body.9bfd1cb8.png')] ${isScrolled
-          ? "translate-y-0 opacity-100"
-          : "-translate-y-full opacity-0 pointer-events-none"
-          }`}
+        className={`fixed top-0 left-0 w-full bg-white shadow-md z-100 transition-all duration-500 transform bg-[url('https://honglam.vn/_next/static/media/bg-body.9bfd1cb8.png')] ${
+          isScrolled
+            ? "translate-y-0 opacity-100"
+            : "-translate-y-full opacity-0 pointer-events-none"
+        }`}
       >
         <div className="flex items-center gap-6 px-4 py-2 mx-auto max-w-300">
           <div className="flex-1 w-full">
@@ -183,7 +184,6 @@ const Header = () => {
     </>
   );
 };
-
 
 const AuthAndCart = ({
   totalItems,
@@ -255,17 +255,7 @@ const AuthAndCart = ({
             />{" "}
             Quản lý đơn hàng
           </Link>
-          <Link
-            to="/lucky-wheel"
-            onClick={() => setIsDropdownOpen(false)}
-            className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[#ce450a] animate-pulse group"
-          >
-            <Trophy
-              size={18}
-              className="text-[#faa519]"
-            />{" "}
-            Vòng quay may mắn
-          </Link>
+
           <Link
             to="/account?tab=favorites"
             onClick={() => setIsDropdownOpen(false)}

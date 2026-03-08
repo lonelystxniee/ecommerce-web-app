@@ -1,7 +1,15 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
-import { Truck, Headset, CreditCard, Gift, ChevronRight, Filter, SlidersHorizontal, Trophy } from "lucide-react";
+import {
+  Truck,
+  Headset,
+  CreditCard,
+  Gift,
+  ChevronRight,
+  Filter,
+  SlidersHorizontal,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRef } from "react";
 
@@ -360,9 +368,11 @@ const Home = () => {
         <SectionHeading title="Khám phá tất cả sản phẩm" />
 
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8 bg-white/50 p-6 rounded-[32px] border border-[#e0be91]/30 backdrop-blur-sm">
-          <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+          <div className="flex flex-wrap items-center w-full gap-4 md:w-auto">
             <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-black uppercase text-[#88694f] ml-1 tracking-widest">Danh mục</span>
+              <span className="text-[10px] font-black uppercase text-[#88694f] ml-1 tracking-widest">
+                Danh mục
+              </span>
               <select
                 value={filters.categoryId}
                 onChange={(e) => {
@@ -373,13 +383,17 @@ const Home = () => {
               >
                 <option value="">Tất cả sản phẩm</option>
                 {categories.map((cat) => (
-                  <option key={cat._id} value={cat._id}>{cat.name}</option>
+                  <option key={cat._id} value={cat._id}>
+                    {cat.name}
+                  </option>
                 ))}
               </select>
             </div>
 
             <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-black uppercase text-[#88694f] ml-1 tracking-widest">Giá từ</span>
+              <span className="text-[10px] font-black uppercase text-[#88694f] ml-1 tracking-widest">
+                Giá từ
+              </span>
               <input
                 type="number"
                 placeholder="0"
@@ -393,7 +407,9 @@ const Home = () => {
             </div>
 
             <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-black uppercase text-[#88694f] ml-1 tracking-widest">Đến</span>
+              <span className="text-[10px] font-black uppercase text-[#88694f] ml-1 tracking-widest">
+                Đến
+              </span>
               <input
                 type="number"
                 placeholder="999,999"
@@ -407,8 +423,10 @@ const Home = () => {
             </div>
           </div>
 
-          <div className="flex flex-col gap-1 w-full md:w-auto">
-            <span className="text-[10px] font-black uppercase text-[#88694f] ml-1 tracking-widest">Sắp xếp</span>
+          <div className="flex flex-col w-full gap-1 md:w-auto">
+            <span className="text-[10px] font-black uppercase text-[#88694f] ml-1 tracking-widest">
+              Sắp xếp
+            </span>
             <select
               value={filters.sort}
               onChange={(e) => {
@@ -890,34 +908,4 @@ const GiftCard = ({ id, title, price, img }) => {
   );
 };
 
-{/* FLOATING LUCKY WHEEL BUTTON */ }
-const LuckyWheelButton = () => {
-  return (
-    <Link
-      to="/lucky-wheel"
-      className="fixed bottom-24 right-6 z-[100] flex flex-col items-center group"
-    >
-      <div className="relative">
-        <div className="absolute inset-0 bg-[#f39200] rounded-full blur-lg opacity-40 group-hover:opacity-70 animate-pulse"></div>
-        <div className="relative bg-gradient-to-br from-[#9d0b0f] to-[#f39200] p-4 rounded-full shadow-2xl border-4 border-white transform group-hover:scale-110 transition-all duration-300 active:scale-95">
-          <Trophy className="text-white w-8 h-8 md:w-10 md:h-10 animate-bounce" />
-        </div>
-        <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-white px-4 py-2 rounded-xl shadow-xl border border-[#9d0b0f]/20 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0 pointer-events-none">
-          <p className="text-[#9d0b0f] font-black text-xs uppercase tracking-widest">
-            Săn Voucher 🎁
-          </p>
-          <div className="absolute top-1/2 -right-2 -translate-y-1/2 w-4 h-4 bg-white rotate-45 border-r border-t border-[#9d0b0f]/20"></div>
-        </div>
-      </div>
-    </Link>
-  );
-};
-
-const HomeWithButton = () => (
-  <>
-    <Home />
-    <LuckyWheelButton />
-  </>
-);
-
-export default HomeWithButton;
+export default Home;

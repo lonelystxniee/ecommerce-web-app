@@ -443,27 +443,121 @@ const PersonalInfo = ({ user: initialUser }) => {
 };
 
 // 2. Tab Quản lý đơn hàng nâng cấp
-const OrderManagement = () => (
-  <div className="p-12 text-center bg-white border border-gray-100 shadow-2xl animate-zoomIn rounded-3xl">
-    <div className="w-24 h-24 bg-[#fdfaf5] rounded-full flex items-center justify-center mx-auto mb-6 text-[#800a0d]/20">
-      <Package size={48} />
+const OrderManagement = () => {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const savedUser = JSON.parse(localStorage.getItem("user"));
+        const token = localStorage.getItem("token");
+        const userId = savedUser?.id || savedUser?._id;
+
+        if (!userId) return;
+
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/my-orders/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success) {
+          setOrders(data.orders);
+        }
+      } catch (error) {
+        console.error("Lỗi lấy danh sách đơn hàng:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center p-20 bg-white shadow-2xl rounded-3xl animate-pulse">
+        <RefreshCcw className="animate-spin text-[#800a0d] mb-4" size={40} />
+        <span className="font-bold text-[#88694f]">Đang tải đơn hàng...</span>
+      </div>
+    );
+  }
+
+  if (orders.length === 0) {
+    return (
+      <div className="p-12 text-center bg-white border border-gray-100 shadow-2xl animate-zoomIn rounded-3xl">
+        <div className="w-24 h-24 bg-[#fdfaf5] rounded-full flex items-center justify-center mx-auto mb-6 text-[#800a0d]/20">
+          <Package size={48} />
+        </div>
+        <h2 className="text-2xl font-bold text-[#3e2714] mb-2 tracking-tight">
+          Lịch sử đơn hàng trống
+        </h2>
+        <p className="max-w-sm mx-auto mb-8 text-sm italic font-medium text-gray-500">
+          Hình như bạn chưa có đơn hàng nào tại Hồng Lam. Hãy khám phá những sản
+          phẩm quà tặng tinh hoa của chúng tôi nhé!
+        </p>
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 bg-[#800a0d] text-white px-8 py-3 rounded-[30px] font-bold text-sm tracking-widest hover:rounded-md shadow-lg transition-all active:scale-95"
+        >
+          <ShoppingBag size={16} />
+          Tiếp tục mua sắm
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4 p-8 mb-6 bg-white border border-gray-100 shadow-xl rounded-3xl">
+        <div className="w-12 h-12 bg-[#fdfaf5] rounded-xl flex items-center justify-center text-[#800a0d] shadow-sm">
+          <Package size={24} />
+        </div>
+        <div>
+          <h2 className="text-2xl font-black text-[#800a0d] tracking-tighter">Lịch sử đơn hàng</h2>
+          <p className="text-xs font-medium text-gray-400">Bạn có tổng cộng {orders.length} đơn hàng</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6">
+        {orders.map((order) => (
+          <div key={order._id} className="p-6 transition-all bg-white border border-gray-100 shadow-lg group rounded-3xl hover:shadow-2xl animate-fadeIn">
+            <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+              <div className="space-y-1">
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#88694f]">Mã đơn hàng</span>
+                  <span className="px-2 py-0.5 bg-gray-50 rounded-lg text-[10px] font-bold text-gray-500">#{order._id.slice(-8).toUpperCase()}</span>
+                </div>
+                <h3 className="text-lg font-black text-[#800a0d]">{order.items[0]?.name} {order.items.length > 1 ? `và ${order.items.length - 1} món khác` : ""}</h3>
+                <p className="text-xs font-bold text-gray-400">Ngày đặt: {new Date(order.createdAt).toLocaleDateString("vi-VN")}</p>
+              </div>
+
+              <div className="flex flex-col items-start gap-4 md:items-end">
+                <div className="flex flex-col items-start md:items-end">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#88694f] mb-1">Trạng thái</span>
+                  <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter ${order.status === 'PENDING' ? 'bg-amber-100 text-amber-700' :
+                    order.status === 'COMPLETED' || order.status === 'DELIVERED' ? 'bg-green-100 text-green-700' :
+                      order.status === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
+                    }`}>
+                    {order.status}
+                  </span>
+                </div>
+                <div className="flex flex-col items-start md:items-end">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#88694f] mb-1">Tổng tiền</span>
+                  <span className="text-xl font-black text-[#800a0d]">{order.totalPrice.toLocaleString()}đ</span>
+                </div>
+                <Link
+                  to={`/order-tracking/${order._id}`}
+                  className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-[#88694f] hover:text-[#800a0d] transition-colors group-hover:translate-x-1 duration-300"
+                >
+                  Xem chi tiết hành trình <ChevronRight size={14} />
+                </Link>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
-    <h2 className="text-2xl font-bold text-[#3e2714] mb-2 tracking-tight">
-      Lịch sử đơn hàng trống
-    </h2>
-    <p className="max-w-sm mx-auto mb-8 text-sm italic font-medium text-gray-500">
-      Hình như bạn chưa có đơn hàng nào tại Hồng Lam. Hãy khám phá những sản
-      phẩm quà tặng tinh hoa của chúng tôi nhé!
-    </p>
-    <Link
-      to="/"
-      className="inline-flex items-center gap-2 bg-[#800a0d] text-white px-8 py-3 rounded-[30px] font-bold text-sm tracking-widest hover:rounded-md shadow-lg transition-all active:scale-95"
-    >
-      <ShoppingBag size={16} />
-      Tiếp tục mua sắm
-    </Link>
-  </div>
-);
+  );
+};
 
 // 3. Tab Sản phẩm yêu thích nâng cấp
 const FavoriteProducts = () => (
