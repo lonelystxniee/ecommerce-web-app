@@ -21,8 +21,16 @@ const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState("CUSTOMER");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [activeCount, setActiveCount] = useState(0);
+  const [lockedCount, setLockedCount] = useState(0);
+  const [customerCount, setCustomerCount] = useState(0);
+  const [adminCount, setAdminCount] = useState(0);
+  const [limit] = useState(5);
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [sortOrder, setSortOrder] = useState("newest");
 
   // State cho Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -51,7 +59,16 @@ const UserManagement = () => {
         return;
       }
 
-      const response = await fetch(`${API_URL}/api/auth/users`, {
+      const params = new URLSearchParams({
+        page: currentPage,
+        limit: limit,
+        search: searchTerm,
+        role: "CUSTOMER", // Only fetch customers here
+        status: statusFilter === "ALL" ? "" : statusFilter,
+        sort: sortOrder,
+      });
+
+      const response = await fetch(`${API_URL}/api/auth/users?${params}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -59,6 +76,12 @@ const UserManagement = () => {
       const data = await response.json();
       if (data.success) {
         setUsers(data.users);
+        setTotalPages(data.totalPages);
+        setTotalUsers(data.totalUsers);
+        setActiveCount(data.activeCount);
+        setLockedCount(data.lockedCount);
+        setCustomerCount(data.customerCount);
+        setAdminCount(data.adminCount);
       } else {
         alert(`Lỗi: ${data.message || "Không thể lấy danh sách người dùng"}`);
       }
@@ -71,8 +94,16 @@ const UserManagement = () => {
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    const timeoutId = setTimeout(() => {
+      fetchUsers();
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [currentPage, searchTerm, statusFilter, sortOrder]);
+
+  // Reset to page 1 when filters or search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, sortOrder]);
 
   const handleOpenAddModal = () => {
     setEditMode(false);
@@ -193,18 +224,7 @@ const UserManagement = () => {
     }
   };
 
-  const filteredUsers = users.filter(
-    (user) => {
-      const matchesSearch =
-        user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchesRole = roleFilter === "ALL" || user.role === roleFilter;
-      const matchesStatus = statusFilter === "ALL" || user.status === statusFilter;
-
-      return matchesSearch && matchesRole && matchesStatus;
-    }
-  );
+  const displayUsers = users;
 
   return (
     <div className="p-6 space-y-6 animate-fadeIn">
@@ -236,7 +256,7 @@ const UserManagement = () => {
           </div>
           <div>
             <p className="text-[10px] font-black uppercase text-gray-400">Tổng khách hàng</p>
-            <h3 className="text-2xl font-black text-[#3e2714]">{users.filter(u => u.role === "CUSTOMER").length}</h3>
+            <h3 className="text-2xl font-black text-[#3e2714]">{customerCount}</h3>
           </div>
         </div>
         <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex items-center gap-4">
@@ -245,7 +265,7 @@ const UserManagement = () => {
           </div>
           <div>
             <p className="text-[10px] font-black uppercase text-gray-400">Hoạt động</p>
-            <h3 className="text-2xl font-black text-[#3e2714]">{users.filter(u => u.role === "CUSTOMER" && u.status === "ACTIVE").length}</h3>
+            <h3 className="text-2xl font-black text-[#3e2714]">{activeCount}</h3>
           </div>
         </div>
         <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex items-center gap-4">
@@ -254,7 +274,7 @@ const UserManagement = () => {
           </div>
           <div>
             <p className="text-[10px] font-black uppercase text-gray-400">Tạm khóa</p>
-            <h3 className="text-2xl font-black text-[#3e2714]">{users.filter(u => u.role === "CUSTOMER" && u.status === "LOCKED").length}</h3>
+            <h3 className="text-2xl font-black text-[#3e2714]">{lockedCount}</h3>
           </div>
         </div>
         <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex items-center gap-4">
@@ -263,7 +283,7 @@ const UserManagement = () => {
           </div>
           <div>
             <p className="text-[10px] font-black uppercase text-gray-400">Cấp quản trị</p>
-            <h3 className="text-2xl font-black text-[#3e2714]">{users.filter(u => u.role !== "CUSTOMER").length}</h3>
+            <h3 className="text-2xl font-black text-[#3e2714]">{adminCount}</h3>
           </div>
         </div>
       </div>
@@ -290,12 +310,13 @@ const UserManagement = () => {
             <div className="min-w-[160px]">
               <select
                 className="w-full px-4 py-3.5 bg-[#f7f4ef] rounded-2xl outline-none focus:border-[#f39200] border-2 border-transparent transition-all font-bold text-[#3e2714]"
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
               >
-                <option value="ALL">Tất cả vai trò</option>
-                <option value="CUSTOMER">Khách hàng</option>
-                <option value="ADMIN">Quản trị viên</option>
+                <option value="newest">Mới nhất</option>
+                <option value="oldest">Cũ nhất</option>
+                <option value="name_asc">Tên A-Z</option>
+                <option value="name_desc">Tên Z-A</option>
               </select>
             </div>
             <div className="min-w-[160px]">
@@ -341,16 +362,17 @@ const UserManagement = () => {
                     </div>
                   </td>
                 </tr>
-              ) : filteredUsers.length === 0 ? (
+              ) : displayUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-8 py-20 text-center">
-                    <p className="text-[#88694f] font-medium">
-                      Không tìm thấy người dùng nào
-                    </p>
+                  <td
+                    colSpan="7"
+                    className="px-8 py-20 text-center text-[#88694f]"
+                  >
+                    Không tìm thấy người dùng nào
                   </td>
                 </tr>
               ) : (
-                filteredUsers.map((user) => (
+                displayUsers.map((user) => (
                   <tr
                     key={user._id}
                     className="hover:bg-[#f7f4ef]/50 transition-colors group"
@@ -445,6 +467,62 @@ const UserManagement = () => {
           </table>
         </div>
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex flex-col items-center justify-between gap-4 mt-8 md:flex-row">
+          <p className="text-sm font-medium text-[#88694f]">
+            Hiển thị <span className="font-bold text-[#3e2714]">{displayUsers.length}</span> trên <span className="font-bold text-[#3e2714]">{totalUsers}</span> người dùng
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              className="px-4 py-2 text-sm font-bold text-[#9d0b0f] bg-white border border-[#9d0b0f]/20 rounded-xl hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+            >
+              Trước
+            </button>
+
+            <div className="flex items-center gap-1">
+              {[...Array(totalPages)].map((_, i) => {
+                const pageNum = i + 1;
+                if (
+                  pageNum === 1 ||
+                  pageNum === totalPages ||
+                  (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                ) {
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-10 h-10 rounded-xl text-sm font-bold transition-all shadow-sm ${currentPage === pageNum
+                        ? "bg-[#9d0b0f] text-white"
+                        : "bg-white text-[#9d0b0f] border border-[#9d0b0f]/20 hover:bg-red-50"
+                        }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                } else if (
+                  (pageNum === 2 && currentPage > 3) ||
+                  (pageNum === totalPages - 1 && currentPage < totalPages - 2)
+                ) {
+                  return <span key={pageNum} className="px-1 text-[#88694f]">...</span>;
+                }
+                return null;
+              })}
+            </div>
+
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              className="px-4 py-2 text-sm font-bold text-[#9d0b0f] bg-white border border-[#9d0b0f]/20 rounded-xl hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+            >
+              Sau
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* MODAL THÊM / SỬA NGƯỜI DÙNG */}
       {isModalOpen && (

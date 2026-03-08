@@ -634,8 +634,57 @@ exports.lockAccount = async (req, res) => {
 
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password");
-    res.status(200).json({ success: true, users });
+    const { page = 1, limit = 10, search = "", role = "", status = "", sort = "-createdAt" } = req.query;
+    const skip = (page - 1) * limit;
+
+    const query = {};
+    if (search) {
+      query.$or = [
+        { fullName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+    }
+    if (role && role !== "ALL") {
+      query.role = role;
+    }
+    if (status && status !== "ALL") {
+      query.status = status;
+    }
+
+    const totalUsers = await User.countDocuments(query);
+
+    // Thống kê tổng thể cho dashboard
+    const customerCount = await User.countDocuments({ role: "CUSTOMER" });
+    const adminCount = await User.countDocuments({ role: "ADMIN" });
+
+    // Thống kê theo query hiện tại (search/status/role)
+    const activeCount = await User.countDocuments({ ...query, status: "ACTIVE" });
+    const lockedCount = await User.countDocuments({ ...query, status: "LOCKED" });
+
+    // Xử lý sort
+    let sortOption = {};
+    if (sort === "name_asc") sortOption = { fullName: 1 };
+    else if (sort === "name_desc") sortOption = { fullName: -1 };
+    else if (sort === "oldest") sortOption = { createdAt: 1 };
+    else sortOption = { createdAt: -1 }; // newest is default
+
+    const users = await User.find(query)
+      .select("-password")
+      .sort(sortOption)
+      .skip(skip)
+      .limit(limit);
+
+    res.status(200).json({
+      success: true,
+      users,
+      totalUsers,
+      customerCount,
+      adminCount,
+      activeCount,
+      lockedCount,
+      totalPages: Math.ceil(totalUsers / limit),
+      currentPage: parseInt(page),
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
