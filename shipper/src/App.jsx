@@ -74,6 +74,7 @@ function App() {
         alert(data.message || "Không thể cập nhật trạng thái này!");
       }
     } catch (e) {
+      console.log(e);
       alert("Lỗi server!");
     }
   };
@@ -98,9 +99,9 @@ function App() {
         {/* APP CONTENT */}
         <div className="h-full w-full bg-[#f4f4f4] overflow-y-auto scrollbar-hide pt-12">
           <header className="bg-gradient-to-r from-[#f26522] to-[#9d0b0f] text-white p-5 pt-8 shadow-lg">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center border border-white/20">
+                <div className="flex items-center justify-center w-10 h-10 border rounded-full bg-white/20 border-white/20">
                   <User size={20} />
                 </div>
                 <div>
@@ -120,7 +121,7 @@ function App() {
           </header>
 
           {/* TAB SWITCHER */}
-          <div className="flex p-4 gap-2">
+          <div className="flex gap-2 p-4">
             <button
               onClick={() => setActiveTab("todo")}
               className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === "todo" ? "bg-[#f26522] text-white shadow-md" : "bg-white text-gray-400"}`}
@@ -136,7 +137,7 @@ function App() {
           </div>
 
           {/* LIST ORDERS */}
-          <div className="px-4 pb-28 space-y-4">
+          <div className="px-4 space-y-4 pb-28">
             {orders.length === 0 ? (
               <div className="text-center py-20 bg-white rounded-[32px] border border-dashed text-gray-400">
                 <Package size={48} className="mx-auto mb-2 opacity-20" />
@@ -148,7 +149,7 @@ function App() {
                   key={order._id}
                   className="bg-white rounded-[28px] shadow-sm border border-gray-100 overflow-hidden"
                 >
-                  <div className="flex justify-between items-center px-5 py-3 bg-gray-50/50 border-b">
+                  <div className="flex items-center justify-between px-5 py-3 border-b bg-gray-50/50">
                     <span className="text-[10px] font-black text-[#f26522] uppercase">
                       {order.ghnOrderCode}
                     </span>
@@ -166,26 +167,26 @@ function App() {
                         <User size={16} />
                       </div>
                       <div>
-                        <h4 className="font-bold text-sm text-gray-800">
+                        <h4 className="text-sm font-bold text-gray-800">
                           {order.customerInfo.fullName}
                         </h4>
-                        <p className="text-xs text-blue-500 font-bold">
+                        <p className="text-xs font-bold text-blue-500">
                           {order.customerInfo.phone}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex gap-3 text-xs text-gray-500 font-medium">
+                    <div className="flex gap-3 text-xs font-medium text-gray-500">
                       <MapPin size={16} className="text-red-500 shrink-0" />
                       <p>{order.customerInfo.address}</p>
                     </div>
 
-                    <div className="flex justify-between items-center pt-3 border-t border-dashed">
+                    <div className="flex items-center justify-between pt-3 border-t border-dashed">
                       <div>
                         <p className="text-[9px] text-gray-400 font-bold uppercase">
                           Thu hộ COD
                         </p>
-                        <p className="font-black text-lg text-red-600">
+                        <p className="text-lg font-black text-red-600">
                           {order.totalPrice.toLocaleString()}đ
                         </p>
                       </div>
