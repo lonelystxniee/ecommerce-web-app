@@ -22,6 +22,8 @@ const AdminManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ALL");
 
   // State cho Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -55,7 +57,7 @@ const AdminManagement = () => {
       // Lọc chỉ lấy ADMIN và STAFF
       if (data.success) {
         setUsers(
-          data.users.filter((u) => u.role === "ADMIN" || u.role === "STAFF"),
+          data.users.filter((u) => u.role === "ADMIN"),
         );
       }
     } catch (error) {
@@ -194,9 +196,16 @@ const AdminManagement = () => {
   };
 
   const filteredUsers = users.filter(
-    (user) =>
-      user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()),
+    (user) => {
+      const matchesSearch =
+        user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesRole = roleFilter === "ALL" || user.role === roleFilter;
+      const matchesStatus = statusFilter === "ALL" || user.status === statusFilter;
+
+      return matchesSearch && matchesRole && matchesStatus;
+    }
   );
 
   return (
@@ -272,18 +281,43 @@ const AdminManagement = () => {
 
       {/* Tìm kiếm */}
       <div className="bg-white/80 p-6 rounded-3xl shadow-sm border border-[#9d0b0f]/10">
-        <div className="relative max-w-2xl">
-          <Search
-            className="absolute left-4 top-3.5 text-[#9d0b0f]"
-            size={20}
-          />
-          <input
-            type="text"
-            placeholder="Tìm kiếm quản trị viên..."
-            className="w-full pl-12 pr-4 py-3.5 bg-[#f7f4ef] rounded-2xl outline-none focus:border-[#f39200] border-2 border-transparent transition-all"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search
+              className="absolute left-4 top-3.5 text-[#9d0b0f]"
+              size={20}
+            />
+            <input
+              type="text"
+              placeholder="Tìm kiếm quản trị viên..."
+              className="w-full pl-12 pr-4 py-3.5 bg-[#f7f4ef] rounded-2xl outline-none focus:border-[#f39200] border-2 border-transparent transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-wrap gap-4">
+            <div className="min-w-[160px]">
+              <select
+                className="w-full px-4 py-3.5 bg-[#f7f4ef] rounded-2xl outline-none focus:border-[#f39200] border-2 border-transparent transition-all font-bold text-[#3e2714]"
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+              >
+                <option value="ALL">Tất cả vai trò</option>
+                <option value="ADMIN">ADMIN</option>
+              </select>
+            </div>
+            <div className="min-w-[160px]">
+              <select
+                className="w-full px-4 py-3.5 bg-[#f7f4ef] rounded-2xl outline-none focus:border-[#f39200] border-2 border-transparent transition-all font-bold text-[#3e2714]"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="ALL">Tất cả trạng thái</option>
+                <option value="ACTIVE">Hoạt động</option>
+                <option value="LOCKED">Tạm khóa</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -356,22 +390,20 @@ const AdminManagement = () => {
                     </td>
                     <td className="px-8 py-6 text-center">
                       <span
-                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1 ${
-                          user.role === "ADMIN"
-                            ? "bg-red-100 text-red-600"
-                            : "bg-blue-100 text-blue-600"
-                        }`}
+                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1 ${user.role === "ADMIN"
+                          ? "bg-red-100 text-red-600"
+                          : "bg-blue-100 text-blue-600"
+                          }`}
                       >
                         <Shield size={12} /> {user.role}
                       </span>
                     </td>
                     <td className="px-8 py-6 text-center">
                       <span
-                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold ${
-                          user.status === "ACTIVE"
-                            ? "bg-green-100 text-green-600"
-                            : "bg-yellow-100 text-yellow-600"
-                        }`}
+                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold ${user.status === "ACTIVE"
+                          ? "bg-green-100 text-green-600"
+                          : "bg-yellow-100 text-yellow-600"
+                          }`}
                       >
                         {user.status === "ACTIVE"
                           ? "ĐANG HOẠT ĐỘNG"
@@ -394,11 +426,10 @@ const AdminManagement = () => {
                         </button>
                         <button
                           onClick={() => handleToggleStatus(user)}
-                          className={`p-2 transition-all rounded-xl ${
-                            user.status === "ACTIVE"
-                              ? "text-orange-500 hover:bg-orange-50"
-                              : "text-green-500 hover:bg-green-50"
-                          }`}
+                          className={`p-2 transition-all rounded-xl ${user.status === "ACTIVE"
+                            ? "text-orange-500 hover:bg-orange-50"
+                            : "text-green-500 hover:bg-green-50"
+                            }`}
                           title={
                             user.status === "ACTIVE"
                               ? "Khóa tài khoản"
@@ -499,7 +530,6 @@ const AdminManagement = () => {
                       }
                     >
                       <option value="ADMIN">ADMIN</option>
-                      <option value="STAFF">STAFF</option>
                     </select>
                   </div>
                 </div>

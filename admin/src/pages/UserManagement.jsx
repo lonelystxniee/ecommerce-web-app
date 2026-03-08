@@ -21,6 +21,8 @@ const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("CUSTOMER");
+  const [statusFilter, setStatusFilter] = useState("ALL");
 
   // State cho Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -192,10 +194,16 @@ const UserManagement = () => {
   };
 
   const filteredUsers = users.filter(
-    (user) =>
-      user.role === "CUSTOMER" && (
+    (user) => {
+      const matchesSearch =
         user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()))
+        user.email.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesRole = roleFilter === "ALL" || user.role === roleFilter;
+      const matchesStatus = statusFilter === "ALL" || user.status === statusFilter;
+
+      return matchesSearch && matchesRole && matchesStatus;
+    }
   );
 
   return (
@@ -264,18 +272,44 @@ const UserManagement = () => {
 
       {/* Tìm kiếm */}
       <div className="bg-white/80 p-6 rounded-3xl shadow-sm border border-[#9d0b0f]/10">
-        <div className="relative max-w-2xl">
-          <Search
-            className="absolute left-4 top-3.5 text-[#9d0b0f]"
-            size={20}
-          />
-          <input
-            type="text"
-            placeholder="Tìm nhanh người dùng theo tên hoặc email..."
-            className="w-full pl-12 pr-4 py-3.5 bg-[#f7f4ef] rounded-2xl outline-none focus:border-[#f39200] border-2 border-transparent transition-all"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search
+              className="absolute left-4 top-3.5 text-[#9d0b0f]"
+              size={20}
+            />
+            <input
+              type="text"
+              placeholder="Tìm nhanh người dùng theo tên hoặc email..."
+              className="w-full pl-12 pr-4 py-3.5 bg-[#f7f4ef] rounded-2xl outline-none focus:border-[#f39200] border-2 border-transparent transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-wrap gap-4">
+            <div className="min-w-[160px]">
+              <select
+                className="w-full px-4 py-3.5 bg-[#f7f4ef] rounded-2xl outline-none focus:border-[#f39200] border-2 border-transparent transition-all font-bold text-[#3e2714]"
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+              >
+                <option value="ALL">Tất cả vai trò</option>
+                <option value="CUSTOMER">Khách hàng</option>
+                <option value="ADMIN">Quản trị viên</option>
+              </select>
+            </div>
+            <div className="min-w-[160px]">
+              <select
+                className="w-full px-4 py-3.5 bg-[#f7f4ef] rounded-2xl outline-none focus:border-[#f39200] border-2 border-transparent transition-all font-bold text-[#3e2714]"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="ALL">Tất cả trạng thái</option>
+                <option value="ACTIVE">Hoạt động</option>
+                <option value="LOCKED">Bị khóa</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -464,13 +498,11 @@ const UserManagement = () => {
                   </label>
                   <input
                     required
-                    className="w-full px-5 py-4 bg-white rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all shadow-sm font-medium"
+                    className="w-full px-5 py-4 bg-gray-100 text-gray-500 rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all shadow-sm font-medium"
                     type="email"
                     placeholder="example@gmail.com"
+                    disabled
                     value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
                   />
                 </div>
 
@@ -518,8 +550,7 @@ const UserManagement = () => {
                         setFormData({ ...formData, role: e.target.value })
                       }
                     >
-                      <option value="CUSTOMER">Khách hàng</option>
-                      <option value="STAFF">Nhân viên</option>
+                      <option value="CUSTOMER">Khách hàng</option>
                       <option value="ADMIN">Quản trị viên</option>
                     </select>
                   </div>
