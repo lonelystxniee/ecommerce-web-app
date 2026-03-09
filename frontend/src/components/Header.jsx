@@ -16,12 +16,14 @@ import {
 import toast from "react-hot-toast";
 
 import { useCart } from "../context/CartContext";
+import { useWishlist } from "../context/WishlistContext";
 import AuthForm from "./AuthForm";
 import SearchBar from "./SearchBar";
 import { CategoryDropdown } from "../pages/Home/CategoryDropdown";
 
 const Header = () => {
   const { totalItems } = useCart();
+  const { wishlistIds } = useWishlist();
   const [categories, setCategories] = useState([]);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -140,15 +142,28 @@ const Header = () => {
 
             <div className="flex items-center w-full gap-4">
               <SearchBar />
-              <AuthAndCart
-                totalItems={totalItems}
-                user={user}
-                onAuthClick={() => setIsAuthOpen(true)}
-                isDropdownOpen={isUserDropdownOpen}
-                setIsDropdownOpen={setIsUserDropdownOpen}
-                dropdownRef={mainDropdownRef}
-                onLogout={handleLogout}
-              />
+              <div className="flex items-center gap-4">
+                <Link to="/wishlist" className="relative group text-primary hidden md:block">
+                  <div className="border-secondary rounded-full border-2 p-1.5 group-hover:bg-secondary transition-all">
+                    <Heart size={20} className="group-hover:text-white" />
+                  </div>
+                  {wishlistIds.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-[#9d0b0f] text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                      {wishlistIds.length}
+                    </span>
+                  )}
+                </Link>
+                <AuthAndCart
+                  totalItems={totalItems}
+                  wishlistCount={wishlistIds.length}
+                  user={user}
+                  onAuthClick={() => setIsAuthOpen(true)}
+                  isDropdownOpen={isUserDropdownOpen}
+                  setIsDropdownOpen={setIsUserDropdownOpen}
+                  dropdownRef={mainDropdownRef}
+                  onLogout={handleLogout}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -169,6 +184,7 @@ const Header = () => {
           </div>
           <AuthAndCart
             totalItems={totalItems}
+            wishlistCount={wishlistIds.length}
             user={user}
             onAuthClick={() => setIsAuthOpen(true)}
             isDropdownOpen={isUserDropdownOpen}
@@ -187,6 +203,7 @@ const Header = () => {
 
 const AuthAndCart = ({
   totalItems,
+  wishlistCount,
   user,
   onAuthClick,
   isDropdownOpen,
@@ -267,7 +284,7 @@ const AuthAndCart = ({
             Vòng quay may mắn
           </Link>
           <Link
-            to="/account?tab=favorites"
+            to="/wishlist"
             onClick={() => setIsDropdownOpen(false)}
             className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#5c4033] hover:text-[#ce450a] group"
           >
@@ -288,6 +305,17 @@ const AuthAndCart = ({
         </div>
       )}
     </div>
+
+    <Link to="/wishlist" className="relative group text-primary md:hidden">
+      <div className="border-secondary rounded-full border-2 p-1.5 group-hover:bg-secondary transition-all">
+        <Heart size={20} className="group-hover:text-white" />
+      </div>
+      {wishlistCount > 0 && (
+        <span className="absolute -top-1 -right-1 bg-[#9d0b0f] text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+          {wishlistCount}
+        </span>
+      )}
+    </Link>
 
     <Link to="/cart" className="relative group text-primary">
       <div className="border-secondary rounded-full border-2 p-1.5 group-hover:bg-secondary transition-all">

@@ -25,8 +25,8 @@ const OrderSchema = new mongoose.Schema(
     ],
     totalPrice: { type: Number, required: true },
     paymentMethod: { type: String, default: "COD" },
-    status: { type: String, default: "PENDING" }, // PENDING, CONFIRMED, PACKING, READY_TO_PICK, PICKING, STORING, DELIVERING, COMPLETED, CANCELLED
-    promoCode: { type: String, default: null },
+    status: { type: String, default: "PENDING" }, // PENDING, CONFIRMED, DELIVERING, COMPLETED, CANCELLED
+
     trackingHistory: [
       {
         status: String,

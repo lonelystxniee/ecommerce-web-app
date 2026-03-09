@@ -347,6 +347,23 @@ exports.updateProduct = async (req, res) => {
       }
     }
 
+    // 2️⃣ Handle variants
+    if (req.body.variants) {
+      try {
+        updateData.variants = typeof req.body.variants === 'string'
+          ? JSON.parse(req.body.variants)
+          : req.body.variants;
+
+        // Optionally update top-level price and quantity based on variants
+        if (updateData.variants.length > 0) {
+          updateData.price = updateData.variants[0].price;
+          updateData.quantity = updateData.variants.reduce((acc, v) => acc + (Number(v.stock) || 0), 0);
+        }
+      } catch (e) {
+        console.error("Error parsing variants in update:", e);
+      }
+    }
+
     // 3️⃣ Update product
     const updated = await Product.findByIdAndUpdate(id, updateData, {
       new: true

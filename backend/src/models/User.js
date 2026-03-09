@@ -15,6 +15,7 @@ const UserSchema = new mongoose.Schema(
     avatar: { type: String, default: null },
     gender: { type: String, enum: ["Nam", "Nữ", "Khác"], default: null },
     birthday: { type: Date, default: null },
+    wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
   },
   { timestamps: true }
 );

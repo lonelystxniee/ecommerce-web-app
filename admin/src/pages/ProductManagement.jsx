@@ -34,7 +34,7 @@ const ProductManagement = () => {
     slogan: "",
     category: "o-mai",
     description: "", // Trường mô tả đã có sẵn ở đây
-    variants: [{ label: "200g", price: "", stock: 100 }],
+    variants: [{ label: "Loại A", price: "", stock: 100 }],
     images: [],
   });
 
@@ -163,8 +163,9 @@ const ProductManagement = () => {
       data.append("slogan", formData.slogan);
       data.append("categoryName", formData.category);
       data.append("description", formData.description);
-      data.append("price", formData.variants[0]?.price || 0); // Backend expects single price/quantity for now
-      data.append("quantity", formData.variants[0]?.stock || 0);
+      data.append("price", formData.variants[0]?.price || 0);
+      data.append("quantity", formData.variants.reduce((acc, v) => acc + (Number(v.stock) || 0), 0));
+      data.append("variants", JSON.stringify(formData.variants));
 
       if (imageFiles.length > 0) {
         imageFiles.forEach(file => {
@@ -253,7 +254,9 @@ const ProductManagement = () => {
       slogan: product.slogan || "",
       category: product.categoryID?.[0]?.name || "o-mai",
       description: product.description || "",
-      variants: [{ label: "Giá gốc", price: product.price, stock: product.quantity }],
+      variants: product.variants && product.variants.length > 0
+        ? product.variants
+        : [{ label: "Giá gốc", price: product.price, stock: product.quantity }],
       images: product.images || (product.image ? [product.image] : []),
     });
     setImageFiles([]);
@@ -273,7 +276,7 @@ const ProductManagement = () => {
       slogan: "",
       category: "o-mai",
       description: "",
-      variants: [{ label: "200g", price: "", stock: 100 }],
+      variants: [{ label: "Loại A", price: "", stock: 100 }],
       images: [],
     });
   };
@@ -600,7 +603,7 @@ const ProductManagement = () => {
               <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                 <div className="flex justify-between items-center mb-4">
                   <h4 className="font-bold text-[#9d0b0f] flex items-center gap-2 uppercase text-sm">
-                    <Package size={18} /> Các loại khối lượng & Giá
+                    <Package size={18} /> Các loại & Giá (Tùy chỉnh)
                   </h4>
                   <button
                     type="button"
@@ -618,7 +621,7 @@ const ProductManagement = () => {
                     >
                       <div className="flex-1">
                         <label className="text-[10px] font-bold text-gray-400 uppercase">
-                          Khối lượng
+                          Tên loại / Khối lượng
                         </label>
                         <input
                           required
@@ -628,6 +631,7 @@ const ProductManagement = () => {
                           onChange={(e) =>
                             handleVariantChange(index, "label", e.target.value)
                           }
+                          placeholder="VD: Loại A hoặc 200g"
                         />
                       </div>
                       <div className="flex-1">

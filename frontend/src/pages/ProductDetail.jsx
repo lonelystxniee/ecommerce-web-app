@@ -15,9 +15,11 @@ import {
   Trash2,
   Play,
   X,
+  Heart,
 } from "lucide-react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
+import { useWishlist } from "../context/WishlistContext";
 
 import toast from "react-hot-toast";
 
@@ -25,6 +27,7 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { addToCart } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
 
@@ -41,8 +44,12 @@ const ProductDetail = () => {
         const data = await res.json();
         if (data.success) {
           setProduct(data.product);
-          // Initialize quantities for the single "default" variant since backend is flat
-          setQuantities([0]);
+          // Initialize quantities based on the number of variants
+          if (data.product.variants && data.product.variants.length > 0) {
+            setQuantities(new Array(data.product.variants.length).fill(0));
+          } else {
+            setQuantities([0]);
+          }
         }
       } catch (error) {
         console.error("Lỗi lấy chi tiết sản phẩm:", error);
@@ -216,8 +223,10 @@ const ProductDetail = () => {
     );
   };
 
-  // Logic: Use flat fields from backend
-  const variants = product ? [{ label: "Giá gốc", price: product.price }] : [];
+  // Logic: Use variants from backend, fallback to flat fields if none
+  const variants = product?.variants && product.variants.length > 0
+    ? product.variants
+    : (product ? [{ label: "Giá gốc", price: product.price }] : []);
 
   const updateQty = (index, delta) => {
     const newQty = [...quantities];
@@ -268,9 +277,11 @@ const ProductDetail = () => {
         addToCart({
           ...product,
           id: `${product._id}-${variants[i].label}`,
-          name: `${product.name} ${variants[i].label}`,
+          name: product.name,
+          label: variants[i].label,
           price: variants[i].price,
-          quantity: q, // Truyền số lượng thực tế
+          quantity: q,
+          image: productImages[0]
         });
         hasItems = true;
       }
@@ -429,16 +440,20 @@ const ProductDetail = () => {
               </p>
               <div className="flex gap-3">
                 <button
-                  onClick={() => handleAction("buy_now")}
-                  className="flex-1 py-4 font-bold tracking-widest text-white uppercase rounded-md shadow-lg bg-primary active:scale-95"
-                >
-                  MUA NGAY
-                </button>
-                <button
                   onClick={() => handleAction("add_to_cart")}
                   className="flex-1 bg-[#f39200] text-white py-4 rounded-md font-bold uppercase tracking-widest shadow-lg active:scale-95"
                 >
                   Thêm vào giỏ
+                </button>
+                <button
+                  onClick={() => toggleWishlist(product._id)}
+                  className={`px-4 py-4 rounded-md shadow-lg transition-all active:scale-95 border-2 ${isInWishlist(product._id)
+                    ? "bg-red-50 border-[#9d0b0f] text-[#9d0b0f]"
+                    : "bg-white border-gray-200 text-gray-400 hover:text-[#9d0b0f] hover:border-[#9d0b0f]"
+                    }`}
+                  title={isInWishlist(product._id) ? "Xóa khỏi yêu thích" : "Thêm vào yêu thích"}
+                >
+                  <Heart size={24} fill={isInWishlist(product._id) ? "#9d0b0f" : "none"} />
                 </button>
               </div>
 
@@ -699,7 +714,7 @@ const ProductDetail = () => {
         {/* Video Player Modal */}
         <VideoModal videoUrl={activeVideo} onClose={() => setActiveVideo(null)} />
       </div>
-    </div>
+    </div >
   );
 };
 

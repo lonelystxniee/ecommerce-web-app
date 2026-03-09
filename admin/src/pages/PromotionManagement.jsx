@@ -39,12 +39,10 @@ const PromotionManagement = () => {
     description: "",
   });
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
-
   const fetchPromos = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/promotions/all`);
+      const res = await fetch("http://localhost:5175/api/promotions/all");
       const data = await res.json();
       if (data.success) setPromos(data.promos);
     } catch (e) {
@@ -116,8 +114,8 @@ const PromotionManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const url = editingId
-      ? `${API_URL}/api/promotions/update/${editingId}`
-      : `${API_URL}/api/promotions/create`;
+      ? `http://localhost:5175/api/promotions/update/${editingId}`
+      : "http://localhost:5175/api/promotions/create";
 
     const method = editingId ? "PUT" : "POST";
 
@@ -137,7 +135,7 @@ const PromotionManagement = () => {
   const handleDelete = async (id) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa mã giảm giá này?")) {
       const res = await fetch(
-        `${API_URL}/api/promotions/delete/${id}`,
+        `http://localhost:5175/api/promotions/delete/${id}`,
         { method: "DELETE" },
       );
       if (res.ok) {
@@ -176,7 +174,7 @@ const PromotionManagement = () => {
           />
           <input
             type="text"
-            placeholder="Tìm kiếm mã khuyến mãi..."
+            placeholder=""
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -339,7 +337,7 @@ const PromotionManagement = () => {
         </div>
       )}
 
-      {/* MODAL FORM */}
+      {/* MODAL FORM (Giữ nguyên cấu trúc xịn của bạn nhưng thêm mô tả) */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-[#f7f4ef] w-full max-w-lg rounded-[40px] overflow-hidden shadow-2xl border-2 border-[#9d0b0f] animate-zoomIn">
@@ -365,7 +363,7 @@ const PromotionManagement = () => {
                   </label>
                   <input
                     required
-                    placeholder="VD: CLICKGO2026"
+                    placeholder=""
                     className="w-full p-3 rounded-2xl border border-stone-200 outline-none focus:border-[#f39200] font-black uppercase text-center text-lg tracking-widest"
                     value={formData.code}
                     onChange={(e) =>
@@ -381,7 +379,7 @@ const PromotionManagement = () => {
                     Mô tả ngắn gọn
                   </label>
                   <input
-                    placeholder="VD: Tri ân khách hàng thân thiết"
+                    placeholder=""
                     className="w-full p-3 rounded-2xl border border-stone-200 outline-none focus:border-[#f39200] text-sm"
                     value={formData.description}
                     onChange={(e) =>

@@ -66,7 +66,11 @@ exports.createOrder = async (req, res) => {
     });
 
     await newOrder.save();
-    res.status(201).json({ success: true, message: "Đặt hàng thành công!", orderId: newOrder._id });
+    res.status(201).json({
+      success: true,
+      message: "Đặt hàng thành công!",
+      orderId: newOrder._id,
+    });
 
     // KHÔNG gọi ghn.createGHNOrder ở đây để giữ trạng thái PENDING
   } catch (error) {
@@ -79,7 +83,10 @@ exports.createOrder = async (req, res) => {
 exports.adminConfirm = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
+    if (!order)
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn hàng" });
 
     addUniqueHistory(order, "confirmed", "Hệ thống đã xác nhận đơn hàng");
     order.status = "CONFIRMED";
@@ -87,10 +94,19 @@ exports.adminConfirm = async (req, res) => {
 
     // Ghi log
     if (req.user) {
-      await activityController.createLog(req.user.id, "Xác nhận đơn hàng", `Đã xác nhận đơn hàng: ${order._id}`, req);
+      await activityController.createLog(
+        req.user.id,
+        "Xác nhận đơn hàng",
+        `Đã xác nhận đơn hàng: ${order._id}`,
+        req,
+      );
     }
 
-    res.json({ success: true, message: "Đã xác nhận đơn hàng thành công", order });
+    res.json({
+      success: true,
+      message: "Đã xác nhận đơn hàng thành công",
+      order,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -100,7 +116,10 @@ exports.adminConfirm = async (req, res) => {
 exports.adminPacking = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
+    if (!order)
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn hàng" });
 
     addUniqueHistory(order, "packing", "Shop đang chuẩn bị hàng và đóng gói");
     order.status = "PACKING";
@@ -108,7 +127,12 @@ exports.adminPacking = async (req, res) => {
 
     // Ghi log
     if (req.user) {
-      await activityController.createLog(req.user.id, "Đóng gói đơn hàng", `Đã đóng gói đơn hàng: ${order._id}`, req);
+      await activityController.createLog(
+        req.user.id,
+        "Đóng gói đơn hàng",
+        `Đã đóng gói đơn hàng: ${order._id}`,
+        req,
+      );
     }
 
     res.json({ success: true, message: "Đã đóng gói thành công", order });
@@ -139,7 +163,10 @@ exports.adminHandover = async (req, res) => {
 exports.getOrderDetail = async (req, res) => {
   try {
     let order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
+    if (!order)
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn hàng" });
 
     if (order.ghnOrderCode) {
       const ghnInfo = await ghn.getGHNTracking(order.ghnOrderCode);
@@ -178,7 +205,9 @@ exports.shipperUpdateStatus = async (req, res) => {
     const { orderId } = req.body;
     const order = await Order.findById(orderId);
     if (!order || !order.ghnOrderCode)
-      return res.status(400).json({ success: false, message: "Đơn hàng không hợp lệ" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Đơn hàng không hợp lệ" });
 
     const ghnRes = await ghn.leadtimeGHNOrder(order.ghnOrderCode);
     if (ghnRes && ghnRes.code === 200) {
@@ -249,11 +278,20 @@ exports.getAllOrders = async (req, res) => {
 exports.updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    const updated = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    const updated = await Order.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true },
+    );
 
     // Ghi log
     if (updated && req.user) {
-      await activityController.createLog(req.user.id, "Cập nhật đơn hàng", `Đã cập nhật trạng thái đơn hàng ${updated._id} thành ${status}`, req);
+      await activityController.createLog(
+        req.user.id,
+        "Cập nhật đơn hàng",
+        `Đã cập nhật trạng thái đơn hàng ${updated._id} thành ${status}`,
+        req,
+      );
     }
 
     res.json({ success: true, message: "Cập nhật trạng thái thành công" });
