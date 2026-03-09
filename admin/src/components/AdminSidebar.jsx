@@ -46,6 +46,7 @@ const AdminSidebar = () => {
       icon: <ClipboardList size={20} />,
       label: "Nhật ký hệ thống",
     },
+    { path: "/warehouse", icon: <Layers size={20} />, label: "Quản lý kho" },
   ];
 
   const handleLogout = () => {

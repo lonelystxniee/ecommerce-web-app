@@ -25,5 +25,12 @@ router.post(
     upload.single("file"),
     productController.importExcel
 );
+router.post(
+    "/bulk-stock-in",
+    authMiddleware,
+    adminMiddleware,
+    productController.bulkStockIn
+);
+
 
 module.exports = router;

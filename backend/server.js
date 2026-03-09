@@ -24,6 +24,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/promotions", require("./src/routes/promotionRoutes"));
 app.use("/api/wishlist", require("./src/routes/wishlistRoutes"));
 
+
 const PORT = process.env.PORT || 5175;
 
 connectDB()
