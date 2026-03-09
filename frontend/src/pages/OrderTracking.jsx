@@ -57,11 +57,16 @@ const OrderTracking = () => {
         <div className="flex items-center justify-between p-8 mb-6 bg-white border border-gray-100 shadow-sm rounded-3xl">
           <div>
             <p className="text-xs font-bold tracking-widest text-gray-400 uppercase">
-              Mã vận đơn GHN
+              Mã đơn hàng
             </p>
             <h2 className="text-2xl font-black text-[#9d0b0f]">
-              {order.ghnOrderCode || "ĐANG XỬ LÝ"}
+              #{order._id?.slice(-8).toUpperCase()}
             </h2>
+            {order.ghnOrderCode && (
+              <p className="mt-1 text-xs font-bold text-gray-500">
+                Mã GHN: <span className="text-[#f39200]">{order.ghnOrderCode}</span>
+              </p>
+            )}
           </div>
           <div className="text-right">
             <p className="text-xs font-bold text-gray-400 uppercase">
@@ -73,7 +78,7 @@ const OrderTracking = () => {
           </div>
         </div>
 
-        <div className="bg-white p-10 rounded-[40px] shadow-xl border border-gray-100">
+        <div className="p-10 bg-white border border-gray-100 shadow-xl rounded-3xl">
           <div className="relative border-l-2 border-[#9d0b0f]/20 ml-6 space-y-12">
             {order.trackingHistory?.map((step, index) => (
               <div key={index} className="relative pl-10">
@@ -99,7 +104,7 @@ const OrderTracking = () => {
                     className={index === 0 ? "text-[#f39200]" : "text-gray-300"}
                   >
                     {step.status === "DELIVERED" ||
-                    step.desc.includes("thành công") ? (
+                      step.desc.includes("thành công") ? (
                       <CheckCircle size={24} />
                     ) : (
                       <Truck size={24} />
@@ -111,7 +116,7 @@ const OrderTracking = () => {
           </div>
         </div>
 
-        <div className="mt-8 bg-white p-8 rounded-[32px] shadow-sm border border-dashed border-[#9d0b0f]/30">
+        <div className="mt-8 bg-white p-8 rounded-3xl shadow-sm border border-dashed border-[#9d0b0f]/30">
           <h3 className="text-[#9d0b0f] font-black uppercase text-xs mb-4 flex items-center gap-2">
             <MapPin size={18} /> Địa chỉ nhận hàng
           </h3>

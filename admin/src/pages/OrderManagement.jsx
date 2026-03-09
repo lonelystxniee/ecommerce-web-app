@@ -32,8 +32,8 @@ const OrderManagement = () => {
       const token = localStorage.getItem("token");
       const response = await fetch(`${API_URL}/api/orders/all`, {
         headers: {
-          "Authorization": `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
       const data = await response.json();
       if (data.success) setOrders(data.orders);
@@ -58,18 +58,20 @@ const OrderManagement = () => {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
           },
         },
       );
       const data = await response.json();
       if (data.success) {
-        alert("Cập nhật quy trình thành công!");
+        alert(data.message || "Cập nhật thành công!");
         fetchOrders();
         setIsModalOpen(false);
+      } else {
+        alert("Lỗi: " + (data.message || "Không rõ nguyên nhân"));
       }
     } catch (error) {
-      alert("Lỗi kết nối!");
+      alert("Lỗi kết nối: " + error.message);
     }
   };
 
@@ -127,7 +129,7 @@ const OrderManagement = () => {
       </div>
 
       <div className="bg-white rounded-[32px] shadow-xl border border-gray-100 overflow-hidden">
-        <table className="w-full text-left text-sm">
+        <table className="w-full text-sm text-left">
           <thead className="bg-[#9d0b0f] text-white text-[10px] uppercase font-bold tracking-widest">
             <tr>
               <th className="px-8 py-5">Mã đơn</th>
@@ -155,7 +157,7 @@ const OrderManagement = () => {
                   </p>
                 </td>
                 <td className="px-8 py-6 text-center">
-                  <div className="flex gap-2 justify-center">
+                  <div className="flex justify-center gap-2">
                     {order.status === "PENDING" && (
                       <button
                         onClick={() => handleWorkflow(order._id, "confirm")}
@@ -226,7 +228,7 @@ const OrderManagement = () => {
           <div className="relative bg-[#f7f4ef] w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[40px] shadow-2xl border-2 border-[#9d0b0f] animate-zoomIn">
             <div className="bg-[#9d0b0f] p-6 text-white flex justify-between items-center sticky top-0 z-20">
               <div>
-                <h3 className="text-xl font-bold uppercase tracking-tight">
+                <h3 className="text-xl font-bold tracking-tight uppercase">
                   Chi tiết đơn hàng
                 </h3>
                 <p className="text-[10px] font-bold opacity-80 uppercase tracking-widest">
@@ -235,15 +237,15 @@ const OrderManagement = () => {
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="bg-white/20 p-2 rounded-full hover:bg-white/40"
+                className="p-2 rounded-full bg-white/20 hover:bg-white/40"
               >
                 <X size={20} />
               </button>
             </div>
 
-            <div className="p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 gap-8 p-8 lg:grid-cols-3">
               {/* Cột trái: Thông tin khách hàng */}
-              <div className="lg:col-span-1 space-y-6">
+              <div className="space-y-6 lg:col-span-1">
                 <div className="bg-white p-6 rounded-[32px] shadow-sm border border-stone-200">
                   <h4 className="text-[#9d0b0f] font-black uppercase text-xs mb-4 flex items-center gap-2 border-b pb-2">
                     <User size={14} /> Thông tin khách nhận
@@ -271,7 +273,7 @@ const OrderManagement = () => {
                     )}
                     <div className="flex gap-3">
                       <MapPin size={16} className="text-[#f39200] shrink-0" />
-                      <span className="text-gray-600 leading-relaxed italic">
+                      <span className="italic leading-relaxed text-gray-600">
                         {selectedOrder.customerInfo.address}
                       </span>
                     </div>
@@ -289,13 +291,13 @@ const OrderManagement = () => {
                         {selectedOrder.paymentMethod}
                       </span>
                     </p>
-                    <p className="font-bold flex items-center gap-1">
+                    <p className="flex items-center gap-1 font-bold">
                       <Calendar size={12} /> Ngày đặt:{" "}
                       {new Date(selectedOrder.createdAt).toLocaleString(
                         "vi-VN",
                       )}
                     </p>
-                    <div className="bg-orange-50 p-3 rounded-xl border border-dashed border-orange-200 mt-2">
+                    <div className="p-3 mt-2 border border-orange-200 border-dashed bg-orange-50 rounded-xl">
                       <p className="text-[10px] font-bold text-[#88694f] uppercase mb-1">
                         Ghi chú của khách:
                       </p>
@@ -322,7 +324,7 @@ const OrderManagement = () => {
                     <tbody className="divide-y divide-gray-50">
                       {selectedOrder.items.map((item, idx) => (
                         <tr key={idx}>
-                          <td className="py-4 pl-6 flex items-center gap-3">
+                          <td className="flex items-center gap-3 py-4 pl-6">
                             <img
                               src={
                                 item.image || (item.images && item.images[0])
@@ -339,10 +341,10 @@ const OrderManagement = () => {
                               </p>
                             </div>
                           </td>
-                          <td className="py-4 text-center font-medium">
+                          <td className="py-4 font-medium text-center">
                             {item.price.toLocaleString()}đ
                           </td>
-                          <td className="py-4 text-center font-black">
+                          <td className="py-4 font-black text-center">
                             x{item.quantity}
                           </td>
                           <td className="py-4 pr-6 text-right font-black text-[#9d0b0f]">
@@ -356,7 +358,7 @@ const OrderManagement = () => {
                   <div className="bg-[#9d0b0f] p-6 text-white flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <Package size={20} />
-                      <span className="font-bold uppercase tracking-widest text-xs">
+                      <span className="text-xs font-bold tracking-widest uppercase">
                         Tổng cộng thanh toán
                       </span>
                     </div>
@@ -366,7 +368,7 @@ const OrderManagement = () => {
                   </div>
                 </div>
 
-                <div className="mt-6 flex justify-end gap-3">
+                <div className="flex justify-end gap-3 mt-6">
                   <button
                     onClick={() => setIsModalOpen(false)}
                     className="px-10 py-3 rounded-2xl bg-[#3e2714] text-white font-bold text-xs hover:bg-black transition-all"

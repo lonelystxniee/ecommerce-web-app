@@ -9,9 +9,13 @@ import {
   Camera,
   Lock,
   History,
+  MapPin,
+  RefreshCcw,
 } from "lucide-react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import AddressManagement from "../components/AddressManagement";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { validateChangePassword } from "../helpers/validate";
 
 const AccountPage = () => {
   const [searchParams] = useSearchParams();
@@ -23,7 +27,11 @@ const AccountPage = () => {
     try {
       const savedUser = localStorage.getItem("user");
       if (savedUser && savedUser !== "undefined") {
-        return JSON.parse(savedUser);
+        const parsed = JSON.parse(savedUser);
+        // Normalize ID
+        if (parsed._id && !parsed.id) parsed.id = parsed._id;
+        if (parsed.id && !parsed._id) parsed._id = parsed.id;
+        return parsed;
       }
     } catch (error) {
       console.error("Lỗi đọc dữ liệu user:", error);
@@ -118,6 +126,12 @@ const AccountPage = () => {
                   onClick={() => changeTab("orders")}
                 />
                 <SidebarItem
+                  icon={<MapPin size={18} />}
+                  text="Địa chỉ giao hàng"
+                  active={activeTab === "addresses"}
+                  onClick={() => changeTab("addresses")}
+                />
+                <SidebarItem
                   icon={<Heart size={18} />}
                   text="Danh sách yêu thích"
                   active={activeTab === "favorites"}
@@ -155,6 +169,7 @@ const AccountPage = () => {
           <div className="transition-all duration-300">
             {activeTab === "info" && <PersonalInfo user={user} />}
             {activeTab === "orders" && <OrderManagement />}
+            {activeTab === "addresses" && <AddressManagement user={user} />}
             {activeTab === "favorites" && <FavoriteProducts />}
             {activeTab === "password" && <ChangePassword />}
             {activeTab === "activities" && <ActivityHistory />}
@@ -169,9 +184,10 @@ const SidebarItem = ({ icon, text, active, onClick }) => (
   <button
     onClick={onClick}
     className={`flex items-center gap-3 w-full px-5 py-3.5 transition-all duration-200 rounded-xl text-sm font-bold cursor-pointer
-      ${active
-        ? "bg-[#fdfaf5] text-[#800a0d] shadow-sm border border-[#800a0d]/10"
-        : "text-text-primary hover:bg-gray-50 hover:pl-6"
+      ${
+        active
+          ? "bg-[#fdfaf5] text-[#800a0d] shadow-sm border border-[#800a0d]/10"
+          : "text-text-primary hover:bg-gray-50 hover:pl-6"
       }`}
   >
     <span className={`${active ? "text-[#800a0d]" : "text-[#88694f]"}`}>
@@ -442,7 +458,7 @@ const PersonalInfo = ({ user: initialUser }) => {
   );
 };
 
-// 2. Tab Quản lý đơn hàng nâng cấp
+// 2. Tab Quản lý đơn hàng (Customer) - hiển thị lịch sử đơn và liên kết theo dõi
 const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -450,21 +466,21 @@ const OrderManagement = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const savedUser = JSON.parse(localStorage.getItem("user"));
-        const token = localStorage.getItem("token");
-        const userId = savedUser?.id || savedUser?._id;
-
-        if (!userId) return;
-
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/my-orders/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (data.success) {
-          setOrders(data.orders);
+        const user = JSON.parse(localStorage.getItem("user") || "null");
+        if (!user || !(user._id || user.id)) {
+          setOrders([]);
+          return;
         }
-      } catch (error) {
-        console.error("Lỗi lấy danh sách đơn hàng:", error);
+        const userId = user._id || user.id;
+        const token = localStorage.getItem("token");
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL || ""}/api/orders/user/${userId}`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        const data = await res.json();
+        if (data.success) setOrders(data.orders || []);
+      } catch (err) {
+        console.error("Fetch user orders failed", err);
       } finally {
         setLoading(false);
       }
@@ -512,37 +528,70 @@ const OrderManagement = () => {
           <Package size={24} />
         </div>
         <div>
-          <h2 className="text-2xl font-black text-[#800a0d] tracking-tighter">Lịch sử đơn hàng</h2>
-          <p className="text-xs font-medium text-gray-400">Bạn có tổng cộng {orders.length} đơn hàng</p>
+          <h2 className="text-2xl font-black text-[#800a0d] tracking-tighter">
+            Lịch sử đơn hàng
+          </h2>
+          <p className="text-xs font-medium text-gray-400">
+            Bạn có tổng cộng {orders.length} đơn hàng
+          </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6">
         {orders.map((order) => (
-          <div key={order._id} className="p-6 transition-all bg-white border border-gray-100 shadow-lg group rounded-3xl hover:shadow-2xl animate-fadeIn">
+          <div
+            key={order._id}
+            className="p-6 transition-all bg-white border border-gray-100 shadow-lg group rounded-3xl hover:shadow-2xl animate-fadeIn"
+          >
             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
               <div className="space-y-1">
                 <div className="flex items-center gap-3">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#88694f]">Mã đơn hàng</span>
-                  <span className="px-2 py-0.5 bg-gray-50 rounded-lg text-[10px] font-bold text-gray-500">#{order._id.slice(-8).toUpperCase()}</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#88694f]">
+                    Mã đơn hàng
+                  </span>
+                  <span className="px-2 py-0.5 bg-gray-50 rounded-lg text-[10px] font-bold text-gray-500">
+                    #{order._id.slice(-8).toUpperCase()}
+                  </span>
                 </div>
-                <h3 className="text-lg font-black text-[#800a0d]">{order.items[0]?.name} {order.items.length > 1 ? `và ${order.items.length - 1} món khác` : ""}</h3>
-                <p className="text-xs font-bold text-gray-400">Ngày đặt: {new Date(order.createdAt).toLocaleDateString("vi-VN")}</p>
+                <h3 className="text-lg font-black text-[#800a0d]">
+                  {order.items[0]?.name}{" "}
+                  {order.items.length > 1
+                    ? `và ${order.items.length - 1} món khác`
+                    : ""}
+                </h3>
+                <p className="text-xs font-bold text-gray-400">
+                  Ngày đặt:{" "}
+                  {new Date(order.createdAt).toLocaleDateString("vi-VN")}
+                </p>
               </div>
 
               <div className="flex flex-col items-start gap-4 md:items-end">
                 <div className="flex flex-col items-start md:items-end">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#88694f] mb-1">Trạng thái</span>
-                  <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter ${order.status === 'PENDING' ? 'bg-amber-100 text-amber-700' :
-                    order.status === 'COMPLETED' || order.status === 'DELIVERED' ? 'bg-green-100 text-green-700' :
-                      order.status === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
-                    }`}>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#88694f] mb-1">
+                    Trạng thái
+                  </span>
+                  <span
+                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter ${
+                      order.status === "PENDING"
+                        ? "bg-amber-100 text-amber-700"
+                        : order.status === "COMPLETED" ||
+                            order.status === "DELIVERED"
+                          ? "bg-green-100 text-green-700"
+                          : order.status === "CANCELLED"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-blue-100 text-blue-700"
+                    }`}
+                  >
                     {order.status}
                   </span>
                 </div>
                 <div className="flex flex-col items-start md:items-end">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#88694f] mb-1">Tổng tiền</span>
-                  <span className="text-xl font-black text-[#800a0d]">{order.totalPrice.toLocaleString()}đ</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#88694f] mb-1">
+                    Tổng tiền
+                  </span>
+                  <span className="text-xl font-black text-[#800a0d]">
+                    {order.totalPrice.toLocaleString()}đ
+                  </span>
                 </div>
                 <Link
                   to={`/order-tracking/${order._id}`}
@@ -598,8 +647,6 @@ const ShoppingBag = ({ size }) => (
     <path d="M16 10a4 4 0 0 1-8 0" />
   </svg>
 );
-
-import { validateChangePassword } from "../helpers/validate";
 
 const ChangePassword = () => {
   const [loading, setLoading] = useState(false);
@@ -669,7 +716,7 @@ const ChangePassword = () => {
   };
 
   return (
-    <div className="p-8 mx-auto bg-white border border-gray-100 shadow-2xl  animate-zoomIn rounded-3xl">
+    <div className="p-8 mx-auto bg-white border border-gray-100 shadow-2xl animate-zoomIn rounded-3xl">
       <div className="flex items-center gap-4 pb-6 mb-8 border-b border-gray-200 border-dashed">
         <div className="w-12 h-12 bg-[#fdfaf5] rounded-xl flex items-center justify-center text-[#800a0d] shadow-sm">
           <Lock size={24} />
@@ -696,11 +743,16 @@ const ChangePassword = () => {
             value={formData.oldPassword}
             onChange={handleInputChange}
             placeholder="••••••••"
-            className={`w-full px-5 py-2 bg-[#fdfaf5] border rounded-2xl outline-none focus:bg-white transition-all font-bold text-[#3e2714] ${errors.oldPassword ? "border-red-500" : "border-gray-100 focus:border-[#800a0d]"
-              }`}
+            className={`w-full px-5 py-2 bg-[#fdfaf5] border rounded-2xl outline-none focus:bg-white transition-all font-bold text-[#3e2714] ${
+              errors.oldPassword
+                ? "border-red-500"
+                : "border-gray-100 focus:border-[#800a0d]"
+            }`}
           />
           {errors.oldPassword && (
-            <p className="pl-1 text-xs font-bold text-red-500">{errors.oldPassword}</p>
+            <p className="pl-1 text-xs font-bold text-red-500">
+              {errors.oldPassword}
+            </p>
           )}
         </div>
 
@@ -715,11 +767,16 @@ const ChangePassword = () => {
             value={formData.newPassword}
             onChange={handleInputChange}
             placeholder="••••••••"
-            className={`w-full px-5 py-2 bg-[#fdfaf5] border rounded-2xl outline-none focus:bg-white transition-all font-bold text-[#3e2714] ${errors.newPassword ? "border-red-500" : "border-gray-100 focus:border-[#800a0d]"
-              }`}
+            className={`w-full px-5 py-2 bg-[#fdfaf5] border rounded-2xl outline-none focus:bg-white transition-all font-bold text-[#3e2714] ${
+              errors.newPassword
+                ? "border-red-500"
+                : "border-gray-100 focus:border-[#800a0d]"
+            }`}
           />
           {errors.newPassword && (
-            <p className="pl-1 text-xs font-bold text-red-500">{errors.newPassword}</p>
+            <p className="pl-1 text-xs font-bold text-red-500">
+              {errors.newPassword}
+            </p>
           )}
         </div>
 
@@ -734,11 +791,16 @@ const ChangePassword = () => {
             value={formData.confirmPassword}
             onChange={handleInputChange}
             placeholder="••••••••"
-            className={`w-full px-5 py-2 bg-[#fdfaf5] border rounded-2xl outline-none focus:bg-white transition-all font-bold text-[#3e2714] ${errors.confirmPassword ? "border-red-500" : "border-gray-100 focus:border-[#800a0d]"
-              }`}
+            className={`w-full px-5 py-2 bg-[#fdfaf5] border rounded-2xl outline-none focus:bg-white transition-all font-bold text-[#3e2714] ${
+              errors.confirmPassword
+                ? "border-red-500"
+                : "border-gray-100 focus:border-[#800a0d]"
+            }`}
           />
           {errors.confirmPassword && (
-            <p className="pl-1 text-xs font-bold text-red-500">{errors.confirmPassword}</p>
+            <p className="pl-1 text-xs font-bold text-red-500">
+              {errors.confirmPassword}
+            </p>
           )}
         </div>
 
@@ -813,25 +875,39 @@ const ActivityHistory = () => {
 
       {activities.length === 0 ? (
         <div className="py-20 text-center">
-          <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
+          <div className="flex items-center justify-center w-20 h-20 mx-auto mb-4 text-gray-300 rounded-full bg-gray-50">
             <History size={32} />
           </div>
-          <p className="font-bold text-gray-400 italic">Chưa có lịch sử hoạt động nào được ghi nhận.</p>
+          <p className="text-sm italic font-bold text-gray-400">
+            Chưa có hoạt động nào được ghi lại
+          </p>
         </div>
       ) : (
-        <div className="space-y-6 relative before:absolute before:left-6 before:top-2 before:bottom-2 before:w-0.5 before:bg-gray-100">
-          {activities.map((activity, index) => (
-            <div key={activity._id} className="relative pl-14 group">
-              <div className="absolute left-4 top-1 w-4 h-4 rounded-full bg-white border-4 border-[#800a0d] z-10 group-hover:scale-125 transition-transform"></div>
-              <div className="p-5 bg-[#fdfaf5] rounded-2xl border border-gray-50 hover:border-[#800a0d]/20 transition-all hover:shadow-lg">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-2">
-                  <span className="font-black text-[#800a0d] text-sm uppercase tracking-widest">{activity.action}</span>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase">{new Date(activity.createdAt).toLocaleString('vi-VN')}</span>
+        <div className="space-y-8 relative before:absolute before:left-[31px] before:top-2 before:bottom-2 before:w-0.5 before:bg-gray-100">
+          {activities.map((activity) => (
+            <div key={activity._id} className="relative pl-16 group">
+              <div className="absolute left-0 top-0 w-12 h-12 bg-white border-2 border-gray-100 rounded-2xl flex items-center justify-center transition-all group-hover:border-[#800a0d] group-hover:scale-110 z-10 shadow-sm">
+                <div className="w-2.5 h-2.5 rounded-full bg-[#800a0d] group-hover:animate-ping absolute"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-[#800a0d] relative"></div>
+              </div>
+              <div className="bg-[#fdfaf5]/30 p-5 rounded-3xl border border-gray-100 transition-all hover:bg-white hover:shadow-xl hover:border-[#800a0d]/10">
+                <div className="flex flex-col items-start justify-between gap-2 mb-2 sm:flex-row">
+                  <h4 className="font-black text-[#800a0d] text-base tracking-tight">
+                    {activity.action}
+                  </h4>
+                  <span className="text-[10px] font-black text-[#88694f] bg-white px-3 py-1 rounded-full border border-gray-100 shadow-sm">
+                    {new Date(activity.createdAt).toLocaleString("vi-VN")}
+                  </span>
                 </div>
-                <p className="text-sm text-[#3e2714] font-medium">{activity.details}</p>
-                {activity.ipAddress && (
-                  <p className="mt-2 text-[10px] text-gray-400 font-bold border-t border-gray-100 pt-2 italic">IP: {activity.ipAddress.replace('::ffff:', '')}</p>
-                )}
+                <p className="text-sm font-medium leading-relaxed text-gray-600">
+                  {activity.details}
+                </p>
+                <div className="mt-4 flex flex-wrap items-center gap-4 text-[9px] font-black text-[#88694f] uppercase tracking-[0.1em]">
+                  <div className="flex items-center gap-1.5 opacity-60">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                    <span>IP: {activity.ipAddress || "N/A"}</span>
+                  </div>
+                </div>
               </div>
             </div>
           ))}
@@ -841,24 +917,6 @@ const ActivityHistory = () => {
   );
 };
 
-const RefreshCcw = ({ size, className }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-    <path d="M3 3v5h5" />
-    <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
-    <path d="M16 21v-5h5" />
-  </svg>
-);
+// Note: OrderManagement and FavoriteProducts are defined earlier in this file.
 
 export default AccountPage;

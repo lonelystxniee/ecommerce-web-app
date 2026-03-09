@@ -44,7 +44,13 @@ exports.createGHNOrder = async (orderId) => {
         });
 
         if (response.data.code === 200) {
-            const ghnRealCode = response.data.data.order_code;
+            const ghnRealCode = response.data.data?.order_code || response.data.data?.ghn_order_code;
+
+            if (!ghnRealCode) {
+                console.error("❌ GHN Trả về 200 nhưng không thấy order_code:", response.data);
+                return;
+            }
+
             await Order.findByIdAndUpdate(orderId, {
                 ghnOrderCode: ghnRealCode,
                 status: "READY_TO_PICK",

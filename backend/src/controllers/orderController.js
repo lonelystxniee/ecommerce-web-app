@@ -1,9 +1,8 @@
 const Order = require("../models/Order");
-const Promotion = require("../models/Promotion"); // Import model khuyến mãi
+const Promotion = require("../models/Promotion");
 const ghn = require("./ghnController");
 const activityController = require("./activityController");
 
-// HÀM HỖ TRỢ: Thêm lịch sử hành trình không trùng lặp
 const addUniqueHistory = (order, status, desc) => {
   const normalizedStatus = status.toLowerCase();
   const isExisted = order.trackingHistory.find(
@@ -30,6 +29,7 @@ exports.createOrder = async (req, res) => {
       paymentMethod,
       userId,
       promoCode,
+      shippingInfo,
     } = req.body;
 
     if (!items || items.length === 0) {
@@ -53,7 +53,7 @@ exports.createOrder = async (req, res) => {
       totalPrice,
       paymentMethod,
       promoCode: promoCode || null,
-      status: "PENDING", // LUÔN BẮT ĐẦU TỪ PENDING
+      status: "PENDING",
       trackingHistory: [
         {
           status: "pending",
@@ -65,10 +65,113 @@ exports.createOrder = async (req, res) => {
       ],
     });
 
-    await newOrder.save();
-    res.status(201).json({ success: true, message: "Đặt hàng thành công!", orderId: newOrder._id });
+    const subtotalFromItems = (items || []).reduce(
+      (s, it) => s + Number(it.price || 0) * Number(it.quantity || 0),
+      0,
+    );
+    let shippingFeeValue = 0;
+    newOrder.shipping = newOrder.shipping || {};
 
-    // KHÔNG gọi ghn.createGHNOrder ở đây để giữ trạng thái PENDING
+    if (shippingInfo && typeof shippingInfo.shippingFee !== "undefined") {
+      shippingFeeValue = Number(shippingInfo.shippingFee) || 0;
+      newOrder.shipping.shippingFee = shippingFeeValue;
+      newOrder.shipping.shippingAddressStructured = {
+        province: typeof shippingInfo.province === 'string'
+          ? { name: shippingInfo.province }
+          : (shippingInfo.province || {}),
+        district: typeof shippingInfo.district === 'string'
+          ? { name: shippingInfo.district }
+          : (shippingInfo.district || {}),
+        ward: typeof shippingInfo.ward === 'string'
+          ? { name: shippingInfo.ward }
+          : (shippingInfo.ward || {}),
+        detail: shippingInfo.detail || customerInfo.address || "",
+      };
+      newOrder.shipping.shippingWeight = shippingInfo.weight || undefined;
+      newOrder.shipping.shippingDimensions = {
+        length: shippingInfo.length || 0,
+        width: shippingInfo.width || 0,
+        height: shippingInfo.height || 0,
+      };
+    } else if (
+      shippingInfo &&
+      shippingInfo.to_district_id &&
+      shippingInfo.to_ward_code &&
+      shippingInfo.weight
+    ) {
+      try {
+        const feeBody = {
+          to_district_id: shippingInfo.to_district_id,
+          to_ward_code: shippingInfo.to_ward_code,
+          weight: shippingInfo.weight,
+          length: shippingInfo.length || 0,
+          width: shippingInfo.width || 0,
+          height: shippingInfo.height || 0,
+          insurance_value: shippingInfo.insurance_value || 0,
+        };
+        const feeRes = await ghn.calculateFee(feeBody);
+        const feeData = feeRes.data || feeRes;
+        if (feeData && Array.isArray(feeData) && feeData.length > 0) {
+          shippingFeeValue = Number(
+            feeData[0].total || feeData[0].shipping_fee || 0,
+          );
+          newOrder.shipping.shippingServiceId =
+            feeData[0].service_id || feeData[0].service_type_id || "";
+          newOrder.shipping.shippingServiceName =
+            feeData[0].short_description || feeData[0].service_name || "";
+        } else if (feeData && typeof feeData === "object") {
+          shippingFeeValue = Number(feeData.total || feeData.shipping_fee || 0);
+        }
+        newOrder.shipping.shippingFee = shippingFeeValue;
+        newOrder.shipping.shippingWeight = shippingInfo.weight;
+        newOrder.shipping.shippingDimensions = {
+          length: shippingInfo.length || 0,
+          width: shippingInfo.width || 0,
+          height: shippingInfo.height || 0,
+        };
+        newOrder.shipping.shippingAddressStructured = {
+          province: typeof shippingInfo.province === 'string'
+            ? { name: shippingInfo.province }
+            : (shippingInfo.province || {}),
+          district: typeof shippingInfo.district === 'string'
+            ? { name: shippingInfo.district }
+            : (shippingInfo.district || {}),
+          ward: typeof shippingInfo.ward === 'string'
+            ? { name: shippingInfo.ward }
+            : (shippingInfo.ward || {}),
+          detail: shippingInfo.detail || customerInfo.address || "",
+        };
+      } catch (feeErr) {
+        console.error("GHN fee lookup failed:", feeErr.message || feeErr);
+      }
+    }
+
+    const computedTotal = subtotalFromItems + (shippingFeeValue || 0);
+    if (Number(totalPrice) && Number(totalPrice) === computedTotal) {
+      newOrder.totalPrice = Number(totalPrice);
+    } else {
+      newOrder.totalPrice = computedTotal;
+    }
+
+    await newOrder.save();
+
+    // Ghi log hoạt động đặt hàng
+    try {
+      await activityController.createLog(
+        userId,
+        "Đặt đơn hàng",
+        `Người dùng đã đặt đơn hàng mới mã ${newOrder._id.toString().slice(-8).toUpperCase()} trị giá ${newOrder.totalPrice.toLocaleString()}đ`,
+        req
+      );
+    } catch (err) {
+      console.error("Lỗi ghi log hoạt động khi tạo đơn hàng:", err);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "Đặt hàng thành công!",
+      orderId: newOrder._id,
+    });
   } catch (error) {
     console.error("Lỗi createOrder:", error);
     res.status(500).json({ success: false, message: error.message });
@@ -79,7 +182,10 @@ exports.createOrder = async (req, res) => {
 exports.adminConfirm = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
+    if (!order)
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn hàng" });
 
     addUniqueHistory(order, "confirmed", "Hệ thống đã xác nhận đơn hàng");
     order.status = "CONFIRMED";
@@ -87,10 +193,19 @@ exports.adminConfirm = async (req, res) => {
 
     // Ghi log
     if (req.user) {
-      await activityController.createLog(req.user.id, "Xác nhận đơn hàng", `Đã xác nhận đơn hàng: ${order._id}`, req);
+      await activityController.createLog(
+        req.user.id,
+        "Xác nhận đơn hàng",
+        `Đã xác nhận đơn hàng: ${order._id}`,
+        req,
+      );
     }
 
-    res.json({ success: true, message: "Đã xác nhận đơn hàng thành công", order });
+    res.json({
+      success: true,
+      message: "Đã xác nhận đơn hàng thành công",
+      order,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -100,7 +215,10 @@ exports.adminConfirm = async (req, res) => {
 exports.adminPacking = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
+    if (!order)
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn hàng" });
 
     addUniqueHistory(order, "packing", "Shop đang chuẩn bị hàng và đóng gói");
     order.status = "PACKING";
@@ -108,7 +226,12 @@ exports.adminPacking = async (req, res) => {
 
     // Ghi log
     if (req.user) {
-      await activityController.createLog(req.user.id, "Đóng gói đơn hàng", `Đã đóng gói đơn hàng: ${order._id}`, req);
+      await activityController.createLog(
+        req.user.id,
+        "Đóng gói đơn hàng",
+        `Đã đóng gói đơn hàng: ${order._id}`,
+        req,
+      );
     }
 
     res.json({ success: true, message: "Đã đóng gói thành công", order });
@@ -121,25 +244,59 @@ exports.adminPacking = async (req, res) => {
 exports.adminHandover = async (req, res) => {
   try {
     const orderId = req.params.id;
-    // Gọi hàm tạo đơn thật bên bưu cục GHN
-    await ghn.createGHNOrder(orderId);
 
+    // Gọi GHN, nhưng không để lỗi GHN chặn toàn bộ quy trình
+    let ghnError = null;
+    try {
+      await ghn.createGHNOrder(orderId);
+    } catch (err) {
+      ghnError = err.message || "GHN API failed";
+      console.error("❌ GHN API error (non-blocking):", ghnError);
+    }
+
+    // Dù GHN có lỗi hay không, vẫn cập nhật trạng thái lên READY_TO_PICK
     const updatedOrder = await Order.findById(orderId);
-    res.json({
+    if (!updatedOrder)
+      return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
+
+    // Nếu GHN thất bại (không lưu ghnOrderCode), vẫn cập nhật status thủ công
+    if (!updatedOrder.ghnOrderCode) {
+      updatedOrder.status = "READY_TO_PICK";
+      const orderId8 = updatedOrder._id.toString().slice(-8).toUpperCase();
+      const desc = `Đã bàn giao đơn #${orderId8} cho GHN${ghnError ? " (GHN lỗi: " + ghnError + ")" : ""}`;
+      const isExisted = updatedOrder.trackingHistory.find(h => h.status === "ready_to_pick");
+      if (!isExisted) {
+        updatedOrder.trackingHistory.push({
+          status: "ready_to_pick",
+          desc,
+          time: new Date(),
+        });
+      }
+      await updatedOrder.save();
+    }
+
+    return res.json({
       success: true,
-      message: "Đã bàn giao đơn cho GHN",
+      message: ghnError
+        ? `Đã bàn giao (GHN lỗi: ${ghnError}, trạng thái vẫn được cập nhật)`
+        : "Đã bàn giao đơn cho GHN",
       order: updatedOrder,
+      ghnError: ghnError || null,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
+
 // 5. User Sync: Đồng bộ trạng thái thực tế từ GHN
 exports.getOrderDetail = async (req, res) => {
   try {
     let order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
+    if (!order)
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn hàng" });
 
     if (order.ghnOrderCode) {
       const ghnInfo = await ghn.getGHNTracking(order.ghnOrderCode);
@@ -178,7 +335,9 @@ exports.shipperUpdateStatus = async (req, res) => {
     const { orderId } = req.body;
     const order = await Order.findById(orderId);
     if (!order || !order.ghnOrderCode)
-      return res.status(400).json({ success: false, message: "Đơn hàng không hợp lệ" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Đơn hàng không hợp lệ" });
 
     const ghnRes = await ghn.leadtimeGHNOrder(order.ghnOrderCode);
     if (ghnRes && ghnRes.code === 200) {
@@ -237,6 +396,20 @@ exports.getMyOrders = async (req, res) => {
   }
 };
 
+exports.getOrderById = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order)
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
+    res.json({ success: true, order });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// Admin: list all orders (simple, unpaginated)
 exports.getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find().sort({ createdAt: -1 });
@@ -249,11 +422,20 @@ exports.getAllOrders = async (req, res) => {
 exports.updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    const updated = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    const updated = await Order.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true },
+    );
 
     // Ghi log
     if (updated && req.user) {
-      await activityController.createLog(req.user.id, "Cập nhật đơn hàng", `Đã cập nhật trạng thái đơn hàng ${updated._id} thành ${status}`, req);
+      await activityController.createLog(
+        req.user.id,
+        "Cập nhật đơn hàng",
+        `Đã cập nhật trạng thái đơn hàng ${updated._id} thành ${status}`,
+        req,
+      );
     }
 
     res.json({ success: true, message: "Cập nhật trạng thái thành công" });

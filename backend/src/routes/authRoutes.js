@@ -6,6 +6,7 @@ const { verifyToken } = require("../middlewares/authMiddleware");
 const adminMiddleware = require("../middlewares/admin.middleware");
 
 router.post("/register", authController.register);
+
 router.post("/login", authController.login);
 router.put("/update-profile", verifyToken, authController.updateProfile);
 router.put("/change-password", verifyToken, authController.changePassword);
@@ -17,13 +18,32 @@ router.get("/activities", verifyToken, activityController.getActivities);
 
 // Admin User Management Routes
 router.get("/users", verifyToken, adminMiddleware, authController.getAllUsers);
-router.post("/users", verifyToken, adminMiddleware, authController.adminCreateUser);
-router.put("/users/:id", verifyToken, adminMiddleware, authController.updateUser);
-router.delete("/users/:id", verifyToken, adminMiddleware, authController.deleteUser);
+router.post(
+  "/users",
+  verifyToken,
+  adminMiddleware,
+  authController.adminCreateUser,
+);
+router.put(
+  "/users/:id",
+  verifyToken,
+  adminMiddleware,
+  authController.updateUser,
+);
+router.delete(
+  "/users/:id",
+  verifyToken,
+  adminMiddleware,
+  authController.deleteUser,
+);
 router.post("/google", authController.googleLogin);
 
 // Admin Activities Log
-router.get("/admin-activities", verifyToken, adminMiddleware, activityController.getAllActivities);
-
+router.get(
+  "/admin-activities",
+  verifyToken,
+  adminMiddleware,
+  activityController.getAllActivities,
+);
 
 module.exports = router;
