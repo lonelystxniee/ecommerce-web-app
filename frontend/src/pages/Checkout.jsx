@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { ChevronRight, CreditCard, Truck, Receipt } from "lucide-react";
+import AddressManagement from "../components/AddressManagement";
+import toast from "react-hot-toast";
 
 const Checkout = () => {
   const { cartItems, totalPrice, clearCart } = useCart();
@@ -27,8 +29,42 @@ const Checkout = () => {
   const [locationSelection, setLocationSelection] = useState({ provinceId: '', districtId: '', wardCode: '' });
   const [shippingFee, setShippingFee] = useState(null);
 
+  // saved addresses and modal
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [selectedAddress, setSelectedAddress] = useState(null);
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const token = localStorage.getItem('token');
+
+  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5175';
   useEffect(() => {
     fetch('/api/locations/provinces').then(r => r.json()).then(d => { if (d.success) setProvinces(d.provinces || d.provinces || d); }).catch(() => { });
+  }, []);
+
+  // load saved addresses for logged in users (to show address management)
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/addresses`, { headers: { Authorization: `Bearer ${token}` } });
+        const ct = res.headers.get('content-type') || '';
+        if (!res.ok) return;
+        if (ct.includes('application/json')) {
+          const data = await res.json();
+          if (data.success) {
+            setSavedAddresses((data.addresses || []).map(a => ({ ...a, id: a._id || a.id })));
+            // pick default address as selected initially
+            const def = (data.addresses || []).find(x => x.isDefault) || (data.addresses || [])[0];
+            if (def) {
+              setSelectedAddress(def);
+              // push district/ward into locationSelection so shipping can calculate
+              setLocationSelection((s) => ({ ...s, districtId: def.districtId || def.district_id || '', wardCode: def.wardCode || def.ward_code || '' }));
+              setFormData((s) => ({ ...s, fullName: def.fullName || s.fullName, phone: def.phone || s.phone, address: (def.street || '') + (def.ward ? ", " + def.ward : "") + (def.district ? ", " + def.district : "") + (def.province ? ", " + def.province : "") }));
+            }
+          }
+        }
+      } catch (e) { }
+    })();
   }, []);
 
   useEffect(() => {
@@ -64,6 +100,23 @@ const Checkout = () => {
     } catch (e) { }
   };
 
+  // Auto-calculate shipping when ward selection changes or cart changes
+  useEffect(() => {
+    if (locationSelection.wardCode) {
+      calculateShipping();
+    } else {
+      setShippingFee(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locationSelection.wardCode, cartItems]);
+
+  // when user selects an address from modal, update state and trigger shipping calc
+  const handleSelectAddress = (addr) => {
+    setSelectedAddress(addr);
+    setShowAddressModal(false);
+    setFormData((s) => ({ ...s, fullName: addr.fullName || s.fullName, phone: addr.phone || s.phone, address: (addr.street || '') + (addr.ward ? ", " + addr.ward : "") + (addr.district ? ", " + addr.district : "") + (addr.province ? ", " + addr.province : "") }));
+    setLocationSelection((s) => ({ ...s, districtId: addr.districtId || addr.district_id || '', wardCode: addr.wardCode || addr.ward_code || '' }));
+  };
   // 3. Xử lý thay đổi input
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -72,8 +125,9 @@ const Checkout = () => {
   // 4. Hàm xử lý đặt hàng
   const handleOrder = async () => {
     // Kiểm tra dữ liệu
-    if (!formData.fullName || !formData.phone || !formData.address) {
-      alert("Vui lòng điền đầy đủ các thông tin có dấu (*)");
+    // require either a selectedAddress or filled address textarea
+    if (!formData.fullName || !formData.phone || (!formData.address && !selectedAddress)) {
+      toast.error("Vui lòng điền đầy đủ các thông tin có dấu (*)");
       return;
     }
 
@@ -89,16 +143,19 @@ const Checkout = () => {
         fullName: formData.fullName,
         phone: formData.phone,
         email: formData.email,
-        address: formData.address,
+        address: selectedAddress ? ((selectedAddress.street || '') + (selectedAddress.ward ? ", " + selectedAddress.ward : "") + (selectedAddress.district ? ", " + selectedAddress.district : "") + (selectedAddress.province ? ", " + selectedAddress.province : "")) : formData.address,
         note: formData.note,
       },
       items: cartItems,
-      totalPrice: totalPrice,
+      // send grand total (subtotal + shipping) so backend has the final amount
+      totalPrice: totalPrice + (shippingFee || 0),
       paymentMethod: formData.paymentMethod,
       shippingInfo: {
-        province: provinces.find(p => String(p.ProvinceID || p.province_id) === String(locationSelection.provinceId)) || null,
-        district: districts.find(d => String(d.DistrictID || d.district_id) === String(locationSelection.districtId)) || null,
-        ward: wards.find(w => String(w.WardCode || w.code) === String(locationSelection.wardCode)) || null,
+        // include shippingFee so backend can trust frontend-calculated fee when available
+        shippingFee: shippingFee || 0,
+        province: selectedAddress ? (selectedAddress.province || null) : (provinces.find(p => String(p.ProvinceID || p.province_id) === String(locationSelection.provinceId)) || null),
+        district: selectedAddress ? (selectedAddress.district || null) : (districts.find(d => String(d.DistrictID || d.district_id) === String(locationSelection.districtId)) || null),
+        ward: selectedAddress ? (selectedAddress.ward || null) : (wards.find(w => String(w.WardCode || w.code) === String(locationSelection.wardCode)) || null),
         to_district_id: Number(locationSelection.districtId) || undefined,
         to_ward_code: locationSelection.wardCode || undefined,
         weight: cartItems.reduce((sum, it) => sum + ((it.weight || 300) * (it.quantity || 1)), 0),
@@ -117,6 +174,37 @@ const Checkout = () => {
       if (data.success) {
         alert("Đặt hàng thành công! Cảm ơn bạn đã ủng hộ Hồng Lam.");
         if (clearCart) clearCart(); // Xóa giỏ hàng nếu có hàm clear
+        // If user is logged in and had no saved addresses, save this address in background
+        (async () => {
+          try {
+            if (token && (savedAddresses.length === 0) && !selectedAddress) {
+              // build address body similar to AddressManagement
+              const provinceObj = provinces.find(p => String(p.ProvinceID || p.province_id) === String(locationSelection.provinceId));
+              const districtObj = districts.find(d => String(d.DistrictID || d.district_id) === String(locationSelection.districtId));
+              const wardObj = wards.find(w => String(w.WardCode || w.code) === String(locationSelection.wardCode));
+              const body = {
+                fullName: formData.fullName,
+                phone: formData.phone,
+                street: formData.address,
+                ward: wardObj ? (wardObj.WardName || wardObj.name) : undefined,
+                wardCode: locationSelection.wardCode || undefined,
+                district: districtObj ? (districtObj.DistrictName || districtObj.name) : undefined,
+                districtId: locationSelection.districtId || (districtObj ? (districtObj.DistrictID || districtObj.district_id) : null),
+                province: provinceObj ? (provinceObj.ProvinceName || provinceObj.name) : undefined,
+                provinceId: locationSelection.provinceId || (provinceObj ? (provinceObj.ProvinceID || provinceObj.province_id) : null),
+                isDefault: true,
+              };
+              await fetch(`${API_BASE}/api/addresses`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify(body),
+              });
+            }
+          } catch (e) {
+            console.error('Save address after order failed', e);
+          }
+        })();
+
         navigate("/");
         window.location.reload(); // Reload để reset giỏ hàng hoàn toàn
       } else {
@@ -184,36 +272,62 @@ const Checkout = () => {
                     className="w-full border border-gray-200 p-3 rounded-lg outline-none focus:border-[#faa519] transition-all bg-gray-50/50"
                   />
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-gray-500 mb-2 font-medium">
-                    Tỉnh/Thành <span className="text-red-500">*</span>
-                  </label>
-                  <select name="provinceId" value={locationSelection.provinceId} onChange={handleLocationChange} className="w-full border border-gray-200 p-3 rounded-lg outline-none">
-                    <option value="">Chọn tỉnh/thành</option>
-                    {provinces.map(p => <option key={p.ProvinceID || p.province_id} value={p.ProvinceID || p.province_id}>{p.ProvinceName || p.name}</option>)}
-                  </select>
-                </div>
+                {savedAddresses.length > 0 ? (
+                  <div className="md:col-span-2 p-4 border rounded-lg bg-[#fffefc]">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="font-bold text-gray-800">Địa chỉ giao hàng</div>
+                        <div className="text-sm text-gray-600 mt-2">
+                          {selectedAddress ? (
+                            <>
+                              <div className="font-bold">{selectedAddress.fullName} {selectedAddress.isDefault && (<span className="ml-2 text-xs px-2 py-1 rounded-full bg-[#fde0df] text-[#9d0b0f]">Mặc định</span>)}</div>
+                              <div className="text-xs">{selectedAddress.phone}</div>
+                              <div className="mt-2 text-sm">{(selectedAddress.street || '') + (selectedAddress.ward ? ', ' + selectedAddress.ward : '') + (selectedAddress.district ? ', ' + selectedAddress.district : '') + (selectedAddress.province ? ', ' + selectedAddress.province : '')}</div>
+                            </>
+                          ) : (
+                            <div className="text-sm text-gray-600">Chưa chọn địa chỉ</div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => setShowAddressModal(true)} className="px-4 py-2 rounded-2xl border hover:bg-gray-50">Thay đổi</button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="md:col-span-2">
+                      <label className="block text-gray-500 mb-2 font-medium">
+                        Tỉnh/Thành <span className="text-red-500">*</span>
+                      </label>
+                      <select name="provinceId" value={locationSelection.provinceId} onChange={handleLocationChange} className="w-full border border-gray-200 p-3 rounded-lg outline-none">
+                        <option value="">Chọn tỉnh/thành</option>
+                        {provinces.map(p => <option key={p.ProvinceID || p.province_id} value={p.ProvinceID || p.province_id}>{p.ProvinceName || p.name}</option>)}
+                      </select>
+                    </div>
 
-                <div>
-                  <label className="block text-gray-500 mb-2 font-medium">Quận/Huyện <span className="text-red-500">*</span></label>
-                  <select name="districtId" value={locationSelection.districtId} onChange={handleLocationChange} className="w-full border border-gray-200 p-3 rounded-lg outline-none">
-                    <option value="">Chọn quận/huyện</option>
-                    {districts.map(d => <option key={d.DistrictID || d.district_id} value={d.DistrictID || d.district_id}>{d.DistrictName || d.name}</option>)}
-                  </select>
-                </div>
+                    <div>
+                      <label className="block text-gray-500 mb-2 font-medium">Quận/Huyện <span className="text-red-500">*</span></label>
+                      <select name="districtId" value={locationSelection.districtId} onChange={handleLocationChange} className="w-full border border-gray-200 p-3 rounded-lg outline-none">
+                        <option value="">Chọn quận/huyện</option>
+                        {districts.map(d => <option key={d.DistrictID || d.district_id} value={d.DistrictID || d.district_id}>{d.DistrictName || d.name}</option>)}
+                      </select>
+                    </div>
 
-                <div>
-                  <label className="block text-gray-500 mb-2 font-medium">Xã/Phường <span className="text-red-500">*</span></label>
-                  <select name="wardCode" value={locationSelection.wardCode} onChange={handleLocationChange} className="w-full border border-gray-200 p-3 rounded-lg outline-none">
-                    <option value="">Chọn xã/phường</option>
-                    {wards.map(w => <option key={w.WardCode || w.code} value={w.WardCode || w.code}>{w.WardName || w.name}</option>)}
-                  </select>
-                </div>
+                    <div>
+                      <label className="block text-gray-500 mb-2 font-medium">Xã/Phường <span className="text-red-500">*</span></label>
+                      <select name="wardCode" value={locationSelection.wardCode} onChange={handleLocationChange} className="w-full border border-gray-200 p-3 rounded-lg outline-none">
+                        <option value="">Chọn xã/phường</option>
+                        {wards.map(w => <option key={w.WardCode || w.code} value={w.WardCode || w.code}>{w.WardName || w.name}</option>)}
+                      </select>
+                    </div>
 
-                <div className="md:col-span-2">
-                  <label className="block text-gray-500 mb-2 font-medium">Địa chỉ chi tiết <span className="text-red-500">*</span></label>
-                  <textarea name="address" value={formData.address} onChange={handleChange} placeholder="Số nhà, tên đường, phường/xã..." className="w-full border border-gray-200 p-3 rounded-lg h-24 outline-none focus:border-[#faa519] transition-all bg-gray-50/50"></textarea>
-                </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-gray-500 mb-2 font-medium">Địa chỉ chi tiết <span className="text-red-500">*</span></label>
+                      <textarea name="address" value={formData.address} onChange={handleChange} placeholder="Số nhà, tên đường, phường/xã..." className="w-full border border-gray-200 p-3 rounded-lg h-24 outline-none focus:border-[#faa519] transition-all bg-gray-50/50"></textarea>
+                    </div>
+                  </>
+                )}
 
                 <div className="md:col-span-2">
                   <button type="button" onClick={calculateShipping} className="px-4 py-2 bg-[#9d0b0f] text-white rounded">Tính phí vận chuyển</button>
@@ -374,6 +488,22 @@ const Checkout = () => {
             </div>
           </div>
         </div>
+        {/* Address management modal */}
+        {showAddressModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="w-full max-w-3xl p-6">
+              <div className="relative bg-white rounded-2xl shadow-lg">
+                <div className="p-4 border-b flex items-center justify-between">
+                  <h3 className="font-bold">Địa chỉ của tôi</h3>
+                  <button onClick={() => setShowAddressModal(false)} className="px-3 py-1">✕</button>
+                </div>
+                <div className="p-6">
+                  <AddressManagement user={savedUser} selectable={true} onSelect={handleSelectAddress} />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

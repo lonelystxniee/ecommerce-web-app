@@ -127,3 +127,53 @@ exports.webhook = async (req, res) => {
     res.status(500).json({ success: false, message: err.message || 'Webhook handler error' });
   }
 };
+
+// Get shipping events / shipping info for an order (customer or admin)
+exports.getEvents = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findById(orderId);
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+    res.json({ success: true, shipping: order.shipping || {} });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message || 'Failed to get shipping events' });
+  }
+};
+
+// Admin: set tracking code for an order
+exports.setTrackingCode = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { trackingCode } = req.body;
+    if (!trackingCode) return res.status(400).json({ success: false, message: 'trackingCode required' });
+    const order = await Order.findById(orderId);
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+    order.shipping = order.shipping || {};
+    order.shipping.trackingCode = trackingCode;
+    order.shipping.shippingEvents = order.shipping.shippingEvents || [];
+    order.shipping.shippingEvents.push({ time: new Date(), status: 'TRACKING_ASSIGNED', note: `Tracking ${trackingCode} set by admin` });
+    await order.save();
+    res.json({ success: true, shipping: order.shipping });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message || 'Failed to set tracking code' });
+  }
+};
+
+// Admin: update shipping status manually
+exports.updateShippingStatus = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { shippingStatus } = req.body;
+    if (!shippingStatus) return res.status(400).json({ success: false, message: 'shippingStatus required' });
+    const order = await Order.findById(orderId);
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+    order.shipping = order.shipping || {};
+    order.shipping.shippingStatus = shippingStatus;
+    order.shipping.shippingEvents = order.shipping.shippingEvents || [];
+    order.shipping.shippingEvents.push({ time: new Date(), status: shippingStatus, note: 'Updated by admin' });
+    await order.save();
+    res.json({ success: true, shipping: order.shipping });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message || 'Failed to update shipping status' });
+  }
+};

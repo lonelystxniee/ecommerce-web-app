@@ -38,7 +38,7 @@ exports.login = async (req, res) => {
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: "24h" },
+      { expiresIn: "48h" },
     );
 
     console.log("✅ Đăng nhập thành công cho:", user.fullName);
