@@ -31,6 +31,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/category", categoryRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/addresses", addressRoutes);
+app.use("/api/wishlist", require("./src/routes/wishlistRoutes"));
 
 const PORT = process.env.PORT || 5175;
 

@@ -295,7 +295,7 @@ const AdminManagement = () => {
 
       {/* Tìm kiếm */}
       <div className="bg-white/80 p-6 rounded-3xl shadow-sm border border-[#9d0b0f]/10">
-        <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex flex-col gap-4 md:flex-row">
           <div className="relative flex-1">
             <Search
               className="absolute left-4 top-3.5 text-[#9d0b0f]"
@@ -341,7 +341,7 @@ const AdminManagement = () => {
       <div className="overflow-hidden border border-gray-100 shadow-xl bg-white/90 rounded-4xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
-            <thead className="bg-[#9d0b0f] text-white text-[10px] uppercase font-bold tracking-widest">
+            <thead className="bg-[#9d0b0f] text-white text-xs uppercase font-bold tracking-widest">
               <tr>
                 <th className="px-8 py-5">Thành viên</th>
                 <th className="px-8 py-5">Liên hệ</th>
@@ -406,20 +406,22 @@ const AdminManagement = () => {
                     </td>
                     <td className="px-8 py-6 text-center">
                       <span
-                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1 ${user.role === "ADMIN"
-                          ? "bg-red-100 text-red-600"
-                          : "bg-blue-100 text-blue-600"
-                          }`}
+                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1 ${
+                          user.role === "ADMIN"
+                            ? "bg-red-100 text-red-600"
+                            : "bg-blue-100 text-blue-600"
+                        }`}
                       >
                         <Shield size={12} /> {user.role}
                       </span>
                     </td>
                     <td className="px-8 py-6 text-center">
                       <span
-                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold ${user.status === "ACTIVE"
-                          ? "bg-green-100 text-green-600"
-                          : "bg-yellow-100 text-yellow-600"
-                          }`}
+                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold ${
+                          user.status === "ACTIVE"
+                            ? "bg-green-100 text-green-600"
+                            : "bg-yellow-100 text-yellow-600"
+                        }`}
                       >
                         {user.status === "ACTIVE"
                           ? "ĐANG HOẠT ĐỘNG"
@@ -442,10 +444,11 @@ const AdminManagement = () => {
                         </button>
                         <button
                           onClick={() => handleToggleStatus(user)}
-                          className={`p-2 transition-all rounded-xl ${user.status === "ACTIVE"
-                            ? "text-orange-500 hover:bg-orange-50"
-                            : "text-green-500 hover:bg-green-50"
-                            }`}
+                          className={`p-2 transition-all rounded-xl ${
+                            user.status === "ACTIVE"
+                              ? "text-orange-500 hover:bg-orange-50"
+                              : "text-green-500 hover:bg-green-50"
+                          }`}
                           title={
                             user.status === "ACTIVE"
                               ? "Khóa tài khoản"
@@ -472,12 +475,17 @@ const AdminManagement = () => {
       {totalPages > 1 && (
         <div className="flex flex-col items-center justify-between gap-4 mt-8 md:flex-row">
           <p className="text-sm font-medium text-[#88694f]">
-            Hiển thị <span className="font-bold text-[#3e2714]">{displayUsers.length}</span> trên <span className="font-bold text-[#3e2714]">{totalUsers}</span> quản trị viên
+            Hiển thị{" "}
+            <span className="font-bold text-[#3e2714]">
+              {displayUsers.length}
+            </span>{" "}
+            trên <span className="font-bold text-[#3e2714]">{totalUsers}</span>{" "}
+            quản trị viên
           </p>
           <div className="flex items-center gap-2">
             <button
               disabled={currentPage === 1}
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               className="px-4 py-2 text-sm font-bold text-[#9d0b0f] bg-white border border-[#9d0b0f]/20 rounded-xl hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
             >
               Trước
@@ -495,10 +503,11 @@ const AdminManagement = () => {
                     <button
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
-                      className={`w-10 h-10 rounded-xl text-sm font-bold transition-all shadow-sm ${currentPage === pageNum
-                        ? "bg-[#9d0b0f] text-white"
-                        : "bg-white text-[#9d0b0f] border border-[#9d0b0f]/20 hover:bg-red-50"
-                        }`}
+                      className={`w-10 h-10 rounded-xl text-sm font-bold transition-all shadow-sm ${
+                        currentPage === pageNum
+                          ? "bg-[#9d0b0f] text-white"
+                          : "bg-white text-[#9d0b0f] border border-[#9d0b0f]/20 hover:bg-red-50"
+                      }`}
                     >
                       {pageNum}
                     </button>
@@ -507,7 +516,11 @@ const AdminManagement = () => {
                   (pageNum === 2 && currentPage > 3) ||
                   (pageNum === totalPages - 1 && currentPage < totalPages - 2)
                 ) {
-                  return <span key={pageNum} className="px-1 text-[#88694f]">...</span>;
+                  return (
+                    <span key={pageNum} className="px-1 text-[#88694f]">
+                      ...
+                    </span>
+                  );
                 }
                 return null;
               })}
@@ -515,7 +528,9 @@ const AdminManagement = () => {
 
             <button
               disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
               className="px-4 py-2 text-sm font-bold text-[#9d0b0f] bg-white border border-[#9d0b0f]/20 rounded-xl hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
             >
               Sau

@@ -65,26 +65,29 @@ exports.createOrder = async (req, res) => {
       ],
     });
 
-    const subtotalFromItems = (items || []).reduce(
-      (s, it) => s + Number(it.price || 0) * Number(it.quantity || 0),
-      0,
-    );
-    let shippingFeeValue = 0;
-    newOrder.shipping = newOrder.shipping || {};
+    await newOrder.save();
+    res.status(201).json({
+      success: true,
+      message: "Đặt hàng thành công!",
+      orderId: newOrder._id,
+    });
 
     if (shippingInfo && typeof shippingInfo.shippingFee !== "undefined") {
       shippingFeeValue = Number(shippingInfo.shippingFee) || 0;
       newOrder.shipping.shippingFee = shippingFeeValue;
       newOrder.shipping.shippingAddressStructured = {
-        province: typeof shippingInfo.province === 'string'
-          ? { name: shippingInfo.province }
-          : (shippingInfo.province || {}),
-        district: typeof shippingInfo.district === 'string'
-          ? { name: shippingInfo.district }
-          : (shippingInfo.district || {}),
-        ward: typeof shippingInfo.ward === 'string'
-          ? { name: shippingInfo.ward }
-          : (shippingInfo.ward || {}),
+        province:
+          typeof shippingInfo.province === "string"
+            ? { name: shippingInfo.province }
+            : shippingInfo.province || {},
+        district:
+          typeof shippingInfo.district === "string"
+            ? { name: shippingInfo.district }
+            : shippingInfo.district || {},
+        ward:
+          typeof shippingInfo.ward === "string"
+            ? { name: shippingInfo.ward }
+            : shippingInfo.ward || {},
         detail: shippingInfo.detail || customerInfo.address || "",
       };
       newOrder.shipping.shippingWeight = shippingInfo.weight || undefined;
@@ -130,15 +133,18 @@ exports.createOrder = async (req, res) => {
           height: shippingInfo.height || 0,
         };
         newOrder.shipping.shippingAddressStructured = {
-          province: typeof shippingInfo.province === 'string'
-            ? { name: shippingInfo.province }
-            : (shippingInfo.province || {}),
-          district: typeof shippingInfo.district === 'string'
-            ? { name: shippingInfo.district }
-            : (shippingInfo.district || {}),
-          ward: typeof shippingInfo.ward === 'string'
-            ? { name: shippingInfo.ward }
-            : (shippingInfo.ward || {}),
+          province:
+            typeof shippingInfo.province === "string"
+              ? { name: shippingInfo.province }
+              : shippingInfo.province || {},
+          district:
+            typeof shippingInfo.district === "string"
+              ? { name: shippingInfo.district }
+              : shippingInfo.district || {},
+          ward:
+            typeof shippingInfo.ward === "string"
+              ? { name: shippingInfo.ward }
+              : shippingInfo.ward || {},
           detail: shippingInfo.detail || customerInfo.address || "",
         };
       } catch (feeErr) {
@@ -161,7 +167,7 @@ exports.createOrder = async (req, res) => {
         userId,
         "Đặt đơn hàng",
         `Người dùng đã đặt đơn hàng mới mã ${newOrder._id.toString().slice(-8).toUpperCase()} trị giá ${newOrder.totalPrice.toLocaleString()}đ`,
-        req
+        req,
       );
     } catch (err) {
       console.error("Lỗi ghi log hoạt động khi tạo đơn hàng:", err);
@@ -257,14 +263,18 @@ exports.adminHandover = async (req, res) => {
     // Dù GHN có lỗi hay không, vẫn cập nhật trạng thái lên READY_TO_PICK
     const updatedOrder = await Order.findById(orderId);
     if (!updatedOrder)
-      return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn hàng" });
 
     // Nếu GHN thất bại (không lưu ghnOrderCode), vẫn cập nhật status thủ công
     if (!updatedOrder.ghnOrderCode) {
       updatedOrder.status = "READY_TO_PICK";
       const orderId8 = updatedOrder._id.toString().slice(-8).toUpperCase();
       const desc = `Đã bàn giao đơn #${orderId8} cho GHN${ghnError ? " (GHN lỗi: " + ghnError + ")" : ""}`;
-      const isExisted = updatedOrder.trackingHistory.find(h => h.status === "ready_to_pick");
+      const isExisted = updatedOrder.trackingHistory.find(
+        (h) => h.status === "ready_to_pick",
+      );
       if (!isExisted) {
         updatedOrder.trackingHistory.push({
           status: "ready_to_pick",
@@ -287,7 +297,6 @@ exports.adminHandover = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
 
 // 5. User Sync: Đồng bộ trạng thái thực tế từ GHN
 exports.getOrderDetail = async (req, res) => {

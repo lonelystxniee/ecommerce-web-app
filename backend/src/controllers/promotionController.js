@@ -1,5 +1,4 @@
 const Promotion = require("../models/Promotion");
-const activityController = require("./activityController");
 
 // 1. Lấy tất cả mã (Admin)
 exports.getAll = async (req, res) => {
@@ -16,12 +15,6 @@ exports.create = async (req, res) => {
     try {
         const newPromo = new Promotion(req.body);
         await newPromo.save();
-
-        // Ghi log
-        if (req.user) {
-            await activityController.createLog(req.user.id, "Tạo mã giảm giá", `Đã tạo mã giảm giá: ${newPromo.code}`, req);
-        }
-
         res.json({ success: true, message: "Tạo thành công" });
     } catch (error) {
         res
@@ -33,13 +26,7 @@ exports.create = async (req, res) => {
 // 3. Cập nhật mã (Admin) - MỚI
 exports.update = async (req, res) => {
     try {
-        const updated = await Promotion.findByIdAndUpdate(req.params.id, req.body, { new: true });
-
-        // Ghi log
-        if (updated && req.user) {
-            await activityController.createLog(req.user.id, "Cập nhật mã giảm giá", `Đã cập nhật mã giảm giá: ${updated.code}`, req);
-        }
-
+        await Promotion.findByIdAndUpdate(req.params.id, req.body);
         res.json({ success: true, message: "Cập nhật thành công" });
     } catch (error) {
         res.status(500).json({ success: false, message: "Lỗi cập nhật" });
@@ -49,13 +36,7 @@ exports.update = async (req, res) => {
 // 4. Xóa mã (Admin) - MỚI
 exports.delete = async (req, res) => {
     try {
-        const deleted = await Promotion.findByIdAndDelete(req.params.id);
-
-        // Ghi log
-        if (deleted && req.user) {
-            await activityController.createLog(req.user.id, "Xóa mã giảm giá", `Đã xóa mã giảm giá: ${deleted.code}`, req);
-        }
-
+        await Promotion.findByIdAndDelete(req.params.id);
         res.json({ success: true, message: "Đã xóa mã giảm giá" });
     } catch (error) {
         res.status(500).json({ success: false });

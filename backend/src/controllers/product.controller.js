@@ -347,6 +347,23 @@ exports.updateProduct = async (req, res) => {
       }
     }
 
+    // 2️⃣ Handle variants
+    if (req.body.variants) {
+      try {
+        updateData.variants = typeof req.body.variants === 'string'
+          ? JSON.parse(req.body.variants)
+          : req.body.variants;
+
+        // Optionally update top-level price and quantity based on variants
+        if (updateData.variants.length > 0) {
+          updateData.price = updateData.variants[0].price;
+          updateData.quantity = updateData.variants.reduce((acc, v) => acc + (Number(v.stock) || 0), 0);
+        }
+      } catch (e) {
+        console.error("Error parsing variants in update:", e);
+      }
+    }
+
     // 3️⃣ Update product
     const updated = await Product.findByIdAndUpdate(id, updateData, {
       new: true
@@ -427,5 +444,106 @@ exports.searchProduct = async (req, res) => {
   } catch (error) {
     console.error("Search error:", error);
     res.status(500).json({ success: false, message: "Lỗi khi tìm kiếm sản phẩm" });
+  }
+};
+
+// Bulk stock in logic
+exports.bulkStockIn = async (req, res) => {
+  try {
+    const { items } = req.body;
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, message: "Danh sách hàng nhập không hợp lệ" });
+    }
+
+    const results = {
+      updated: 0,
+      created: 0,
+      failed: 0,
+      errors: []
+    };
+
+    for (const item of items) {
+      try {
+        let product = await Product.findOne({ productCode: item.productCode });
+
+        if (product) {
+          // Update existing product
+          // If product has variants, we MUST update a variant
+          if (product.variants && product.variants.length > 0) {
+            let variant = item.variantLabel
+              ? product.variants.find(v => v.label === item.variantLabel)
+              : product.variants[0]; // If label not provided, default to first variant
+
+            if (variant) {
+              variant.stock = (variant.stock || 0) + (Number(item.quantity) || 0);
+              if (item.price) variant.price = Number(item.price);
+            } else if (item.variantLabel) {
+              // Add new variant if label provided but not found
+              product.variants.push({
+                label: item.variantLabel,
+                price: Number(item.price) || product.price,
+                stock: Number(item.quantity) || 0
+              });
+            }
+            // Sync total quantity
+            product.quantity = product.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
+          } else {
+            // Flat product update
+            product.quantity += (Number(item.quantity) || 0);
+            if (item.price) product.price = Number(item.price);
+          }
+
+          await product.save();
+          results.updated++;
+        } else {
+          // Create new product
+          if (!item.productName || !item.categoryID) {
+            results.failed++;
+            results.errors.push(`Sản phẩm ${item.productCode} chưa tồn tại, thiếu thông tin (Tên hoặc Danh mục)`);
+            continue;
+          }
+
+          const productData = {
+            productName: item.productName,
+            productCode: item.productCode,
+            price: Number(item.price) || 0,
+            quantity: Number(item.quantity) || 0,
+            categoryID: item.categoryID,
+            description: item.description || "",
+            slogan: item.slogan || "",
+            variants: item.variantLabel ? [{
+              label: item.variantLabel,
+              price: Number(item.price) || 0,
+              stock: Number(item.quantity) || 0
+            }] : []
+          };
+
+          await Product.create(productData);
+          results.created++;
+        }
+      } catch (err) {
+        results.failed++;
+        results.errors.push(`Lỗi khi xử lý mã ${item.productCode}: ${err.message}`);
+      }
+    }
+
+    // Log activity
+    await activityController.createLog(
+      req.user.id,
+      "Nhập kho hàng loạt",
+      `Đã cập nhật ${results.updated} và tạo mới ${results.created} sản phẩm`,
+      req
+    );
+
+    res.status(200).json({
+      success: true,
+      message: `Nhập kho hoàn tất: Cập nhật ${results.updated}, Tạo mới ${results.created}, Lỗi ${results.failed}`,
+      results
+    });
+
+  } catch (error) {
+    console.error("Bulk stock-in error:", error);
+    res.status(500).json({ success: false, message: "Lỗi hệ thống khi nhập kho", error: error.message });
   }
 };

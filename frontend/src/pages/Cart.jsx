@@ -59,9 +59,11 @@ const Cart = () => {
                   <h3 className="text-lg font-bold text-gray-800">
                     {item.name}
                   </h3>
-                  <p className="text-sm text-[#88694f] italic">
-                    {item.label || "Phân loại mặc định"}
-                  </p>
+                  {item.label && item.label !== "Giá gốc" && (
+                    <p className="text-sm text-[#88694f] italic">
+                      Loại: {item.label}
+                    </p>
+                  )}
                   <p className="mt-1 font-bold text-primary">
                     {item.price.toLocaleString()}đ
                   </p>

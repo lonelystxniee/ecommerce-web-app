@@ -364,7 +364,7 @@ const Home = () => {
       </div>
 
       {/* SECTION 8: TẤT CẢ SẢN PHẨM (PAGINATION) */}
-      <div ref={allProductRef} className="px-4 mx-auto mt-20 max-w-300">
+      <div ref={allProductRef} className="px-4 mx-auto mt-35 max-w-300">
         <SectionHeading title="Khám phá tất cả sản phẩm" />
 
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8 bg-white/50 p-6 rounded-[32px] border border-[#e0be91]/30 backdrop-blur-sm">
@@ -502,7 +502,7 @@ const Home = () => {
       </div>
 
       {/* SECTION 4: GIẢI PHÁP QUÀ TẶNG */}
-      <div className="px-4 mx-auto text-center mt-30 max-w-300">
+      <div className="px-4 mx-auto mt-20 text-center max-w-300">
         <SectionHeading title="Thực phẩm tươi sạch" />
         <p className="text-secondary-2 my-5 hidden px-[12%] text-center text-sm lg:block text-gray-600 font-light leading-relaxed italic">
           ClickGo Mart cam kết cung cấp các loại thực phẩm tươi sạch mỗi ngày,

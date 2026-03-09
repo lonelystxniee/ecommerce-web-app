@@ -12,6 +12,7 @@ import ReviewManagement from "./pages/ReviewManagement";
 import AdminManagement from "./pages/AdminManagement";
 import ActivityLogs from "./pages/ActivityLogs";
 import LoginPage from "./pages/LoginPage";
+import WarehouseManagement from "./pages/WarehouseManagement";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -31,6 +32,8 @@ function App() {
             <Route path="categories" element={<CategoryManagement />} />
             <Route path="reviews" element={<ReviewManagement />} />
             <Route path="activities" element={<ActivityLogs />} />
+            <Route path="warehouse" element={<WarehouseManagement />} />
+
           </Route>
         </Route>
       </Routes>
