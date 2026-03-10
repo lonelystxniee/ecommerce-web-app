@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { API_URL } from "../apiConfig";
 import { useParams, Link, useSearchParams } from "react-router-dom";
 import {
   ChevronRight,
@@ -24,7 +25,6 @@ const CategoryPage = () => {
   const [loading, setLoading] = useState(true);
   const [currentCategory, setCurrentCategory] = useState(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
 
   const [filters, setFilters] = useState({
     minPrice: searchParams.get("minPrice") || "",

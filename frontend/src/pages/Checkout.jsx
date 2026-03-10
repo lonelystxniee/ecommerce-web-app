@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { API_URL } from "../apiConfig";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { ChevronRight, CreditCard, Truck, Receipt, Tag } from "lucide-react";
@@ -37,7 +38,7 @@ const Checkout = () => {
   const [showAddressModal, setShowAddressModal] = useState(false);
   const token = localStorage.getItem("token");
 
-  const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5175";
+  const API_BASE = API_URL;
   useEffect(() => {
     fetch(`${API_BASE}/api/locations/provinces`)
       .then((r) => r.json())
@@ -211,7 +212,6 @@ const Checkout = () => {
     fetchPromos();
   }, []);
 
-  const API_URL = import.meta.env.VITE_API_URL || API_BASE;
 
   const handleApplyPromo = async (codeOverride) => {
     const codeToApply = codeOverride || promoCode;
@@ -769,8 +769,8 @@ const Checkout = () => {
                             key={promo._id}
                             onClick={() => handleApplyPromo(promo.code)}
                             className={`p-3 rounded-xl border-2 transition-all cursor-pointer group flex items-center justify-between ${appliedCode === promo.code
-                                ? "border-primary bg-red-50"
-                                : "border-white bg-white hover:border-secondary shadow-sm"
+                              ? "border-primary bg-red-50"
+                              : "border-white bg-white hover:border-secondary shadow-sm"
                               }`}
                           >
                             <div className="flex items-center gap-3">
@@ -792,8 +792,8 @@ const Checkout = () => {
                                 handleApplyPromo(promo.code);
                               }}
                               className={`text-[9px] font-black px-3 py-1 rounded-full transition-all ${appliedCode === promo.code
-                                  ? "bg-primary text-white"
-                                  : "bg-gray-100 text-[#88694f] group-hover:bg-secondary group-hover:text-white"
+                                ? "bg-primary text-white"
+                                : "bg-gray-100 text-[#88694f] group-hover:bg-secondary group-hover:text-white"
                                 }`}
                             >
                               {appliedCode === promo.code

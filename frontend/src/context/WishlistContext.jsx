@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
+import { API_URL } from "../apiConfig";
 import toast from "react-hot-toast";
 
 const WishlistContext = createContext();
@@ -6,7 +7,6 @@ const WishlistContext = createContext();
 export const WishlistProvider = ({ children }) => {
     const [wishlistItems, setWishlistItems] = useState([]);
     const [wishlistIds, setWishlistIds] = useState([]);
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
 
     const fetchWishlist = async () => {
         const token = localStorage.getItem("token");
