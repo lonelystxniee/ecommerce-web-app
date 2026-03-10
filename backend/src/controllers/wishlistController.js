@@ -1,5 +1,5 @@
 const User = require("../models/User");
-const Product = require("../models/product");
+const Product = require("../models/Product");
 
 exports.toggleWishlist = async (req, res) => {
     try {
