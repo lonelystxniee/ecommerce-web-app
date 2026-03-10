@@ -1,4 +1,5 @@
 import React from "react";
+import { API_URL } from "../../config/apiConfig";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import {
@@ -17,7 +18,6 @@ import Hero from "./Hero";
 import CategorySection from "./CategorySection";
 import { ProductItemSmall } from "./ProductItemSmall";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
 
 export const SectionHeading = ({ title, outlined }) => (
   <div className="relative flex items-center justify-center my-10 z-1">
