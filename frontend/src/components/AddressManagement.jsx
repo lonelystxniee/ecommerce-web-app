@@ -41,8 +41,9 @@ export default function AddressManagement({ user, selectable = false, onSelect =
 
     // remove duplicate items by their normalized id (some GHN responses can include duplicates)
     const uniqueById = (list, idFn = (x) => (x ? String(x) : '')) => {
+        if (!Array.isArray(list)) return [];
         const seen = new Set();
-        return (list || []).filter((it) => {
+        return list.filter((it) => {
             const id = String(idFn(it) ?? '');
             if (!id) return false;
             if (seen.has(id)) return false;
@@ -62,7 +63,7 @@ export default function AddressManagement({ user, selectable = false, onSelect =
             }
             if (contentType.includes('application/json')) {
                 const data = await res.json();
-                if (data.success) setProvinces(data.provinces || []);
+                if (data.success) setProvinces(Array.isArray(data.provinces) ? data.provinces : []);
             }
         } catch (err) {
             console.error('fetchProvinces', err);
@@ -81,7 +82,7 @@ export default function AddressManagement({ user, selectable = false, onSelect =
             }
             if (contentType.includes('application/json')) {
                 const data = await res.json();
-                if (data.success) setDistricts(data.districts || []);
+                if (data.success) setDistricts(Array.isArray(data.districts) ? data.districts : []);
             }
         } catch (err) {
             console.error('fetchDistricts', err);
@@ -100,7 +101,7 @@ export default function AddressManagement({ user, selectable = false, onSelect =
             }
             if (contentType.includes('application/json')) {
                 const data = await res.json();
-                if (data.success) setWards(data.wards || []);
+                if (data.success) setWards(Array.isArray(data.wards) ? data.wards : []);
             }
         } catch (err) {
             console.error('fetchWards', err);
