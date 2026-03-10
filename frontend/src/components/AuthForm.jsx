@@ -3,9 +3,9 @@ import { X, Eye, EyeOff, Check, ChevronDown } from "lucide-react";
 import { GoogleLogin } from "@react-oauth/google";
 import { validateLogin, validateRegister } from "../helpers/validate";
 import toast from "react-hot-toast";
+import API_URL from "../config/apiConfig";
 
 const AuthForm = ({ isOpen, onClose }) => {
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
   const [viewMode, setViewMode] = useState("login");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -496,13 +496,12 @@ const InputGroup = ({ label, error, success, doubleRight, ...props }) => (
     </label>
     <div className="relative">
       <input
-        className={`w-full bg-white border rounded-lg py-2 px-3 text-sm outline-none transition-all ${
-          error
+        className={`w-full bg-white border rounded-lg py-2 px-3 text-sm outline-none transition-all ${error
             ? "border-red-500 bg-red-50"
             : success
               ? "border-green-500"
               : "border-gray-300 focus:border-[#800a0d]"
-        }`}
+          }`}
         {...props}
       />
 

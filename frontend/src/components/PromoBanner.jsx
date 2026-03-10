@@ -1,12 +1,12 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
+import API_URL from "../config/apiConfig";
 
 const PromoBanner = () => {
   const [promos, setPromos] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
 
   useEffect(() => {
     const fetchPromos = async () => {

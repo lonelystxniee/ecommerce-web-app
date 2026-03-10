@@ -22,6 +22,7 @@ import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 
 import toast from "react-hot-toast";
+import API_URL from "../config/apiConfig";
 
 const ProductDetail = () => {
   const navigate = useNavigate();
@@ -29,7 +30,6 @@ const ProductDetail = () => {
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
