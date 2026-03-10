@@ -16,8 +16,8 @@ import { useRef } from "react";
 import Hero from "./Hero";
 import CategorySection from "./CategorySection";
 import { ProductItemSmall } from "./ProductItemSmall";
+import API_URL from "../../config/apiConfig";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
 
 export const SectionHeading = ({ title, outlined }) => (
   <div className="relative flex items-center justify-center my-10 z-1">

@@ -10,6 +10,7 @@ import {
 import { useCart } from "../context/CartContext";
 
 import toast from "react-hot-toast";
+import API_URL from "../config/apiConfig";
 
 const CategoryPage = () => {
   const { slug } = useParams();
@@ -24,7 +25,6 @@ const CategoryPage = () => {
   const [loading, setLoading] = useState(true);
   const [currentCategory, setCurrentCategory] = useState(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
 
   const [filters, setFilters] = useState({
     minPrice: searchParams.get("minPrice") || "",

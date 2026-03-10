@@ -12,8 +12,8 @@ import {
     ShieldCheck,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import API_URL from "../config/apiConfig";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
 
 // ─── Helpers độ mạnh mật khẩu ─────────────────────────────────────────────
 function getStrength(password) {
@@ -235,10 +235,10 @@ export default function ResetPassword() {
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     placeholder="Nhập lại mật khẩu mới"
                                     className={`w-full px-5 py-4 pr-12 bg-[#fdfaf5] border rounded-2xl outline-none transition-all font-bold text-[#3e2714] ${passwordsMatch
-                                            ? "border-green-400 focus:border-green-500"
-                                            : passwordsMismatch
-                                                ? "border-red-400 focus:border-red-500"
-                                                : "border-gray-100 focus:border-[#800a0d]"
+                                        ? "border-green-400 focus:border-green-500"
+                                        : passwordsMismatch
+                                            ? "border-red-400 focus:border-red-500"
+                                            : "border-gray-100 focus:border-[#800a0d]"
                                         } focus:bg-white`}
                                     required
                                 />

@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight, Mail, ArrowLeft, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
+import API_URL from "../config/apiConfig";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");

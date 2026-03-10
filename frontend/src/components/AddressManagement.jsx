@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { MapPin, Edit3, Trash2, PlusCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import API_URL from "../config/apiConfig";
 
 const emptyForm = {
     id: null,
@@ -14,7 +15,7 @@ const emptyForm = {
 };
 
 // align with Checkout which uses `VITE_API_BASE`; support older `VITE_API_URL` too
-const apiBase = import.meta.env.VITE_API_BASE || import.meta.env.VITE_API_URL || 'http://localhost:5175';
+const apiBase = API_URL;
 
 export default function AddressManagement({ user, selectable = false, onSelect = null }) {
     const [addresses, setAddresses] = useState([]);

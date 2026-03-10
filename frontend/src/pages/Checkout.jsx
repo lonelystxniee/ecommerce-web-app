@@ -4,6 +4,7 @@ import { useCart } from "../context/CartContext";
 import { ChevronRight, CreditCard, Truck, Receipt, Tag } from "lucide-react";
 import AddressManagement from "../components/AddressManagement";
 import toast from "react-hot-toast";
+import API_URL from "../config/apiConfig";
 
 const Checkout = () => {
   const { cartItems, totalPrice, clearCart } = useCart();
@@ -37,9 +38,8 @@ const Checkout = () => {
   const [showAddressModal, setShowAddressModal] = useState(false);
   const token = localStorage.getItem("token");
 
-  const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5175";
   useEffect(() => {
-    fetch(`${API_BASE}/api/locations/provinces`)
+    fetch(`${API_URL}/api/locations/provinces`)
       .then((r) => r.json())
       .then((d) => {
         if (d.success) setProvinces(d.provinces || d.provinces || d);
@@ -53,7 +53,7 @@ const Checkout = () => {
     if (!token) return;
     (async () => {
       try {
-        const res = await fetch(`${API_BASE}/api/addresses`, {
+        const res = await fetch(`${API_URL}/api/addresses`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const ct = res.headers.get("content-type") || "";
@@ -96,7 +96,7 @@ const Checkout = () => {
   useEffect(() => {
     if (locationSelection.provinceId) {
       fetch(
-        `${API_BASE}/api/locations/districts?provinceId=${locationSelection.provinceId}`,
+        `${API_URL}/api/locations/districts?provinceId=${locationSelection.provinceId}`,
       )
         .then((r) => r.json())
         .then((d) => {
@@ -109,7 +109,7 @@ const Checkout = () => {
   useEffect(() => {
     if (locationSelection.districtId) {
       fetch(
-        `${API_BASE}/api/locations/wards?districtId=${locationSelection.districtId}`,
+        `${API_URL}/api/locations/wards?districtId=${locationSelection.districtId}`,
       )
         .then((r) => r.json())
         .then((d) => {
@@ -135,7 +135,7 @@ const Checkout = () => {
     );
     if (!locationSelection.districtId || !locationSelection.wardCode) return;
     try {
-      const res = await fetch(`${API_BASE}/api/shipping/calculate`, {
+      const res = await fetch(`${API_URL}/api/shipping/calculate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -210,8 +210,6 @@ const Checkout = () => {
     };
     fetchPromos();
   }, []);
-
-  const API_URL = import.meta.env.VITE_API_URL || API_BASE;
 
   const handleApplyPromo = async (codeOverride) => {
     const codeToApply = codeOverride || promoCode;
@@ -396,7 +394,7 @@ const Checkout = () => {
                       : null),
                   isDefault: true,
                 };
-                await fetch(`${API_BASE}/api/addresses`, {
+                await fetch(`${API_URL}/api/addresses`, {
                   method: "POST",
                   headers: {
                     "Content-Type": "application/json",
@@ -769,8 +767,8 @@ const Checkout = () => {
                             key={promo._id}
                             onClick={() => handleApplyPromo(promo.code)}
                             className={`p-3 rounded-xl border-2 transition-all cursor-pointer group flex items-center justify-between ${appliedCode === promo.code
-                                ? "border-primary bg-red-50"
-                                : "border-white bg-white hover:border-secondary shadow-sm"
+                              ? "border-primary bg-red-50"
+                              : "border-white bg-white hover:border-secondary shadow-sm"
                               }`}
                           >
                             <div className="flex items-center gap-3">
@@ -792,8 +790,8 @@ const Checkout = () => {
                                 handleApplyPromo(promo.code);
                               }}
                               className={`text-[9px] font-black px-3 py-1 rounded-full transition-all ${appliedCode === promo.code
-                                  ? "bg-primary text-white"
-                                  : "bg-gray-100 text-[#88694f] group-hover:bg-secondary group-hover:text-white"
+                                ? "bg-primary text-white"
+                                : "bg-gray-100 text-[#88694f] group-hover:bg-secondary group-hover:text-white"
                                 }`}
                             >
                               {appliedCode === promo.code
