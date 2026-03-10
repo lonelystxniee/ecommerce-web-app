@@ -126,7 +126,7 @@ const Home = () => {
   const fetchPaginatedProducts = async (page = 1) => {
     setIsPaginatedLoading(true);
     try {
-      let url = `http://localhost:5175/api/products?page=${page}&limit=12`;
+      let url = `${API_URL}/api/products?page=${page}&limit=12`;
 
       const { categoryId, minPrice, maxPrice, sort } = filters;
       if (categoryId || minPrice || maxPrice || sort !== "newest") {
@@ -138,7 +138,7 @@ const Home = () => {
           ...(maxPrice && { maxPrice }),
           ...(sort && { sort }),
         });
-        url = `http://localhost:5175/api/products/search?${queryParams.toString()}`;
+        url = `${API_URL}/api/products/search?${queryParams.toString()}`;
       }
 
       const response = await fetch(url);
