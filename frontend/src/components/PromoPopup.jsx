@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../config/apiConfig';
 
 const PromoPopup = () => {
     const [promos, setPromos] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [show, setShow] = useState(false);
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5175';
 
     useEffect(() => {
         const hasSeenPopup = sessionStorage.getItem('hasSeenPromoPopup');
