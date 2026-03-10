@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { API_URL } from "../apiConfig";
 import { useParams, Link } from "react-router-dom";
 import {
   Package,
@@ -13,7 +14,6 @@ const OrderTracking = () => {
   const { id } = useParams();
   const [order, setOrder] = useState(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
 
   const fetchTracking = async () => {
     try {

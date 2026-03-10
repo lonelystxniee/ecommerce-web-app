@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { API_URL } from "../apiConfig";
 import { useSearchParams, Link } from "react-router-dom";
 import {
   ShoppingCart,
@@ -13,7 +14,6 @@ const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get("q") || "";
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
 
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
