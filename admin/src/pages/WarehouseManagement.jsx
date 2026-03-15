@@ -19,6 +19,8 @@ const WarehouseManagement = () => {
     const [supplier, setSupplier] = useState("");
     const [note, setNote] = useState("");
     const [loading, setLoading] = useState(false);
+    const [isImporting, setIsImporting] = useState(false);
+    const [importResult, setImportResult] = useState(null); // null = hidden, object = show popup
     const [categories, setCategories] = useState([]);
     const [allProducts, setAllProducts] = useState([]);
     const [pagination, setPagination] = useState({
@@ -253,6 +255,35 @@ const WarehouseManagement = () => {
         toast.info("Lịch sử nhập kho không được lưu trữ cục bộ để giữ hiệu năng hệ thống");
     };
 
+    const handleImportExcel = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (!window.confirm(`Nhập kho từ file ${file.name}?`)) { e.target.value = ''; return; }
+        setIsImporting(true);
+        try {
+            const token = localStorage.getItem("token");
+            const fd = new FormData();
+            fd.append("file", file);
+            const res = await fetch(`${API_URL}/api/products/import-warehouse-excel`, {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${token}` },
+                body: fd
+            });
+            const data = await res.json();
+            if (data.success) {
+                setImportResult({ success: true, ...data.results, fileName: file.name });
+                fetchAllProducts(1);
+            } else {
+                setImportResult({ success: false, message: data.message, fileName: file.name });
+            }
+        } catch (err) {
+            toast.error("Lỗi kết nối máy chủ!");
+        } finally {
+            setIsImporting(false);
+            e.target.value = '';
+        }
+    };
+
     const handleSubmit = async () => {
         if (items.length === 0) {
             toast.error("Vui lòng thêm sản phẩm để nhập kho");
@@ -306,15 +337,27 @@ const WarehouseManagement = () => {
                         Nhập hàng mới hoặc bổ sung tồn kho cho sản phẩm hiện có
                     </p>
                 </div>
-                <button
-                    onClick={() => {
-                        fetchHistory();
-                    }}
-                    className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold uppercase text-xs tracking-widest transition-all shadow-lg bg-white text-[#800a0d] border border-[#800a0d]/20`}
-                >
-                    <History size={18} />
-                    Xem lịch sử tạm thời
-                </button>
+                <div className="flex flex-wrap gap-3 items-center">
+                    <label
+                        className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold uppercase text-xs tracking-widest transition-all shadow-lg cursor-pointer ${isImporting ? "bg-green-300 text-white cursor-wait" : "bg-green-600 text-white hover:bg-green-700"
+                            }`}
+                        title="Tải lên file Excel gồm 2 cột: Mã sản phẩm (SKU) và Số lượng nhập"
+                    >
+                        {isImporting ? (
+                            <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Đang nhập...</>
+                        ) : (
+                            <><Upload size={18} /> Nhập Excel</>
+                        )}
+                        <input type="file" className="hidden" accept=".xlsx,.xls,.csv" onChange={handleImportExcel} disabled={isImporting} />
+                    </label>
+                    <button
+                        onClick={() => { fetchHistory(); }}
+                        className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold uppercase text-xs tracking-widest transition-all shadow-lg bg-white text-[#800a0d] border border-[#800a0d]/20`}
+                    >
+                        <History size={18} />
+                        Xem lịch sử tạm thời
+                    </button>
+                </div>
             </div>
 
             {/* Stock In Form */}
@@ -814,6 +857,91 @@ const WarehouseManagement = () => {
                                 {loading ? "Đang xử lý..." : "Lưu & Thêm vào danh sách nhập"}
                             </button>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Excel Import Result Popup */}
+            {importResult && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                    <div
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        onClick={() => setImportResult(null)}
+                    />
+                    <div className="relative bg-white rounded-[32px] shadow-2xl border border-gray-100 w-full max-w-lg overflow-hidden">
+                        {/* Header */}
+                        <div className={`px-8 py-6 flex items-center justify-between ${importResult.success ? 'bg-green-600' : 'bg-red-600'} text-white`}>
+                            <div className="flex items-center gap-3">
+                                {importResult.success ? <CheckCircle2 size={28} /> : <AlertCircle size={28} />}
+                                <div>
+                                    <h3 className="text-lg font-black uppercase">Kết quả nhập Excel</h3>
+                                    <p className="text-sm opacity-80 font-medium">{importResult.fileName}</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setImportResult(null)} className="hover:scale-110 transition-transform">
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-8 space-y-4">
+                            {importResult.success ? (
+                                <>
+                                    {/* Stats */}
+                                    <div className="grid grid-cols-3 gap-4">
+                                        <div className="bg-green-50 border border-green-100 rounded-2xl p-4 text-center">
+                                            <p className="text-3xl font-black text-green-600">{importResult.updated ?? 0}</p>
+                                            <p className="text-[11px] font-bold text-green-700 uppercase mt-1">Cập nhật thành công</p>
+                                        </div>
+                                        <div className="bg-yellow-50 border border-yellow-100 rounded-2xl p-4 text-center">
+                                            <p className="text-3xl font-black text-yellow-600">{importResult.notFound?.length ?? 0}</p>
+                                            <p className="text-[11px] font-bold text-yellow-700 uppercase mt-1">Không tìm thấy</p>
+                                        </div>
+                                        <div className="bg-red-50 border border-red-100 rounded-2xl p-4 text-center">
+                                            <p className="text-3xl font-black text-red-500">{importResult.failed ?? 0}</p>
+                                            <p className="text-[11px] font-bold text-red-700 uppercase mt-1">Lỗi</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Not found list */}
+                                    {importResult.notFound?.length > 0 && (
+                                        <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4">
+                                            <p className="text-[11px] font-black uppercase text-yellow-700 mb-2">⚠️ Mã không tìm thấy trong hệ thống:</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {importResult.notFound.map((sku, i) => (
+                                                    <span key={i} className="text-xs bg-white border border-yellow-200 text-yellow-800 font-bold px-2 py-1 rounded-lg">{sku}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Error list */}
+                                    {importResult.errors?.length > 0 && (
+                                        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 max-h-32 overflow-y-auto">
+                                            <p className="text-[11px] font-black uppercase text-red-700 mb-2">❌ Chi tiết lỗi:</p>
+                                            {importResult.errors.map((err, i) => (
+                                                <p key={i} className="text-xs text-red-600 font-medium">{err}</p>
+                                            ))}
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="bg-red-50 border border-red-100 rounded-2xl p-6 text-center">
+                                    <AlertCircle size={40} className="text-red-400 mx-auto mb-3" />
+                                    <p className="text-sm font-bold text-red-700">{importResult.message}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-8 pb-8">
+                            <button
+                                onClick={() => setImportResult(null)}
+                                className="w-full bg-[#800a0d] text-white py-3 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-black transition-all shadow-lg"
+                            >
+                                Đóng
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

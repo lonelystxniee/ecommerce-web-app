@@ -31,6 +31,12 @@ router.post(
     adminMiddleware,
     productController.bulkStockIn
 );
-
+router.post(
+    "/import-warehouse-excel",
+    authMiddleware,
+    adminMiddleware,
+    upload.single("file"),
+    productController.importWarehouseExcel
+);
 
 module.exports = router;

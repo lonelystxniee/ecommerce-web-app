@@ -6,8 +6,10 @@ import {
   ChevronDown,
   ShoppingBag,
   RefreshCcw,
+  Heart,
 } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import { useWishlist } from "../context/WishlistContext";
 
 import toast from "react-hot-toast";
 
@@ -16,6 +18,7 @@ const CategoryPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const { addToCart } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
   const [isCatOpen, setIsCatOpen] = useState(true);
   const [isPriceOpen, setIsPriceOpen] = useState(true);
 
@@ -268,6 +271,19 @@ const CategoryPage = () => {
                         className="object-contain w-full transition-transform duration-500 aspect-square group-hover:scale-105"
                         alt={p.productName || p.name}
                       />
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleWishlist(p._id);
+                        }}
+                        className="absolute top-2 right-2 p-1.5 bg-white/80 hover:bg-white rounded-full shadow-sm z-10 transition-all active:scale-90"
+                      >
+                        <Heart
+                          size={16}
+                          className={isInWishlist(p._id) ? "text-[#9d0b0f] fill-[#9d0b0f]" : "text-gray-400"}
+                        />
+                      </button>
                     </Link>
                     <div className="flex flex-col flex-1 p-2 text-center">
                       <Link

@@ -16,11 +16,13 @@ import {
   Play,
   X,
   Heart,
+  ChevronRight,
 } from "lucide-react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 
+import { ProductItemSmall } from "./Home/ProductItemSmall";
 import toast from "react-hot-toast";
 
 const ProductDetail = () => {
@@ -34,7 +36,8 @@ const ProductDetail = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeImg, setActiveImg] = useState(0);
-  const [quantities, setQuantities] = useState([]); // Chuyển thành mảng rỗng để khởi tạo theo data
+  const [quantities, setQuantities] = useState([]);
+  const [relatedProducts, setRelatedProducts] = useState([]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -61,6 +64,30 @@ const ProductDetail = () => {
     fetchProduct();
     window.scrollTo(0, 0);
   }, [id]);
+
+  useEffect(() => {
+    const fetchRelatedProducts = async () => {
+      if (!product || !product.categoryID || product.categoryID.length === 0) return;
+      try {
+        const categoryId = product.categoryID[0]._id || product.categoryID[0];
+        const res = await fetch(`${API_URL}/api/products/search?categoryId=${categoryId}&limit=6`);
+        const data = await res.json();
+        if (data.success) {
+          // Filter out the current product and limit to 5
+          const filtered = data.products
+            .filter(p => p._id !== id)
+            .slice(0, 5);
+          setRelatedProducts(filtered);
+        }
+      } catch (error) {
+        console.error("Lỗi lấy sản phẩm liên quan:", error);
+      }
+    };
+
+    if (product) {
+      fetchRelatedProducts();
+    }
+  }, [product, id]);
 
   // Logic: Lấy mảng images từ DB, nếu không có thì fallback về trường image cũ
   const productImages =
@@ -733,6 +760,28 @@ const ProductDetail = () => {
 
         {/* Video Player Modal */}
         <VideoModal videoUrl={activeVideo} onClose={() => setActiveVideo(null)} />
+
+        {/* Sản phẩm cùng loại */}
+        {relatedProducts.length > 0 && (
+          <div className="mt-16 pt-12 border-t border-gray-100">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-2xl font-bold uppercase tracking-tighter text-primary">
+                Sản phẩm cùng loại
+              </h3>
+              <Link
+                to={`/category/${product.categoryID?.[0]?.slug || ''}`}
+                className="text-sm font-bold text-[#88694f] hover:text-primary transition-colors flex items-center gap-1"
+              >
+                Xem tất cả <ChevronRight size={16} />
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {relatedProducts.map((p) => (
+                <ProductItemSmall key={p._id} product={p} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div >
   );

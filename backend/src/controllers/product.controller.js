@@ -547,3 +547,95 @@ exports.bulkStockIn = async (req, res) => {
     res.status(500).json({ success: false, message: "Lỗi hệ thống khi nhập kho", error: error.message });
   }
 };
+
+// Import warehouse stock from Excel/CSV (SKU + Quantity only)
+exports.importWarehouseExcel = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "Vui lòng tải lên file Excel!" });
+    }
+
+    // Parse the uploaded file buffer
+    const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+
+    if (rows.length < 2) {
+      return res.status(400).json({ success: false, message: "File không có dữ liệu (cần ít nhất 1 dòng dữ liệu ngoài tiêu đề)!" });
+    }
+
+    // Find SKU and Quantity column indices from header row
+    const header = rows[0].map(h => String(h).toLowerCase().trim());
+    const skuIdx = header.findIndex(h => h.includes("sku") || h.includes("mã") || h.includes("ma"));
+    const qtyIdx = header.findIndex(h => h.includes("số lượng") || h.includes("so luong") || h.includes("quantity") || h.includes("sl"));
+
+    if (skuIdx === -1 || qtyIdx === -1) {
+      return res.status(400).json({
+        success: false,
+        message: `File thiếu cột yêu cầu! Cần cột "Mã sản phẩm (SKU)" và "Số lượng nhập". Header đọc được: ${rows[0].join(", ")}`
+      });
+    }
+
+    const results = { updated: 0, failed: 0, errors: [], notFound: [] };
+    const dataRows = rows.slice(1).filter(row => row[skuIdx] !== "");
+
+    for (const row of dataRows) {
+      const sku = String(row[skuIdx]).trim();
+      const qty = parseInt(row[qtyIdx]) || 0;
+
+      if (!sku) continue;
+      if (qty <= 0) {
+        results.failed++;
+        results.errors.push(`${sku}: Số lượng nhập phải > 0 (đọc được: ${row[qtyIdx]})`);
+        continue;
+      }
+
+      try {
+        const product = await Product.findOne({ productCode: sku });
+        if (!product) {
+          results.failed++;
+          results.notFound.push(sku);
+          continue;
+        }
+
+        // Increment overall quantity
+        product.quantity = (product.quantity || 0) + qty;
+
+        // Also increment stock of first variant if it exists
+        if (product.variants && product.variants.length > 0) {
+          product.variants[0].stock = (product.variants[0].stock || 0) + qty;
+        }
+
+        await product.save();
+        results.updated++;
+      } catch (err) {
+        results.failed++;
+        results.errors.push(`${sku}: ${err.message}`);
+      }
+    }
+
+    // Log activity
+    await activityController.createLog(
+      req.user.id,
+      "Nhập kho qua Excel",
+      `Đã cập nhật ${results.updated} sản phẩm từ file Excel. Lỗi: ${results.failed}`,
+      req
+    );
+
+    let message = `✅ Đã cập nhật ${results.updated} sản phẩm thành công!`;
+    if (results.notFound.length > 0) {
+      message += ` ⚠️ Không tìm thấy ${results.notFound.length} mã: ${results.notFound.slice(0, 5).join(", ")}${results.notFound.length > 5 ? "..." : ""}`;
+    }
+    if (results.errors.length > 0) {
+      message += ` ❌ ${results.failed} lỗi khác.`;
+    }
+
+    res.status(200).json({ success: true, message, results });
+
+  } catch (error) {
+    console.error("Import warehouse Excel error:", error);
+    res.status(500).json({ success: false, message: "Lỗi hệ thống khi đọc file Excel", error: error.message });
+  }
+};
+
