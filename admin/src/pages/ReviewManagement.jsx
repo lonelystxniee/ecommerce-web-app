@@ -27,7 +27,11 @@ const ReviewManagement = () => {
     const fetchReviews = async (page = 1) => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_URL}/api/reviews?page=${page}&limit=10&search=${searchTerm}`);
+            const response = await fetch(`${API_URL}/api/reviews?page=${page}&limit=10&search=${searchTerm}`, {
+                headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`
+                }
+            });
             const data = await response.json();
             if (data.success) {
                 setReviews(data.reviews);

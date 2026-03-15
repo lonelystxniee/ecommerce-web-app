@@ -101,7 +101,10 @@ const ProductDetail = () => {
         const savedUser = localStorage.getItem("user");
         if (savedUser) {
           const currentUser = JSON.parse(savedUser);
-          const existingReview = data.reviews.find(r => r.userID?._id === currentUser._id || r.userID === currentUser._id);
+          const existingReview = data.reviews.find(r =>
+            (r.userID && r.userID._id === currentUser._id) ||
+            r.userID === currentUser._id
+          );
           if (existingReview) {
             setUserReview(existingReview);
             setUserRating(existingReview.rating);
