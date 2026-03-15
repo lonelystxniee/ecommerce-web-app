@@ -40,8 +40,11 @@ export const ProductItemSmall = ({ product }) => {
         >
           {product.name}
         </Link>
-        <p className="text-[13px] text-text-primary mb-4 text-center line-clamp-1 italic font-medium relative z-1">
+        <p className="text-[13px] text-text-primary mb-2 text-center line-clamp-1 italic font-medium relative z-1">
           {product.slogan}
+        </p>
+        <p className="mb-4 text-sm font-black text-primary relative z-1">
+          Chỉ từ {product.price?.toLocaleString() || 0}đ
         </p>
         <Link
           to={`/product/${productId}`}

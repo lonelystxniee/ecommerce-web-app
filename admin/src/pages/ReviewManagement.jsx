@@ -161,14 +161,25 @@ const ReviewManagement = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3 max-w-xs">
+                                            <a
+                                                href={`http://localhost:5174/product/${review.productID?._id}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-3 max-w-xs hover:bg-gray-100 p-2 rounded-lg transition-colors group cursor-pointer"
+                                                title="Xem sản phẩm trên cửa hàng"
+                                            >
                                                 <img
                                                     src={review.productID?.images?.[0] || "https://via.placeholder.com/50"}
                                                     alt=""
-                                                    className="w-10 h-10 object-contain rounded border border-gray-100 bg-white flex-shrink-0"
+                                                    className="w-10 h-10 object-contain rounded border border-gray-100 bg-white flex-shrink-0 group-hover:border-primary transition-colors"
                                                 />
-                                                <p className="text-sm font-medium text-[#3e2714] line-clamp-1">{review.productID?.productName || "Sản phẩm không tồn tại"}</p>
-                                            </div>
+                                                <div className="flex flex-col">
+                                                    <p className="text-sm font-medium text-[#3e2714] line-clamp-1 group-hover:text-primary transition-colors">{review.productID?.productName || "Sản phẩm không tồn tại"}</p>
+                                                    <span className="text-[10px] text-primary flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <ExternalLink size={10} /> Xem trên Web
+                                                    </span>
+                                                </div>
+                                            </a>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="space-y-1">
@@ -180,7 +191,36 @@ const ReviewManagement = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="space-y-2">
-                                                <p className="text-sm text-gray-600 line-clamp-2 italic">"{review.comment}"</p>
+                                                <p className="text-sm text-gray-600 line-clamp-2 italic">
+                                                    "{(() => {
+                                                        const badWords = ["ngu", "chó", "đm", "vl", "vãi", "cứt", "tệ", "dở", "địt", "lồn", "cặc", "đĩ", "điếm"];
+                                                        let text = review.comment || "";
+
+                                                        // Create a regex to match any bad word (case insensitive)
+                                                        const regex = new RegExp(`(${badWords.join('|')})`, 'gi');
+
+                                                        // Split text by bad words and wrap matches in a styled span
+                                                        const parts = text.split(regex);
+
+                                                        return parts.map((part, index) => {
+                                                            if (regex.test(part)) {
+                                                                // Extract the first letter and mask the rest
+                                                                const firstChar = part.charAt(0);
+                                                                const maskedText = firstChar + "*".repeat(part.length - 1);
+                                                                return (
+                                                                    <span
+                                                                        key={index}
+                                                                        className="bg-red-100 text-[#9d0b0f] font-bold px-1 rounded mx-0.5 border border-red-200"
+                                                                        title={`Từ gốc: ${part}`}
+                                                                    >
+                                                                        {maskedText}
+                                                                    </span>
+                                                                );
+                                                            }
+                                                            return part;
+                                                        });
+                                                    })()}"
+                                                </p>
                                                 {(review.images?.length > 0 || review.videos?.length > 0) && (
                                                     <div className="flex gap-1">
                                                         {review.images?.slice(0, 3).map((img, i) => (

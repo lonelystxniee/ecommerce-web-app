@@ -647,7 +647,24 @@ const ProductDetail = () => {
                         />
                       ))}
                     </div>
-                    <p className="text-sm text-gray-600 leading-relaxed mb-4">{review.comment}</p>
+                    <p className="text-sm text-gray-600 leading-relaxed mb-4">
+                      {(() => {
+                        const badWords = ["ngu", "chó", "đm", "vl", "vãi", "cứt", "tệ", "dở", "địt", "lồn", "cặc", "đĩ", "điếm"];
+                        let text = review.comment || "";
+
+                        const regex = new RegExp(`(${badWords.join('|')})`, 'gi');
+                        const parts = text.split(regex);
+
+                        return parts.map((part, index) => {
+                          if (regex.test(part)) {
+                            const firstChar = part.charAt(0);
+                            const maskedText = firstChar + "*".repeat(part.length - 1);
+                            return <span key={index}>{maskedText}</span>;
+                          }
+                          return part;
+                        });
+                      })()}
+                    </p>
 
                     {/* Media trong bình luận */}
                     <div className="flex flex-wrap gap-2">
