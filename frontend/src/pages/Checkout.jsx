@@ -1,26 +1,15 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
-<<<<<<< HEAD
 import { ChevronRight, CreditCard, Truck, Receipt, Tag } from "lucide-react";
 import toast from "react-hot-toast";
-=======
-import { ChevronRight, CreditCard, Truck, Receipt } from "lucide-react";
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
 
 const Checkout = () => {
   const { cartItems, totalPrice, clearCart } = useCart();
   const navigate = useNavigate();
 
-<<<<<<< HEAD
   const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
 
-=======
-  // 1. Lấy thông tin user từ localStorage nếu đã đăng nhập
-  const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
-
-  // 2. State quản lý Form
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
   const [formData, setFormData] = useState({
     fullName: savedUser.fullName || "",
     phone: savedUser.phone || "",
@@ -30,15 +19,10 @@ const Checkout = () => {
     paymentMethod: "COD",
   });
 
-<<<<<<< HEAD
-=======
-  // 3. Xử lý thay đổi input
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-<<<<<<< HEAD
   // --- LOGIC MÃ GIẢM GIÁ ---
   const [promoCode, setPromoCode] = useState("");
   const [discount, setDiscount] = useState(0);
@@ -91,69 +75,38 @@ const Checkout = () => {
       totalPrice: finalPrice, // Gửi tổng tiền đã giảm giá
       discountAmount: discount,
       promoCode: appliedCode,
-=======
-  // 4. Hàm xử lý đặt hàng
-  const handleOrder = async () => {
-    // Kiểm tra dữ liệu
-    if (!formData.fullName || !formData.phone || !formData.address) {
-      alert("Vui lòng điền đầy đủ các thông tin có dấu (*)");
-      return;
-    }
-
-    if (cartItems.length === 0) {
-      alert("Giỏ hàng trống, không thể đặt hàng!");
-      return;
-    }
-
-    // Chuẩn bị dữ liệu gửi lên Backend
-    const orderData = {
-      userId: savedUser.id || savedUser._id || null,
-      customerInfo: {
-        fullName: formData.fullName,
-        phone: formData.phone,
-        email: formData.email,
-        address: formData.address,
-        note: formData.note,
-      },
-      items: cartItems,
-      totalPrice: totalPrice,
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
       paymentMethod: formData.paymentMethod,
     };
 
     try {
-<<<<<<< HEAD
       const res = await fetch(`${API_URL}/api/orders/create`, {
-=======
-      const response = await fetch("http://localhost:5175/api/orders/create", {
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderData),
       });
-<<<<<<< HEAD
       const data = await res.json();
 
       if (data.success) {
         if (formData.paymentMethod === "VNPAY") {
-          // GỌI API LẤY LINK VNPAY VỚI SỐ TIỀN ĐÃ GIẢM
-          const resVnpay = await fetch(
-            `${API_URL}/api/orders/vnpay-payment`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                amount: finalPrice, // SỐ TIỀN ĐÃ TRỪ GIẢM GIÁ
-                orderId: data.orderId,
-              }),
-            },
-          );
+          // GỌI API LẤY LINK V
+          //
+
+          const resVnpay = await fetch(`${API_URL}/api/orders/vnpay-payment`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              amount: finalPrice, // SỐ TIỀN ĐÃ TRỪ GIẢM GIÁ
+              orderId: data.orderId,
+            }),
+          });
           const vnpayData = await resVnpay.json();
           if (vnpayData.vnpUrl) {
             window.location.href = vnpayData.vnpUrl;
           }
         } else {
-          toast.success("Đặt hàng thành công! Đơn hàng của bạn đang được xử lý.");
+          toast.success(
+            "Đặt hàng thành công! Đơn hàng của bạn đang được xử lý.",
+          );
           clearCart();
           navigate("/");
           setTimeout(() => {
@@ -165,21 +118,6 @@ const Checkout = () => {
       }
     } catch (error) {
       toast.error("Lỗi kết nối hệ thống đặt hàng!");
-=======
-
-      const data = await response.json();
-
-      if (data.success) {
-        alert("Đặt hàng thành công! Cảm ơn bạn đã ủng hộ Hồng Lam.");
-        if (clearCart) clearCart(); // Xóa giỏ hàng nếu có hàm clear
-        navigate("/");
-        window.location.reload(); // Reload để reset giỏ hàng hoàn toàn
-      } else {
-        alert("Có lỗi: " + data.message);
-      }
-    } catch (error) {
-      alert("Lỗi kết nối đến Server!");
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
     }
   };
 
@@ -191,10 +129,7 @@ const Checkout = () => {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-10">
-<<<<<<< HEAD
           {/* CỘT TRÁI: THÔNG TIN GIAO HÀNG */}
-=======
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
           <div className="flex-[2] space-y-8">
             <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 relative overflow-hidden">
               <div className="flex items-center gap-2 mb-6 text-[#9d0b0f]">
@@ -233,11 +168,7 @@ const Checkout = () => {
                 </div>
                 <div>
                   <label className="block text-gray-500 mb-2 font-medium">
-<<<<<<< HEAD
                     Email
-=======
-                    Email (Để nhận thông tin đơn hàng)
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                   </label>
                   <input
                     type="email"
@@ -276,11 +207,7 @@ const Checkout = () => {
               </div>
             </div>
 
-<<<<<<< HEAD
             {/* PHƯƠNG THỨC THANH TOÁN */}
-=======
-            {/* Khối Phương thức thanh toán */}
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
             <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
               <div className="flex items-center gap-2 mb-6 text-[#9d0b0f]">
                 <CreditCard size={24} />
@@ -304,17 +231,11 @@ const Checkout = () => {
                       Thanh toán khi nhận hàng (COD)
                     </p>
                     <p className="text-xs text-gray-500 italic">
-<<<<<<< HEAD
                       Quý khách thanh toán bằng tiền mặt cho bưu tá.
-=======
-                      Quý khách thanh toán bằng tiền mặt cho nhân viên giao
-                      hàng.
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                     </p>
                   </div>
                 </label>
 
-<<<<<<< HEAD
                 <label className="flex items-center gap-4 p-4 border-2 border-gray-100 rounded-xl cursor-pointer hover:border-[#faa519] has-[:checked]:border-[#faa519] has-[:checked]:bg-blue-50/30 transition-all">
                   <input
                     type="radio"
@@ -331,42 +252,17 @@ const Checkout = () => {
                       className="w-12 h-6 object-contain"
                     />
                     <span className="font-bold text-gray-800">
-                      Thanh toán qua VNPAY-QR
+                      Thanh toán qua VNPAY
                     </span>
-=======
-                <label className="flex items-center gap-4 p-4 border-2 border-gray-100 rounded-xl cursor-pointer hover:border-[#faa519] has-[:checked]:border-[#faa519] has-[:checked]:bg-orange-50/30 transition-all">
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="Bank Transfer"
-                    checked={formData.paymentMethod === "Bank Transfer"}
-                    onChange={handleChange}
-                    className="w-5 h-5 accent-[#9d0b0f]"
-                  />
-                  <div>
-                    <p className="font-bold text-gray-800">
-                      Chuyển khoản ngân hàng
-                    </p>
-                    <p className="text-xs text-gray-500 italic">
-                      Thực hiện chuyển khoản vào số tài khoản của Hồng Lam.
-                    </p>
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                   </div>
                 </label>
               </div>
             </div>
           </div>
 
-<<<<<<< HEAD
           {/* CỘT PHẢI: TỔNG KẾT & MÃ GIẢM GIÁ */}
           <div className="flex-1">
             <div className="bg-white p-8 rounded-xl shadow-lg border border-[#faa519]/30 sticky top-28 overflow-hidden">
-=======
-          {/* CỘT PHẢI: TỔNG KẾT ĐƠN HÀNG (DỮ LIỆU THẬT) */}
-          <div className="flex-1">
-            <div className="bg-white p-8 rounded-xl shadow-lg border border-[#faa519]/30 sticky top-28 overflow-hidden">
-              {/* Trang trí vân giấy ở nền */}
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
               <div className="absolute inset-0 opacity-10 pointer-events-none bg-[url('https://www.toptal.com/designers/subtlepatterns/uploads/paper.png')]"></div>
 
               <div className="relative z-10">
@@ -377,12 +273,7 @@ const Checkout = () => {
                   </h3>
                 </div>
 
-<<<<<<< HEAD
                 <div className="max-h-[250px] overflow-y-auto pr-2 custom-scrollbar mb-6 space-y-4">
-=======
-                {/* Danh sách sản phẩm từ CartContext */}
-                <div className="max-h-[300px] overflow-y-auto pr-2 custom-scrollbar mb-6 space-y-4">
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                   {cartItems.map((item) => (
                     <div
                       key={item.id}
@@ -393,11 +284,7 @@ const Checkout = () => {
                           {item.name}
                         </p>
                         <p className="text-xs text-gray-400">
-<<<<<<< HEAD
                           SL: {item.quantity}
-=======
-                          Số lượng: {item.quantity}
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                         </p>
                       </div>
                       <span className="font-bold text-[#9d0b0f]">
@@ -407,7 +294,6 @@ const Checkout = () => {
                   ))}
                 </div>
 
-<<<<<<< HEAD
                 {/* --- NHẬP MÃ GIẢM GIÁ --- */}
                 <div className="mb-6 p-4 bg-[#f7f4ef] rounded-2xl border border-dashed border-[#9d0b0f]/30 shadow-inner">
                   <p className="text-[10px] font-black text-[#88694f] uppercase mb-2 flex items-center gap-1">
@@ -437,9 +323,6 @@ const Checkout = () => {
                 </div>
 
                 {/* TỔNG TIỀN CHI TIẾT */}
-=======
-                {/* Tính toán tiền */}
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                 <div className="space-y-3 text-sm pb-6 border-b border-[#faa519]/20">
                   <div className="flex justify-between text-gray-500 italic">
                     <span>Tạm tính:</span>
@@ -447,15 +330,12 @@ const Checkout = () => {
                       {totalPrice.toLocaleString()}đ
                     </span>
                   </div>
-<<<<<<< HEAD
                   {discount > 0 && (
                     <div className="flex justify-between text-green-600 italic font-medium">
                       <span>Giảm giá:</span>
                       <span>-{discount.toLocaleString()}đ</span>
                     </div>
                   )}
-=======
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                   <div className="flex justify-between text-gray-500 italic">
                     <span>Phí vận chuyển:</span>
                     <span className="text-[#00b14f] font-bold uppercase text-[10px]">
@@ -469,11 +349,7 @@ const Checkout = () => {
                     TỔNG CỘNG:
                   </span>
                   <span className="font-black text-2xl text-[#9d0b0f]">
-<<<<<<< HEAD
                     {finalPrice.toLocaleString()}đ
-=======
-                    {totalPrice.toLocaleString()}đ
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                   </span>
                 </div>
 
@@ -488,12 +364,7 @@ const Checkout = () => {
                   Bằng cách nhấn đặt hàng, bạn đồng ý với{" "}
                   <span className="text-primary font-bold cursor-pointer underline">
                     Điều khoản dịch vụ
-<<<<<<< HEAD
                   </span>
-=======
-                  </span>{" "}
-                  của chúng tôi
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                 </p>
                 <div className="mt-4 flex justify-center">
                   <Link

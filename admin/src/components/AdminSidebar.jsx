@@ -8,7 +8,6 @@ import {
   TicketPercent,
   LogOut,
   ShoppingBag,
-<<<<<<< HEAD
   Layers,
   MessageSquare,
   Shield,
@@ -16,8 +15,6 @@ import {
   Newspaper,
   Layout,
   DollarSign,
-=======
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
 } from "lucide-react";
 
 const AdminSidebar = () => {
@@ -25,10 +22,7 @@ const AdminSidebar = () => {
   const menuItems = [
     { path: "/", icon: <LayoutDashboard size={20} />, label: "Dashboard" },
     { path: "/users", icon: <Users size={20} />, label: "Quản lý người dùng" },
-<<<<<<< HEAD
     { path: "/admins", icon: <Shield size={20} />, label: "Quản trị viên" },
-=======
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
     { path: "/products", icon: <Box size={20} />, label: "Quản lý sản phẩm" },
     {
       path: "/orders",
@@ -36,19 +30,15 @@ const AdminSidebar = () => {
       label: "Quản lý đơn hàng",
     },
     {
-<<<<<<< HEAD
       path: "/revenue",
       icon: <DollarSign size={20} />,
       label: "Quản lý doanh thu",
     },
     {
-=======
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
       path: "/promotions",
       icon: <TicketPercent size={20} />,
       label: "Quản lý khuyến mãi",
     },
-<<<<<<< HEAD
     {
       path: "/categories",
       icon: <Layers size={20} />,
@@ -74,8 +64,6 @@ const AdminSidebar = () => {
       icon: <ClipboardList size={20} />,
       label: "Nhật ký hệ thống",
     },
-=======
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
   ];
 
   const handleLogout = () => {

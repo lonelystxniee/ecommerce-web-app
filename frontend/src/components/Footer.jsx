@@ -3,11 +3,7 @@ import { Mail, Phone, MapPin } from "lucide-react";
 
 const Footer = () => {
   return (
-<<<<<<< HEAD
     <footer className="mt-10 bg-transparent text-secondary-2">
-=======
-    <footer className="mt-10 bg-[#e0be91]/20 text-secondary-2">
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
       <div className="px-4 mx-auto max-w-300">
         {/* MAIN */}
         <div className="pt-10 pb-10">

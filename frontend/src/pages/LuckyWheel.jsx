@@ -587,7 +587,7 @@ const LuckyWheel = () => {
         </div>
       )}
 
-      {/* POPUP KẾT QUẢ QUAY (GIỮ NGUYÊN) */}
+      {/* POPUP KẾT QUẢ QUAY  */}
       {showPopup && result && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
           <div className="bg-white w-full max-w-sm rounded-[40px] overflow-hidden shadow-2xl animate-zoomIn border-4 border-[#faa519]">

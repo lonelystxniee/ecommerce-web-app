@@ -8,7 +8,6 @@ import {
   MessageSquare,
   User,
   Send,
-<<<<<<< HEAD
   Share2,
   Copy,
   Camera,
@@ -16,59 +15,33 @@ import {
   Trash2,
   Play,
   X,
-=======
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
 } from "lucide-react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 
-<<<<<<< HEAD
 import toast from "react-hot-toast";
 
-=======
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
 const ProductDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { addToCart } = useCart();
 
-<<<<<<< HEAD
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeImg, setActiveImg] = useState(0);
   const [quantities, setQuantities] = useState([]);
-=======
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [activeImg, setActiveImg] = useState(0);
-  const [quantities, setQuantities] = useState([]); // Chuyển thành mảng rỗng để khởi tạo theo data
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
 
   useEffect(() => {
     const fetchProduct = async () => {
       setLoading(true);
       try {
-<<<<<<< HEAD
         const res = await fetch(`${API_URL}/api/products/${id}`);
         const data = await res.json();
         if (data.success) {
           setProduct(data.product);
           setQuantities([1]);
-=======
-        const res = await fetch("http://localhost:5175/api/products");
-        const data = await res.json();
-        if (data.success) {
-          const found = data.products.find((p) => p._id === id);
-          if (found) {
-            setProduct(found);
-            // Logic: Khởi tạo số lượng tương ứng với số lượng biến thể từ DB
-            if (found.variants) {
-              setQuantities(new Array(found.variants.length).fill(0));
-            }
-          }
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
         }
       } catch (error) {
         console.error("Lỗi lấy chi tiết sản phẩm:", error);
@@ -81,10 +54,6 @@ const ProductDetail = () => {
     window.scrollTo(0, 0);
   }, [id]);
 
-<<<<<<< HEAD
-=======
-  // Logic: Lấy mảng images từ DB, nếu không có thì fallback về trường image cũ
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
   const productImages =
     product?.images?.length > 0
       ? product.images
@@ -99,7 +68,6 @@ const ProductDetail = () => {
     setActiveImg((prev) => (prev === 0 ? productImages.length - 1 : prev - 1));
   };
 
-<<<<<<< HEAD
   const [reviews, setReviews] = useState([]);
   const [userRating, setUserRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
@@ -252,39 +220,6 @@ const ProductDetail = () => {
 
   // Logic: Use flat fields from backend
   const variants = product ? [{ label: "Giá gốc", price: product.price }] : [];
-=======
-  const [commentList, setCommentList] = useState([
-    {
-      id: 1,
-      user: "Anh Tuấn",
-      text: "Ô mai rất ngon, giao hàng nhanh!",
-      date: "02/02/2026",
-    },
-    {
-      id: 2,
-      user: "Chị Lan",
-      text: "Sản phẩm đóng gói đẹp, thích hợp làm quà biếu.",
-      date: "01/02/2026",
-    },
-  ]);
-  const [userComment, setUserComment] = useState("");
-
-  const handleSendComment = (e) => {
-    e.preventDefault();
-    if (!userComment.trim()) return;
-    const newCmt = {
-      id: Date.now(),
-      user: "Khách hàng",
-      text: userComment,
-      date: "Vừa xong",
-    };
-    setCommentList([newCmt, ...commentList]);
-    setUserComment("");
-  };
-
-  // Logic: Sử dụng trực tiếp variants từ DB thay vì tính toán x1.5 hay x2.25
-  const variants = product?.variants || [];
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
 
   const updateQty = (index, delta) => {
     const newQty = [...quantities];
@@ -292,7 +227,6 @@ const ProductDetail = () => {
     setQuantities(newQty);
   };
 
-<<<<<<< HEAD
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     toast.success("Đã sao chép liên kết vào bộ nhớ tạm!");
@@ -322,8 +256,6 @@ const ProductDetail = () => {
     );
   };
 
-=======
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
   const calculateTotal = () =>
     quantities.reduce(
       (total, q, i) => total + q * (variants[i]?.price || 0),
@@ -345,57 +277,36 @@ const ProductDetail = () => {
         hasItems = true;
       }
     });
-<<<<<<< HEAD
     if (!hasItems) return toast.error("Vui lòng chọn số lượng!");
     if (type === "buy_now") navigate("/cart");
     else toast.success("Đã thêm vào giỏ hàng thành công!");
-=======
-    if (!hasItems) return alert("Vui lòng chọn số lượng!");
-    if (type === "buy_now") navigate("/cart");
-    else alert("Đã thêm vào giỏ hàng thành công!");
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
   };
 
   // Giao diện khi đang tải
   if (loading)
     return (
-<<<<<<< HEAD
       <div className="flex items-center justify-center min-h-screen bg-transparent">
         <div className="w-12 h-12 border-4 rounded-full border-primary border-t-transparent animate-spin"></div>
-=======
-      <div className="min-h-screen flex items-center justify-center bg-[#f7f4ef]">
-        <div className="w-12 h-12 border-4 border-[#9d0b0f] border-t-transparent rounded-full animate-spin"></div>
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
       </div>
     );
 
   // Giao diện khi không tìm thấy sản phẩm
   if (!product)
     return (
-<<<<<<< HEAD
       <div className="min-h-screen p-20 font-bold text-center bg-transparent text-section">
-=======
-      <div className="p-20 text-center font-bold bg-[#f7f4ef] min-h-screen">
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
         Sản phẩm không tồn tại!
       </div>
     );
 
   return (
-<<<<<<< HEAD
     <div className="bg-transparent min-h-screen font-sans text-[#3e2714] pb-10">
       <div className="container px-4 py-6 mx-auto max-w-300">
-=======
-    <div className="bg-[#f7f4ef] min-h-screen font-sans text-[#3e2714] pb-10">
-      <div className="container mx-auto max-w-[1200px] px-4 py-6">
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
         {/* Breadcrumb */}
         <div className="text-[12px] text-gray-500 mb-6 uppercase font-bold">
           Trang chủ / Sản phẩm /{" "}
           <span className="text-primary">{product.name}</span>
         </div>
 
-<<<<<<< HEAD
         <div className="flex flex-col items-start gap-8 mb-12 lg:flex-row">
           {/* CỘT 1: HÌNH ẢNH */}
           <div className="flex flex-col w-full gap-4 lg:w-5/12">
@@ -403,38 +314,20 @@ const ProductDetail = () => {
               <div
                 onClick={prevImg}
                 className="absolute w-8 h-8 -translate-y-1/2 cursor-pointer top-1/2 left-2 z-3"
-=======
-        <div className="flex flex-col lg:flex-row gap-8 items-start mb-12">
-          {/* CỘT 1: HÌNH ẢNH */}
-          <div className="lg:w-5/12 w-full flex flex-col gap-4">
-            <div className="relative bg-white p-2 shadow-md border border-gray-100 rounded-sm overflow-hidden">
-              <div
-                onClick={prevImg}
-                className="absolute top-1/2 left-2 z-[3] h-8 w-8 -translate-y-1/2 cursor-pointer"
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
               >
                 <img
                   alt="prev"
                   src="https://honglam.vn/_next/static/media/slick-prev-xs-hover.d0444fb5.png"
-<<<<<<< HEAD
                   className="w-8 h-8"
-=======
-                  className="h-8 w-8"
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                 />
               </div>
               <div
                 onClick={nextImg}
-<<<<<<< HEAD
                 className="absolute w-8 h-8 -translate-y-1/2 cursor-pointer top-1/2 right-2 z-3"
-=======
-                className="absolute top-1/2 right-2 z-[3] h-8 w-8 -translate-y-1/2 cursor-pointer"
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
               >
                 <img
                   alt="next"
                   src="https://honglam.vn/_next/static/media/slick-next-xs-hover.c14e777f.png"
-<<<<<<< HEAD
                   className="w-8 h-8"
                 />
               </div>
@@ -442,15 +335,6 @@ const ProductDetail = () => {
                 <img
                   src={productImages[activeImg]}
                   className="object-contain h-100"
-=======
-                  className="h-8 w-8"
-                />
-              </div>
-              <div className="overflow-hidden bg-white flex justify-center">
-                <img
-                  src={productImages[activeImg]}
-                  className="h-[400px] object-contain"
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                   alt={product.name}
                 />
               </div>
@@ -462,24 +346,15 @@ const ProductDetail = () => {
                   key={i}
                   src={img}
                   onClick={() => setActiveImg(i)}
-<<<<<<< HEAD
                   className={`border-2 h-20 w-full object-contain cursor-pointer ${activeImg === i ? "border-primary" : "border-transparent opacity-60"}`}
-=======
-                  className={`border-2 h-20 w-full object-contain cursor-pointer ${activeImg === i ? "border-[#9d0b0f]" : "border-transparent opacity-60"}`}
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                 />
               ))}
             </div>
           </div>
 
           {/* CỘT 2: THÔNG TIN */}
-<<<<<<< HEAD
           <div className="flex flex-col w-full lg:w-4/12">
             <h1 className="mb-1 text-3xl font-bold tracking-tight uppercase font-seagull text-primary">
-=======
-          <div className="lg:w-4/12 w-full flex flex-col">
-            <h1 className="text-3xl font-bold text-[#9d0b0f] mb-1 font-serif uppercase tracking-tight">
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
               {product.name}
             </h1>
             <p className="text-sm text-[#88694f] mb-4 italic">
@@ -491,11 +366,7 @@ const ProductDetail = () => {
                   key={s}
                   size={14}
                   fill="#faa519"
-<<<<<<< HEAD
                   className="text-secondary"
-=======
-                  className="text-[#faa519]"
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                 />
               ))}
             </div>
@@ -521,7 +392,6 @@ const ProductDetail = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {variants.map((v, i) => (
-<<<<<<< HEAD
                     <tr key={i} className="font-bold hover:bg-white/30">
                       <td className="py-4 pl-3 text-gray-700">{v.label}</td>
                       <td className="py-4 text-center text-primary">
@@ -532,18 +402,6 @@ const ProductDetail = () => {
                           <button
                             onClick={() => updateQty(i, -1)}
                             className="px-2 py-1 text-gray-400 border-r"
-=======
-                    <tr key={i} className="hover:bg-white/30 font-bold">
-                      <td className="py-4 pl-3 text-gray-700">{v.label}</td>
-                      <td className="py-4 text-center text-[#9d0b0f]">
-                        {v.price.toLocaleString()}đ
-                      </td>
-                      <td className="py-4 flex justify-center">
-                        <div className="flex items-center bg-white border border-gray-300 rounded overflow-hidden">
-                          <button
-                            onClick={() => updateQty(i, -1)}
-                            className="px-2 py-1 border-r text-gray-400"
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                           >
                             <Minus size={12} />
                           </button>
@@ -552,11 +410,7 @@ const ProductDetail = () => {
                           </span>
                           <button
                             onClick={() => updateQty(i, 1)}
-<<<<<<< HEAD
                             className="px-2 py-1 text-gray-400 border-l"
-=======
-                            className="px-2 py-1 border-l text-gray-400"
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                           >
                             <Plus size={12} />
                           </button>
@@ -569,26 +423,16 @@ const ProductDetail = () => {
             </div>
 
             <div className="mt-8">
-<<<<<<< HEAD
               <p className="mb-6 text-xl italic font-bold">
                 Thành tiền:{" "}
                 <span className="text-2xl font-black text-primary">
-=======
-              <p className="text-xl font-bold mb-6 italic">
-                Thành tiền:{" "}
-                <span className="text-[#9d0b0f] text-2xl font-black">
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                   {calculateTotal().toLocaleString()}đ
                 </span>
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={() => handleAction("buy_now")}
-<<<<<<< HEAD
                   className="flex-1 py-4 font-bold tracking-widest text-white uppercase rounded-md shadow-lg bg-primary active:scale-95"
-=======
-                  className="flex-1 bg-[#9d0b0f] text-white py-4 rounded-md font-bold uppercase tracking-widest shadow-lg active:scale-95"
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                 >
                   MUA NGAY
                 </button>
@@ -599,7 +443,6 @@ const ProductDetail = () => {
                   Thêm vào giỏ
                 </button>
               </div>
-<<<<<<< HEAD
 
               {/* PHẦN CHIA SẺ */}
               <div className="mt-8 pt-6 border-t border-dashed border-gray-200">
@@ -654,13 +497,10 @@ const ProductDetail = () => {
                   </div>
                 </div>
               </div>
-=======
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
             </div>
           </div>
         </div>
 
-<<<<<<< HEAD
         {/* PHẦN ĐÁNH GIÁ & BÌNH LUẬN */}
         <div className="p-8 bg-white border border-gray-100 shadow-sm rounded-xl">
           <div className="flex items-center gap-3 pb-4 mb-8 border-b border-gray-100">
@@ -903,39 +743,6 @@ const ProductDetail = () => {
           videoUrl={activeVideo}
           onClose={() => setActiveVideo(null)}
         />
-=======
-        {/* PHẦN BÌNH LUẬN */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
-          <div className="flex items-center gap-3 mb-8 border-b border-gray-100 pb-4">
-            <MessageSquare size={24} className="text-[#9d0b0f]" />
-            <h3 className="text-xl font-bold uppercase">
-              Đánh giá & Bình luận
-            </h3>
-          </div>
-          <form
-            onSubmit={handleSendComment}
-            className="mb-10 flex gap-4 items-start"
-          >
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
-              <User className="text-gray-400" />
-            </div>
-            <div className="flex-1 space-y-3">
-              <textarea
-                value={userComment}
-                onChange={(e) => setUserComment(e.target.value)}
-                placeholder="Nhận xét của bạn..."
-                className="w-full border p-4 rounded-xl outline-none focus:border-[#9d0b0f] text-sm h-32"
-              />
-              <button
-                type="submit"
-                className="bg-[#9d0b0f] text-white px-8 py-2.5 rounded-full font-bold text-sm flex items-center gap-2"
-              >
-                Gửi bình luận <Send size={14} />
-              </button>
-            </div>
-          </form>
-        </div>
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
       </div>
     </div>
   );

@@ -266,6 +266,7 @@ const RevenueManagement = () => {
           textColor="text-white"
         />
         <StatCard
+          to="/orders"
           title="Doanh thu Đơn hàng"
           value={formatCurrency(stats.totalOrderRev)}
           icon={<ShoppingBag className="text-[#9d0b0f]" />}

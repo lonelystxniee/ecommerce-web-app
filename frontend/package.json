@@ -10,31 +10,21 @@
     "preview": "vite preview"
   },
   "dependencies": {
-<<<<<<< HEAD
     "@react-oauth/google": "^0.13.4",
-=======
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
     "@tailwindcss/postcss": "^4.1.18",
     "lucide-react": "^0.563.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-<<<<<<< HEAD
     "react-facebook-login": "^4.1.1",
     "react-hot-toast": "^2.6.0",
     "react-router-dom": "^7.13.0",
     "react-to-print": "^3.3.0"
-=======
-    "react-router-dom": "^7.13.0"
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
-<<<<<<< HEAD
     "@vitejs/plugin-basic-ssl": "^2.1.4",
-=======
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
     "@vitejs/plugin-react": "^5.1.1",
     "autoprefixer": "^10.4.23",
     "eslint": "^9.39.1",

@@ -1,4 +1,3 @@
-// src/controllers/revenueController.js
 const Order = require("../models/Order");
 const AdRevenue = require("../models/AdRevenue");
 
@@ -16,12 +15,10 @@ exports.getRevenueReport = async (req, res) => {
       startDate.setDate(startDate.getDate() - 7);
       daysToChart = 7;
     } else {
-      // Mặc định tháng này (30 ngày gần nhất hoặc từ đầu tháng)
       startDate.setMonth(startDate.getMonth() - 1);
       daysToChart = 30;
     }
 
-    // 2. Lấy dữ liệu từ DB
     const allOrders = await Order.find({ createdAt: { $gte: startDate } });
     const adRevenues = await AdRevenue.find({ date: { $gte: startDate } });
 

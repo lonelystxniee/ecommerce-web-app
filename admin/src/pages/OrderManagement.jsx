@@ -7,19 +7,12 @@ import {
   Package,
   Trash2,
   X,
-<<<<<<< HEAD
   User,
   MapPin,
   Truck,
   CheckCircle,
   Phone,
   Mail,
-=======
-  MapPin,
-  Phone,
-  Mail,
-  User,
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
   CreditCard,
   Calendar,
 } from "lucide-react";
@@ -28,7 +21,6 @@ const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-<<<<<<< HEAD
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -40,30 +32,13 @@ const OrderManagement = () => {
       const token = localStorage.getItem("token");
       const response = await fetch(`${API_URL}/api/orders/all`, {
         headers: {
-          "Authorization": `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
       const data = await response.json();
       if (data.success) setOrders(data.orders);
     } catch (error) {
       console.error(error);
-=======
-
-  // --- STATE CHI TIẾT ĐƠN HÀNG ---
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const fetchOrders = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch("http://localhost:5175/api/orders/all");
-      const data = await response.json();
-      if (data.success) {
-        setOrders(data.orders);
-      }
-    } catch (error) {
-      console.error("Lỗi lấy đơn hàng:", error);
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
     } finally {
       setLoading(false);
     }
@@ -73,7 +48,6 @@ const OrderManagement = () => {
     fetchOrders();
   }, []);
 
-<<<<<<< HEAD
   // HÀM XỬ LÝ QUY TRÌNH (WORKFLOW)
   const handleWorkflow = async (orderId, action) => {
     try {
@@ -84,23 +58,12 @@ const OrderManagement = () => {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
           },
-=======
-  const handleUpdateStatus = async (orderId, newStatus) => {
-    try {
-      const response = await fetch(
-        `http://localhost:5175/api/orders/status/${orderId}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: newStatus }),
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
         },
       );
       const data = await response.json();
       if (data.success) {
-<<<<<<< HEAD
         alert("Cập nhật quy trình thành công!");
         fetchOrders();
         setIsModalOpen(false);
@@ -140,58 +103,6 @@ const OrderManagement = () => {
           </h2>
           <p className="text-[#88694f] font-medium italic">
             Quy trình: Xác nhận → Đóng gói → Bàn giao GHN
-=======
-        alert("Cập nhật trạng thái thành công!");
-        fetchOrders();
-        if (selectedOrder?._id === orderId) {
-          setSelectedOrder({ ...selectedOrder, status: newStatus });
-        }
-      }
-    } catch (error) {
-      alert("Lỗi kết nối server!");
-    }
-  };
-
-  const openDetail = (order) => {
-    setSelectedOrder(order);
-    setIsModalOpen(true);
-  };
-
-  const filteredOrders = orders.filter(
-    (order) =>
-      order.customerInfo.fullName
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) || order._id.includes(searchTerm),
-  );
-
-  const getStatusStyle = (status) => {
-    switch (status) {
-      case "PENDING":
-        return "bg-orange-100 text-[#f39200]";
-      case "CONFIRMED":
-        return "bg-blue-100 text-blue-600";
-      case "SHIPPING":
-        return "bg-purple-100 text-purple-600";
-      case "COMPLETED":
-        return "bg-green-100 text-green-600";
-      case "CANCELLED":
-        return "bg-red-100 text-red-600";
-      default:
-        return "bg-gray-100 text-gray-600";
-    }
-  };
-
-  return (
-    <div className="space-y-6 animate-fadeIn relative">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-2 border-[#9d0b0f] pb-4">
-        <div>
-          <h2 className="text-3xl font-black text-[#9d0b0f] uppercase tracking-tighter">
-            Quản lý đơn hàng
-          </h2>
-          <p className="text-[#88694f] font-medium italic">
-            Theo dõi và điều phối đơn hàng ClickGo
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
           </p>
         </div>
         <button
@@ -202,7 +113,6 @@ const OrderManagement = () => {
         </button>
       </div>
 
-<<<<<<< HEAD
       <div className="bg-white/80 p-4 rounded-2xl border border-[#9d0b0f]/10">
         <div className="relative">
           <Search className="absolute left-4 top-3 text-[#9d0b0f]" size={18} />
@@ -212,37 +122,16 @@ const OrderManagement = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-12 py-2.5 bg-transparent outline-none text-sm"
-=======
-      {/* Tìm kiếm */}
-      <div className="flex gap-4">
-        <div className="flex-1 relative bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-[#9d0b0f]/10">
-          <Search
-            className="absolute left-4 top-3.5 text-[#9d0b0f]"
-            size={18}
-          />
-          <input
-            type="text"
-            placeholder="Tìm theo tên khách hoặc mã đơn..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 py-3.5 bg-transparent outline-none text-[#3e2714] text-sm"
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
           />
         </div>
       </div>
 
-<<<<<<< HEAD
       <div className="bg-white rounded-[32px] shadow-xl border border-gray-100 overflow-hidden">
-=======
-      {/* Bảng Đơn Hàng */}
-      <div className="bg-white/90 backdrop-blur-sm rounded-[32px] shadow-xl border border-gray-100 overflow-hidden">
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
         <table className="w-full text-left text-sm">
           <thead className="bg-[#9d0b0f] text-white text-[10px] uppercase font-bold tracking-widest">
             <tr>
               <th className="px-8 py-5">Mã đơn</th>
               <th className="px-8 py-5">Khách hàng</th>
-<<<<<<< HEAD
               <th className="px-8 py-5 text-center">Xử lý nội bộ (Shop)</th>
               <th className="px-8 py-5 text-center">Trạng thái vận chuyển</th>
               <th className="px-8 py-5 text-right">Thao tác</th>
@@ -297,10 +186,10 @@ const OrderManagement = () => {
                       "DELIVERING",
                       "COMPLETED",
                     ].includes(order.status) && (
-                        <span className="text-green-600 font-black text-[10px] flex items-center gap-1">
-                          <CheckCircle size={12} /> ĐÃ BÀN GIAO
-                        </span>
-                      )}
+                      <span className="text-green-600 font-black text-[10px] flex items-center gap-1">
+                        <CheckCircle size={12} /> ĐÃ BÀN GIAO
+                      </span>
+                    )}
                   </div>
                 </td>
                 <td className="px-8 py-6 text-center">
@@ -323,83 +212,10 @@ const OrderManagement = () => {
                 </td>
               </tr>
             ))}
-=======
-              <th className="px-8 py-5">Sản phẩm</th>
-              <th className="px-8 py-5">Tổng tiền</th>
-              <th className="px-8 py-5">Trạng thái</th>
-              <th className="px-8 py-5 text-center">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {loading ? (
-              <tr>
-                <td
-                  colSpan="6"
-                  className="text-center py-20 text-gray-400 italic"
-                >
-                  Đang tải dữ liệu...
-                </td>
-              </tr>
-            ) : (
-              filteredOrders.map((order) => (
-                <tr
-                  key={order._id}
-                  className="hover:bg-[#f7f4ef]/50 transition-colors"
-                >
-                  <td className="px-8 py-6 font-bold text-[#9d0b0f]">
-                    #{order._id.substring(order._id.length - 6).toUpperCase()}
-                  </td>
-                  <td className="px-8 py-6">
-                    <p className="font-bold text-[#3e2714]">
-                      {order.customerInfo.fullName}
-                    </p>
-                    <p className="text-[10px] text-[#88694f] font-bold">
-                      {order.customerInfo.phone}
-                    </p>
-                  </td>
-                  <td className="px-8 py-6">
-                    <span className="text-xs font-medium bg-stone-100 px-2 py-1 rounded-lg">
-                      {order.items.length} món
-                    </span>
-                  </td>
-                  <td className="px-8 py-6 font-black text-[#3e2714]">
-                    {order.totalPrice.toLocaleString()}đ
-                  </td>
-                  <td className="px-8 py-6">
-                    <select
-                      value={order.status}
-                      onChange={(e) =>
-                        handleUpdateStatus(order._id, e.target.value)
-                      }
-                      className={`px-3 py-1.5 rounded-xl text-[10px] font-bold border-none cursor-pointer ${getStatusStyle(order.status)}`}
-                    >
-                      <option value="PENDING">Chờ xử lý</option>
-                      <option value="CONFIRMED">Đã xác nhận</option>
-                      <option value="SHIPPING">Đang giao</option>
-                      <option value="COMPLETED">Hoàn thành</option>
-                      <option value="CANCELLED">Đã hủy</option>
-                    </select>
-                  </td>
-                  <td className="px-8 py-6 text-center">
-                    <button
-                      onClick={() => openDetail(order)}
-                      className="text-blue-500 p-2.5 bg-blue-50 hover:bg-blue-500 hover:text-white rounded-xl transition-all"
-                    >
-                      <Eye size={18} />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
           </tbody>
         </table>
       </div>
 
-<<<<<<< HEAD
-=======
-      {/* --- POPUP CHI TIẾT ĐƠN HÀNG --- */}
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
       {isModalOpen && selectedOrder && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div
@@ -497,11 +313,7 @@ const OrderManagement = () => {
                   <table className="w-full text-sm">
                     <thead className="bg-[#f7f4ef] border-b">
                       <tr className="text-[10px] font-black uppercase text-gray-400">
-<<<<<<< HEAD
                         <th className="py-4 text-center">Sản phẩm</th>
-=======
-                        <th className="py-4 pl-6 text-left">Sản phẩm</th>
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                         <th className="py-4 text-center">Giá</th>
                         <th className="py-4 text-center">SL</th>
                         <th className="py-4 pr-6 text-right">Thành tiền</th>
@@ -555,10 +367,6 @@ const OrderManagement = () => {
                 </div>
 
                 <div className="mt-6 flex justify-end gap-3">
-<<<<<<< HEAD
-=======
-                  {/* Đã loại bỏ nút IN HÓA ĐƠN ở đây */}
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                   <button
                     onClick={() => setIsModalOpen(false)}
                     className="px-10 py-3 rounded-2xl bg-[#3e2714] text-white font-bold text-xs hover:bg-black transition-all"

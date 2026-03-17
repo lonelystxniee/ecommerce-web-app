@@ -7,7 +7,6 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
-<<<<<<< HEAD
     "axios": "^1.13.6",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.9.0",
@@ -28,17 +27,5 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
-=======
-    "bcryptjs": "^3.0.3",
-    "cors": "^2.8.6",
-    "dotenv": "^17.2.3",
-    "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.2.2",
-    "mysql2": "^3.16.2"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.11"
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
   }
 }

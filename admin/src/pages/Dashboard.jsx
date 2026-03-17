@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -12,16 +11,12 @@ import {
   Cell,
   Legend,
 } from "recharts";
-=======
-import React, { useEffect, useState } from "react";
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
 import {
   ShoppingCart,
   DollarSign,
   Users,
   Package,
   TrendingUp,
-<<<<<<< HEAD
   Search,
   RefreshCcw,
   ChevronLeft,
@@ -49,13 +44,12 @@ const Dashboard = () => {
     combinedTotal: 0,
     orderCount: 0,
   });
-  // Giữ lại apiChartData nếu bạn muốn dùng cho mục đích khác,
-  // nhưng biểu đồ chính sẽ dùng barChartData (logic code 2)
+
   const [apiChartData, setApiChartData] = useState([]);
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
 
-  // --- BỘ LỌC THỜI GIAN ---
+  //lọc thời gian
   const today = new Date().toISOString().split("T")[0];
   const lastMonth = new Date(new Date().setDate(new Date().getDate() - 30))
     .toISOString()
@@ -64,7 +58,6 @@ const Dashboard = () => {
   const [dateRange, setDateRange] = useState({ start: lastMonth, end: today });
   const [globalSearch, setGlobalSearch] = useState("");
 
-  // Mode hiển thị: DAY (Ngày), WEEK (Tuần), MONTH (Tháng), YEAR (Năm)
   const [timeRange, setTimeRange] = useState("DAY");
 
   const [orderSearch, setOrderSearch] = useState("");
@@ -145,7 +138,7 @@ const Dashboard = () => {
     fetchData();
   }, []);
 
-  // --- LOGIC LỌC ĐƠN HÀNG ---
+  // LỌC ĐƠN HÀNG
   const filteredByDateOrders = useMemo(() => {
     return orders.filter((order) => {
       const orderDate = new Date(order.createdAt).toISOString().split("T")[0];
@@ -169,13 +162,12 @@ const Dashboard = () => {
     });
   }, [orders, chartDateRange]);
 
-  // --- FIX: LOGIC BIỂU ĐỒ DOANH THU (DỰA TRÊN CODE 2) ---
+  // LOGIC BIỂU ĐỒ DOANH THU
   const barChartData = useMemo(() => {
     const completed = chartOrders.filter((o) =>
       ["COMPLETED", "DELIVERED"].includes(o.status?.toUpperCase()),
     );
 
-    // ===== NGÀY =====
     if (timeRange === "DAY") {
       const start = new Date(chartDateRange.start);
       const end = new Date(chartDateRange.end);
@@ -203,7 +195,6 @@ const Dashboard = () => {
       return data;
     }
 
-    // ===== TUẦN =====
     if (timeRange === "WEEK") {
       const weeks = [
         { name: "Tuần 1", order: 0, ad: 0 },
@@ -221,7 +212,6 @@ const Dashboard = () => {
       return weeks;
     }
 
-    // ===== THÁNG =====
     if (timeRange === "MONTH") {
       const months = Array.from({ length: 12 }, (_, i) => ({
         name: `Tháng ${i + 1}`,
@@ -237,7 +227,6 @@ const Dashboard = () => {
       return months;
     }
 
-    // ===== NĂM =====
     if (timeRange === "YEAR") {
       const yearMap = {};
 
@@ -316,7 +305,6 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6 animate-fadeIn pb-10 text-[#3e2714]">
-      {/* 1. TOP GLOBAL BAR */}
       <div className="sticky top-0 z-[100] flex flex-col xl:flex-row items-center gap-4 bg-white/90 backdrop-blur-md p-4 rounded-[28px] shadow-xl border border-[#9d0b0f]/5">
         <div className="flex items-center gap-3 shrink-0">
           <div className="bg-[#9d0b0f] p-2.5 rounded-xl text-white shadow-lg shadow-red-100">
@@ -370,7 +358,6 @@ const Dashboard = () => {
         </button>
       </div>
 
-      {/* 2. STATS CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           to="/revenue"
@@ -409,7 +396,6 @@ const Dashboard = () => {
         />
       </div>
 
-      {/* 3. FIX: BIỂU ĐỒ DOANH THU & TOP BÁN CHẠY (LOGIC CODE 2) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-8 bg-white p-8 rounded-[40px] shadow-xl border border-gray-100 flex flex-col h-[500px]">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
@@ -444,7 +430,6 @@ const Dashboard = () => {
               />
             </div>
 
-            {/* Thanh chọn thời gian */}
             <div className="flex bg-[#f7f4ef] p-1 rounded-xl border border-stone-200">
               {[
                 { k: "DAY", v: "NGÀY" },
@@ -484,7 +469,6 @@ const Dashboard = () => {
                     border: "none",
                     boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
                   }}
-                  // Hiển thị cả 2 nguồn thu trong Tooltip
                   formatter={(value, name) => [
                     `${value.toLocaleString()}đ`,
                     name === "order" ? "Tiền hàng" : "Tiền QC",
@@ -492,7 +476,6 @@ const Dashboard = () => {
                 />
                 <Legend verticalAlign="top" align="right" iconType="circle" />
 
-                {/* Cột Tiền hàng (Đỏ) */}
                 <Bar
                   dataKey="order"
                   name="Tiền hàng"
@@ -500,7 +483,6 @@ const Dashboard = () => {
                   fill="#9d0b0f"
                 />
 
-                {/* Cột Tiền QC (Cam) - stackId="a" sẽ giúp 2 cái chồng lên nhau thành 1 cột tổng */}
                 <Bar
                   dataKey="ad"
                   name="Tiền QC"
@@ -545,7 +527,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* 4. TABLES SECTION */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         <TableContainer
           title="Đơn hàng"
@@ -629,7 +610,6 @@ const Dashboard = () => {
         </TableContainer>
       </div>
 
-      {/* 5. VOUCHER HUB */}
       <div className="bg-white p-8 rounded-[40px] shadow-sm border border-stone-100 flex flex-col min-h-[450px]">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
@@ -736,143 +716,11 @@ const Dashboard = () => {
             </button>
           </div>
         )}
-=======
-  CheckCircle,
-} from "lucide-react";
-
-const Dashboard = () => {
-  const [data, setData] = useState({
-    orders: [],
-    totalRevenue: 0,
-    userCount: 0,
-  });
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch("http://localhost:5175/api/orders/all");
-        const json = await res.json();
-        if (json.success) {
-          const total = json.orders.reduce(
-            (acc, curr) => acc + curr.totalPrice,
-            0,
-          );
-          setData({
-            orders: json.orders.slice(0, 5), // Lấy 5 đơn mới nhất
-            totalRevenue: total,
-            userCount: 10, // Giả lập hoặc gọi API User
-          });
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    };
-    fetchData();
-  }, []);
-
-  const stats = [
-    {
-      label: "Tổng đơn hàng",
-      value: data.orders.length,
-      icon: <ShoppingCart className="text-blue-500" />,
-      trend: "+12%",
-      color: "bg-blue-50",
-    },
-    {
-      label: "Doanh thu",
-      value: `₫${(data.totalRevenue / 1000000).toFixed(1)}M`,
-      icon: <DollarSign className="text-green-500" />,
-      trend: "+8%",
-      color: "bg-green-50",
-    },
-    {
-      label: "Khách hàng",
-      value: data.userCount,
-      icon: <Users className="text-purple-500" />,
-      trend: "+5%",
-      color: "bg-purple-50",
-    },
-    {
-      label: "Sản phẩm",
-      value: "45",
-      icon: <Package className="text-orange-500" />,
-      trend: "0%",
-      color: "bg-orange-50",
-    },
-  ];
-
-  return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="text-3xl font-bold text-gray-800">
-          Hệ thống Quản trị ClickGo
-        </h2>
-        <p className="text-gray-500 font-medium">
-          "Tốc độ - Tươi ngon - Tận tâm"
-        </p>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, i) => (
-          <div
-            key={i}
-            className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100"
-          >
-            <div className="flex justify-between">
-              <div className={`${stat.color} p-4 rounded-2xl`}>{stat.icon}</div>
-              <div className="text-[10px] font-bold text-green-500 bg-green-50 px-2 py-1 rounded-lg flex items-center gap-1">
-                <TrendingUp size={12} /> {stat.trend}
-              </div>
-            </div>
-            <div className="mt-6">
-              <p className="text-gray-400 text-xs font-bold uppercase">
-                {stat.label}
-              </p>
-              <h3 className="text-2xl font-black text-gray-800">
-                {stat.value}
-              </h3>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Đơn hàng gần đây */}
-      <div className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100">
-        <h3 className="text-xl font-bold mb-6">Đơn hàng mới nhất</h3>
-        <div className="space-y-4">
-          {data.orders.map((order) => (
-            <div
-              key={order._id}
-              className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl"
-            >
-              <div>
-                <p className="font-bold text-sm">
-                  Khách hàng: {order.customerInfo.fullName}
-                </p>
-                <p className="text-xs text-gray-400">
-                  {new Date(order.createdAt).toLocaleString()}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="font-bold text-[#800a0d]">
-                  {order.totalPrice.toLocaleString()}đ
-                </p>
-                <span className="text-[10px] bg-orange-100 text-orange-500 px-2 py-1 rounded-lg font-bold uppercase">
-                  {order.status}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
       </div>
     </div>
   );
 };
 
-<<<<<<< HEAD
-// --- SUB-COMPONENTS ---
 const StatCard = ({ label, val, icon, color, text, to }) => (
   <Link
     to={to}
@@ -950,6 +798,4 @@ const TableContainer = ({
   </div>
 );
 
-=======
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
 export default Dashboard;

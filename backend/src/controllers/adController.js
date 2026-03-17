@@ -1,6 +1,5 @@
 const Ad = require("../models/Ad");
 
-// 1. Lấy tất cả quảng cáo (Admin dùng)
 exports.getAllAds = async (req, res) => {
   try {
     const ads = await Ad.find().sort({ position: 1 });
@@ -10,7 +9,6 @@ exports.getAllAds = async (req, res) => {
   }
 };
 
-// 2. Thêm quảng cáo mới
 exports.createAd = async (req, res) => {
   try {
     const newAd = new Ad(req.body);
@@ -23,7 +21,6 @@ exports.createAd = async (req, res) => {
   }
 };
 
-// 3. Cập nhật quảng cáo
 exports.updateAd = async (req, res) => {
   try {
     const updatedAd = await Ad.findByIdAndUpdate(req.params.id, req.body, {
@@ -39,7 +36,6 @@ exports.updateAd = async (req, res) => {
   }
 };
 
-// 4. Xóa quảng cáo
 exports.deleteAd = async (req, res) => {
   try {
     await Ad.findByIdAndDelete(req.params.id);

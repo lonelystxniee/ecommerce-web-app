@@ -7,7 +7,6 @@ import UserManagement from "./pages/UserManagement";
 import ProductManagement from "./pages/ProductManagement";
 import OrderManagement from "./pages/OrderManagement";
 import PromotionManagement from "./pages/PromotionManagement";
-<<<<<<< HEAD
 import CategoryManagement from "./pages/CategoryManagement";
 import ReviewManagement from "./pages/ReviewManagement";
 import AdminManagement from "./pages/AdminManagement";
@@ -17,14 +16,11 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import NewsAndVideoManagement from "./pages/NewsAndVideoManagement";
 import AdvertisementManagement from "./pages/AdvertisementManagement";
 import RevenueManagement from "./pages/RevenueManagement";
-=======
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
 
 function App() {
   return (
     <Router>
       <Routes>
-<<<<<<< HEAD
         <Route path="/login" element={<LoginPage />} />
 
         <Route element={<ProtectedRoute />}>
@@ -42,15 +38,6 @@ function App() {
             <Route path="/ads" element={<AdvertisementManagement />} />
             <Route path="/revenue" element={<RevenueManagement />} />
           </Route>
-=======
-        <Route path="/" element={<AdminLayout />}>
-          <Route index element={<Dashboard />} />
-
-          <Route path="users" element={<UserManagement />} />
-          <Route path="products" element={<ProductManagement />} />
-          <Route path="orders" element={<OrderManagement />} />
-          <Route path="promotions" element={<PromotionManagement />} />
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
         </Route>
       </Routes>
     </Router>

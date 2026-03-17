@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import React, { useState, useEffect } from "react";
 import { X, Eye, EyeOff, Check, ChevronDown } from "lucide-react";
 import { GoogleLogin } from "@react-oauth/google";
@@ -20,28 +19,12 @@ const AuthForm = ({ isOpen, onClose }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-=======
-import React, { useState } from "react";
-import { X, Eye, EyeOff, User, Mail, Lock, Phone } from "lucide-react";
-
-const AuthForm = ({ isOpen, onClose }) => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  // State cho Đăng nhập
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
-  // State cho Đăng ký
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
   const [registerData, setRegisterData] = useState({
     fullName: "",
     email: "",
     phone: "",
     password: "",
     confirmPassword: "",
-<<<<<<< HEAD
     gender: "",
     birthday: "",
   });
@@ -144,29 +127,6 @@ const AuthForm = ({ isOpen, onClose }) => {
     if (Object.keys(errors).length > 0) {
       if (viewMode === "login") setLoginErrors(errors);
       else setRegisterErrors(errors);
-=======
-  });
-
-  // Xử lý thay đổi input cho Đăng ký
-  const handleRegisterChange = (e) => {
-    setRegisterData({ ...registerData, [e.target.name]: e.target.value });
-  };
-
-  // Hàm xử lý chung khi submit Form
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    const url = isLogin
-      ? "http://localhost:5175/api/auth/login"
-      : "http://localhost:5175/api/auth/register";
-
-    const body = isLogin ? { email, password } : registerData;
-
-    // Kiểm tra mật khẩu khớp khi đăng ký
-    if (!isLogin && registerData.password !== registerData.confirmPassword) {
-      alert("Mật khẩu nhập lại không khớp!");
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
       setLoading(false);
       return;
     }
@@ -181,7 +141,6 @@ const AuthForm = ({ isOpen, onClose }) => {
       const data = await response.json();
 
       if (data.success) {
-<<<<<<< HEAD
         toast.success(
           viewMode === "login"
             ? "Đăng nhập thành công!"
@@ -204,32 +163,11 @@ const AuthForm = ({ isOpen, onClose }) => {
     } catch (error) {
       console.log(error);
       toast.error("Lỗi kết nối Server!");
-=======
-        alert(
-          isLogin
-            ? "Đăng nhập thành công!"
-            : "Đăng ký thành công! Hãy đăng nhập.",
-        );
-        if (isLogin) {
-          localStorage.setItem("token", data.token);
-          localStorage.setItem("user", JSON.stringify(data.user));
-          onClose();
-          window.location.reload();
-        } else {
-          setIsLogin(true); // Chuyển sang tab đăng nhập sau khi đăng ký xong
-        }
-      } else {
-        alert(data.message || "Thao tác thất bại!");
-      }
-    } catch (error) {
-      alert("Lỗi kết nối Server!");
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
     } finally {
       setLoading(false);
     }
   };
 
-<<<<<<< HEAD
   const handleGoogleSuccess = async (credentialResponse) => {
     setLoading(true);
     try {
@@ -265,8 +203,6 @@ const AuthForm = ({ isOpen, onClose }) => {
     toast.error("Đăng nhập Google thất bại. Vui lòng thử lại!");
   };
 
-=======
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
   if (!isOpen) return null;
 
   return (
@@ -276,17 +212,7 @@ const AuthForm = ({ isOpen, onClose }) => {
         onClick={onClose}
       ></div>
 
-<<<<<<< HEAD
       <div className="relative w-full overflow-hidden shadow-2xl z-210 max-w-120 rounded-xl animate-zoomIn bg-[url('https://honglam.vn/_next/static/media/bg-body.9bfd1cb8.png')]">
-=======
-      <div
-        className="relative w-full overflow-hidden shadow-2xl z-210 max-w-120 rounded-xl animate-zoomIn"
-        style={{
-          backgroundColor: "#f2ebe3",
-          backgroundImage: `url('https://www.toptal.com/designers/subtlepatterns/uploads/paper.png')`,
-        }}
-      >
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
         <button
           onClick={onClose}
           className="absolute z-30 text-gray-400 top-3 right-3 hover:text-gray-600"
@@ -296,24 +222,14 @@ const AuthForm = ({ isOpen, onClose }) => {
 
         <div className="flex border-b border-gray-200/50">
           <button
-<<<<<<< HEAD
             onClick={() => setViewMode("login")}
             className={`flex-1 py-5 text-xl font-bold font-seagull cursor-pointer ${viewMode === "login" || viewMode === "forgot" ? "text-[#800a0d] border-b-[3px] border-[#800a0d]" : "text-gray-500 opacity-70"}`}
-=======
-            onClick={() => setIsLogin(true)}
-            className={`flex-1 py-5 text-xl font-bold ${isLogin ? "text-[#800a0d] border-b-[3px] border-[#800a0d]" : "text-gray-500 opacity-70"}`}
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
           >
             Đăng nhập
           </button>
           <button
-<<<<<<< HEAD
             onClick={() => setViewMode("register")}
             className={`flex-1 py-5 text-xl font-bold font-seagull cursor-pointer ${viewMode === "register" ? "text-[#800a0d] border-b-[3px] border-[#800a0d]" : "text-gray-500 opacity-70"}`}
-=======
-            onClick={() => setIsLogin(false)}
-            className={`flex-1 py-5 text-xl font-bold ${!isLogin ? "text-[#800a0d] border-b-[3px] border-[#800a0d]" : "text-gray-500 opacity-70"}`}
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
           >
             Đăng ký
           </button>
@@ -321,7 +237,6 @@ const AuthForm = ({ isOpen, onClose }) => {
 
         <div className="p-6 md:p-8">
           <form className="space-y-4" onSubmit={handleSubmit}>
-<<<<<<< HEAD
             {viewMode === "forgot" ? (
               /* --- GIAO DIỆN QUÊN MẬT KHẨU --- */
               <div className="space-y-4">
@@ -368,48 +283,32 @@ const AuthForm = ({ isOpen, onClose }) => {
                 )}
               </div>
             ) : viewMode === "login" ? (
-=======
-            {isLogin ? (
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
               /* --- GIAO DIỆN ĐĂNG NHẬP --- */
               <div className="space-y-4">
                 <InputGroup
                   label="Email"
                   type="email"
-<<<<<<< HEAD
                   placeholder="Nhập email của bạn"
                   value={email}
                   onChange={handleLoginEmailChange}
                   error={loginErrors.email}
                   success={email !== "" && !loginErrors.email}
-=======
-                  placeholder="Nhập email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                 />
                 <div className="relative">
                   <InputGroup
                     label="Mật khẩu"
                     type={showPassword ? "text" : "password"}
-<<<<<<< HEAD
                     placeholder="Nhập mật khẩu của bạn"
                     value={password}
                     onChange={handleLoginPasswordChange}
                     error={loginErrors.password}
                     success={password !== "" && !loginErrors.password}
                     doubleRight
-=======
-                    placeholder="Nhập mật khẩu"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                   />
                   <div
                     className="absolute text-gray-400 cursor-pointer right-3 top-9"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-<<<<<<< HEAD
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </div>
                 </div>
@@ -456,21 +355,6 @@ const AuthForm = ({ isOpen, onClose }) => {
               </div>
             ) : (
               /* --- GIAO DIỆN ĐĂNG KÝ --- */
-=======
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </div>
-                </div>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-[#800a0d] text-white py-3 rounded-lg font-bold shadow-md active:scale-95 disabled:bg-gray-400"
-                >
-                  {loading ? "Đang xử lý..." : "ĐĂNG NHẬP"}
-                </button>
-              </div>
-            ) : (
-              /* --- GIAO DIỆN ĐĂNG KÝ (MỚI) --- */
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
               <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                 <InputGroup
                   label="Họ và tên"
@@ -479,14 +363,11 @@ const AuthForm = ({ isOpen, onClose }) => {
                   placeholder="Nguyễn Văn A"
                   value={registerData.fullName}
                   onChange={handleRegisterChange}
-<<<<<<< HEAD
                   error={registerErrors.fullName}
                   success={
                     registerData.fullName.trim() !== "" &&
                     !registerErrors.fullName
                   }
-=======
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                 />
                 <InputGroup
                   label="Email"
@@ -495,17 +376,13 @@ const AuthForm = ({ isOpen, onClose }) => {
                   placeholder="example@gmail.com"
                   value={registerData.email}
                   onChange={handleRegisterChange}
-<<<<<<< HEAD
                   error={registerErrors.email}
                   success={registerData.email !== "" && !registerErrors.email}
-=======
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                 />
                 <InputGroup
                   label="Số điện thoại"
                   name="phone"
                   type="text"
-<<<<<<< HEAD
                   placeholder="0987654321"
                   value={registerData.phone}
                   onChange={handleRegisterChange}
@@ -541,12 +418,6 @@ const AuthForm = ({ isOpen, onClose }) => {
                   onChange={handleRegisterChange}
                 />
 
-=======
-                  placeholder="098..."
-                  value={registerData.phone}
-                  onChange={handleRegisterChange}
-                />
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                 <InputGroup
                   label="Mật khẩu"
                   name="password"
@@ -554,14 +425,11 @@ const AuthForm = ({ isOpen, onClose }) => {
                   placeholder="Tối thiểu 6 ký tự"
                   value={registerData.password}
                   onChange={handleRegisterChange}
-<<<<<<< HEAD
                   error={registerErrors.password}
                   success={
                     registerData.password.length >= 6 &&
                     !registerErrors.password
                   }
-=======
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                 />
                 <InputGroup
                   label="Xác nhận mật khẩu"
@@ -570,34 +438,24 @@ const AuthForm = ({ isOpen, onClose }) => {
                   placeholder="Nhập lại mật khẩu"
                   value={registerData.confirmPassword}
                   onChange={handleRegisterChange}
-<<<<<<< HEAD
                   error={registerErrors.confirmPassword}
                   success={
                     registerData.confirmPassword !== "" &&
                     registerData.confirmPassword === registerData.password
                   }
-=======
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                 />
 
                 <button
                   type="submit"
                   disabled={loading}
-<<<<<<< HEAD
                   className="w-full py-2 text-sm font-bold text-white rounded-lg shadow-md cursor-pointer bg-primary active:scale-95 disabled:bg-gray-400"
                 >
                   {loading ? "Đang đăng ký..." : "Đăng ký tài khoản"}
-=======
-                  className="w-full bg-[#800a0d] text-white py-3 rounded-lg font-bold shadow-md active:scale-95 disabled:bg-gray-400 mt-2"
-                >
-                  {loading ? "Đang đăng ký..." : "ĐĂNG KÝ TÀI KHOẢN"}
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
                 </button>
               </div>
             )}
           </form>
 
-<<<<<<< HEAD
           {viewMode !== "forgot" ? (
             <p className="mt-6 text-sm font-medium text-center text-gray-600">
               {viewMode === "login"
@@ -625,24 +483,12 @@ const AuthForm = ({ isOpen, onClose }) => {
               </span>
             </p>
           )}
-=======
-          <p className="mt-6 text-sm font-medium text-center text-gray-600">
-            {isLogin ? "Bạn chưa có tài khoản?" : "Bạn đã có tài khoản?"}{" "}
-            <span
-              className="text-[#800a0d] font-bold cursor-pointer hover:underline"
-              onClick={() => setIsLogin(!isLogin)}
-            >
-              {isLogin ? "Đăng ký ngay" : "Đăng nhập tại đây"}
-            </span>
-          </p>
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
         </div>
       </div>
     </div>
   );
 };
 
-<<<<<<< HEAD
 const InputGroup = ({ label, error, success, doubleRight, ...props }) => (
   <div className="relative">
     <label className="text-sm font-bold text-[#5c4033] block mb-1.5 justify-between items-center">
@@ -670,19 +516,6 @@ const InputGroup = ({ label, error, success, doubleRight, ...props }) => (
     {error && (
       <p className="mt-1 text-xs font-semibold text-red-500">{error}</p>
     )}
-=======
-// Component con để tái sử dụng Input
-const InputGroup = ({ label, ...props }) => (
-  <div>
-    <label className="text-sm font-bold text-[#5c4033] block mb-1.5">
-      {label}
-    </label>
-    <input
-      required
-      className="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm outline-none focus:border-[#800a0d] transition-all"
-      {...props}
-    />
->>>>>>> e344a2b8c22a04bee0f22d144f39392d00bd1fde
   </div>
 );
 
