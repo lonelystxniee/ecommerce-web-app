@@ -1,10 +1,10 @@
-import { Link } from "react-router-dom";
-import { Heart } from "lucide-react";
-import { useWishlist } from "../../context/WishlistContext";
+import { Link } from 'react-router-dom'
+import { Heart } from 'lucide-react'
+import { useWishlist } from '../../context/WishlistContext'
 
 export const ProductItemSmall = ({ product }) => {
-  const { toggleWishlist, isInWishlist } = useWishlist();
-  const productId = product.id || product._id;
+  const { toggleWishlist, isInWishlist } = useWishlist()
+  const productId = product.id || product._id
 
   return (
     <div
@@ -15,21 +15,21 @@ export const ProductItemSmall = ({ product }) => {
     >
       <div className="relative w-full h-40 mb-4 overflow-hidden lg:h-60 group">
         <img
-          src={product.images?.[0] || product.image || "https://via.placeholder.com/300"}
+          src={product.images?.[0] || product.image || 'https://via.placeholder.com/300'}
           alt={product.name}
           className="object-cover w-full h-full transition-transform duration-700 ease-out group-hover:scale-110"
         />
         <button
           onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleWishlist(productId);
+            e.preventDefault()
+            e.stopPropagation()
+            toggleWishlist(productId)
           }}
-          className="absolute top-2 right-2 p-2 bg-white/80 hover:bg-white rounded-full shadow-sm z-10 transition-all active:scale-90"
+          className="absolute z-10 p-2 transition-all rounded-full shadow-sm top-2 right-2 bg-white/80 hover:bg-white active:scale-90"
         >
           <Heart
             size={18}
-            className={isInWishlist(productId) ? "text-[#9d0b0f] fill-[#9d0b0f]" : "text-gray-400"}
+            className={isInWishlist(productId) ? 'text-[#9d0b0f] fill-[#9d0b0f]' : 'text-gray-400'}
           />
         </button>
       </div>
@@ -51,5 +51,5 @@ export const ProductItemSmall = ({ product }) => {
         </Link>
       </div>
     </div>
-  );
-};
+  )
+}

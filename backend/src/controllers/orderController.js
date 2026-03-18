@@ -343,51 +343,59 @@ exports.shipperUpdateStatus = async (req, res) => {
   try {
     const { orderId } = req.body;
     const order = await Order.findById(orderId);
-    if (!order || !order.ghnOrderCode)
+    if (!order)
       return res
         .status(400)
         .json({ success: false, message: "Đơn hàng không hợp lệ" });
 
-    const ghnRes = await ghn.leadtimeGHNOrder(order.ghnOrderCode);
-    if (ghnRes && ghnRes.code === 200) {
-      const currentStatus = order.status.toUpperCase();
-
-      if (currentStatus === "READY_TO_PICK") {
-        order.status = "PICKING";
-        addUniqueHistory(
-          order,
-          "picking",
-          "Shipper đã lấy hàng thành công và đang chuyển về bưu cục",
-        );
-      } else if (currentStatus === "PICKING") {
-        order.status = "STORING";
-        addUniqueHistory(
-          order,
-          "storing",
-          "Đơn hàng đã nhập kho tập kết Mega SOC Hà Nội",
-        );
-      } else if (currentStatus === "STORING") {
-        order.status = "DELIVERING";
-        addUniqueHistory(
-          order,
-          "delivering",
-          "Shipper đang trên đường giao hàng đến bạn",
-        );
-      } else if (currentStatus === "DELIVERING") {
-        order.status = "COMPLETED";
-        addUniqueHistory(
-          order,
-          "delivered",
-          "Giao hàng thành công! Người nhận đã ký xác nhận.",
-        );
+    // Try to update GHN if we have a tracking code, but don't block the logic if it fails or doesn't exist.
+    // In our system, the Shipper app manages the internal statuses regardless of the GHN status, since the API might fail.
+    if (order.ghnOrderCode) {
+      try {
+        await ghn.leadtimeGHNOrder(order.ghnOrderCode);
+      } catch (ghnErr) {
+        console.error("GHN Leadtime API error, bypassing...", ghnErr.message);
       }
-
-      await order.save();
-      return res.json({ success: true, message: "Cập nhật thành công!" });
     }
-    res
-      .status(400)
-      .json({ success: false, message: "Hệ thống GHN từ chối chuyển bước" });
+
+    const currentStatus = order.status.toUpperCase();
+
+    if (currentStatus === "READY_TO_PICK") {
+      order.status = "PICKING";
+      addUniqueHistory(
+        order,
+        "picking",
+        "Shipper đã lấy hàng thành công và đang chuyển về bưu cục",
+      );
+    } else if (currentStatus === "PICKING") {
+      order.status = "STORING";
+      addUniqueHistory(
+        order,
+        "storing",
+        "Đơn hàng đã nhập kho tập kết Mega SOC",
+      );
+    } else if (currentStatus === "STORING") {
+      order.status = "DELIVERING";
+      addUniqueHistory(
+        order,
+        "delivering",
+        "Shipper đang trên đường giao hàng đến bạn",
+      );
+    } else if (currentStatus === "DELIVERING") {
+      order.status = "COMPLETED";
+      addUniqueHistory(
+        order,
+        "delivered",
+        "Giao hàng thành công! Người nhận đã ký xác nhận.",
+      );
+    } else {
+        return res
+        .status(400)
+        .json({ success: false, message: "Trạng thái đơn hàng không hợp lệ để cập nhật" });
+    }
+
+    await order.save();
+    return res.json({ success: true, message: "Cập nhật thành công!" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

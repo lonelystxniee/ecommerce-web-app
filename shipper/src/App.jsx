@@ -40,7 +40,7 @@ function App() {
             // Thêm STORING vào danh sách hiển thị
             ["READY_TO_PICK", "PICKING", "STORING", "DELIVERING"].includes(
               o.status,
-            ) && o.ghnOrderCode,
+            ), // Remove the explicit requirement for o.ghnOrderCode since GHN creation may fail
         );
         setOrders(filtered);
       }
