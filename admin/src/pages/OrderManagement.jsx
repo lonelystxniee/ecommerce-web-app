@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Search,
   Eye,
@@ -14,6 +15,8 @@ import {
   Phone,
   Mail,
   CreditCard,
+  ChevronLeft,
+  ChevronRight,
   Calendar,
 } from "lucide-react";
 
@@ -23,6 +26,9 @@ const OrderManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(8);
+  const navigate = useNavigate();
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
 
@@ -76,11 +82,45 @@ const OrderManagement = () => {
   };
 
   const filteredOrders = orders.filter(
-    (o) =>
-      o.customerInfo.fullName
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) || o._id.includes(searchTerm),
+    (o) => {
+      const name = (o.customerInfo && o.customerInfo.fullName) || "";
+      return (
+        name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        o._id.includes(searchTerm)
+      );
+    },
   );
+
+  // Pagination calculations
+  const totalItems = filteredOrders.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [totalPages]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, orders]);
+
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
+
+  // helper to determine pages to render (max 5 visible)
+  const getVisiblePages = () => {
+    const maxVisible = 5;
+    if (totalPages <= maxVisible) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    let start = Math.max(1, currentPage - 2);
+    let end = Math.min(totalPages, currentPage + 2);
+    if (currentPage <= 2) {
+      start = 1;
+      end = maxVisible;
+    } else if (currentPage >= totalPages - 1) {
+      start = totalPages - (maxVisible - 1);
+      end = totalPages;
+    }
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  };
 
   const getStatusBadge = (status) => {
     const styles = {
@@ -95,6 +135,23 @@ const OrderManagement = () => {
     };
     return styles[status] || "bg-gray-100 text-gray-500";
   };
+
+  // Derived values for selected order totals
+  const subtotalForSelected = selectedOrder
+    ? (selectedOrder.items || []).reduce(
+      (s, it) => s + (Number(it.price || 0) || 0) * (Number(it.quantity || 1) || 0),
+      0,
+    )
+    : 0;
+  const shippingFeeForSelected = selectedOrder && selectedOrder.shipping
+    ? Number(selectedOrder.shipping.shippingFee || 0)
+    : 0;
+  const discountForSelected = selectedOrder
+    ? Number(selectedOrder.discountAmount || 0)
+    : 0;
+  const computedTotalForSelected = selectedOrder
+    ? Number(selectedOrder.totalPrice || subtotalForSelected + shippingFeeForSelected - discountForSelected)
+    : 0;
 
   return (
     <div className="space-y-6 animate-fadeIn">
@@ -140,7 +197,7 @@ const OrderManagement = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {filteredOrders.map((order) => (
+            {paginatedOrders.map((order) => (
               <tr
                 key={order._id}
                 className="hover:bg-[#f7f4ef]/50 transition-colors"
@@ -216,6 +273,46 @@ const OrderManagement = () => {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination controls */}
+      <div className="flex items-center justify-between mt-4 px-4">
+        <div className="text-sm text-[#88694f]">
+          Trang {currentPage} / {totalPages} — Tổng {totalItems} đơn
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            aria-label="Prev page"
+            className={`p-1 rounded text-gray-500 hover:text-gray-900 ${currentPage === 1 ? 'opacity-40 cursor-not-allowed' : ''}`}
+          >
+            <ChevronLeft size={16} />
+          </button>
+
+          <div className="flex items-center gap-2">
+            {getVisiblePages().map((p) => (
+              <button
+                key={p}
+                onClick={() => setCurrentPage(p)}
+                aria-current={p === currentPage ? 'page' : undefined}
+                className={`px-3 py-1 text-sm font-bold ${p === currentPage ? 'bg-[#9d0b0f] text-white shadow-md rounded-md' : 'text-gray-700'}`}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            aria-label="Next page"
+            className={`p-1 rounded text-gray-500 hover:text-gray-900 ${currentPage === totalPages ? 'opacity-40 cursor-not-allowed' : ''}`}
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
       </div>
 
       {isModalOpen && selectedOrder && (
@@ -355,6 +452,19 @@ const OrderManagement = () => {
                     </tbody>
                   </table>
 
+                  <div className="p-4 bg-white border-t">
+                    <div className="flex justify-between text-sm text-gray-600 mb-2">
+                      <span>Phí vận chuyển:</span>
+                      <span>{shippingFeeForSelected.toLocaleString()}đ</span>
+                    </div>
+                    {discountForSelected > 0 && (
+                      <div className="flex justify-between text-sm text-green-600 mb-2">
+                        <span>Giảm giá:</span>
+                        <span>-{discountForSelected.toLocaleString()}đ</span>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="bg-[#9d0b0f] p-6 text-white flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <Package size={20} />
@@ -363,18 +473,88 @@ const OrderManagement = () => {
                       </span>
                     </div>
                     <span className="text-2xl font-black">
-                      {selectedOrder.totalPrice.toLocaleString()}đ
+                      {computedTotalForSelected.toLocaleString()}đ
                     </span>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-bold">Mã GHN</div>
+                    <div className="text-sm font-mono text-[#3e2714]">{selectedOrder.ghnOrderCode || selectedOrder.shipping?.ghnOrderCode || 'Chưa có'}</div>
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    {!selectedOrder.ghnOrderCode && !selectedOrder.shipping?.ghnOrderCode && (
+                      <button
+                        onClick={async () => {
+                          try {
+                            const token = localStorage.getItem('token');
+                            const url = `${API_URL}/api/admin/orders/${selectedOrder._id}/ship`;
+                            const res = await fetch(url, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+                            const d = await res.json();
+                            if (d.success) {
+                              alert('Đã tạo mã GHN: ' + (d.ghnOrderCode || ''));
+                              fetchOrders();
+                              setSelectedOrder((await fetch(`${API_URL}/api/orders/${selectedOrder._id}`).then(r => r.json())).order);
+                            } else {
+                              alert('Lỗi tạo GHN: ' + (d.message || ''));
+                            }
+                          } catch (e) {
+                            alert('Lỗi kết nối');
+                          }
+                        }}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-bold"
+                      >
+                        Tạo GHN
+                      </button>
+                    )}
+
+                    {selectedOrder.status !== 'CANCELLED' && selectedOrder.status !== 'COMPLETED' && (
+                      <button
+                        onClick={async () => {
+                          if (!confirm('Xác nhận hủy đơn này?')) return;
+                          try {
+                            const token = localStorage.getItem('token');
+                            const res = await fetch(`${API_URL}/api/admin/orders/${selectedOrder._id}/cancel`, { method: 'PUT', headers: { Authorization: `Bearer ${token}` } });
+                            const d = await res.json();
+                            if (d.success) {
+                              alert(d.message || 'Đã hủy đơn');
+                              fetchOrders();
+                              setIsModalOpen(false);
+                            } else {
+                              alert('Lỗi: ' + (d.message || 'Không thể hủy'));
+                            }
+                          } catch (e) {
+                            alert('Lỗi kết nối');
+                          }
+                        }}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-bold"
+                      >
+                        HỦY ĐƠN
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => {
+                        setIsModalOpen(false);
+                        navigate(`/orders/track/${selectedOrder._id}`);
+                      }}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold"
+                    >
+                      Xem GHN
+                    </button>
                   </div>
                 </div>
 
                 <div className="flex justify-end gap-3 mt-6">
                   <button
                     onClick={() => setIsModalOpen(false)}
-                    className="px-10 py-3 rounded-2xl bg-[#3e2714] text-white font-bold text-xs hover:bg-black transition-all"
+                    className="px-6 py-3 rounded-2xl bg-[#3e2714] text-white font-bold text-xs hover:bg-black transition-all"
                   >
                     ĐÓNG
                   </button>
+
+
                 </div>
               </div>
             </div>

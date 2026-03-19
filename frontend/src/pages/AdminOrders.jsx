@@ -11,10 +11,26 @@ const AdminOrders = () => {
     const pushToGHN = async (orderId) => {
         // prepare ghnBody from order and call backend
         try {
-            const res = await fetch('/api/shipping/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderId }) });
+            const res = await fetch(`/api/admin/orders/${orderId}/ship`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
             const data = await res.json();
-            if (data.success) alert('Đã gửi lên GHN');
-            else alert('Lỗi: ' + (data.message || ''));
+            if (data.success) {
+                alert('Đã tạo đơn trên GHN: ' + (data.ghnOrderCode || ''));
+                // refresh list
+                const list = await fetch('/api/orders').then(r => r.json());
+                if (list.success) setOrders(list.orders || []);
+            } else alert('Lỗi: ' + (data.message || ''));
+        } catch (e) { alert('Network error'); }
+    };
+
+    const fetchGHNInfo = async (orderId) => {
+        try {
+            const res = await fetch(`/api/orders/${orderId}/ghn`);
+            const d = await res.json();
+            if (d.success) {
+                alert('GHN: ' + JSON.stringify(d.ghnInfo || d.ghnOrderCode || 'Không có'));
+                const list = await fetch('/api/orders').then(r => r.json());
+                if (list.success) setOrders(list.orders || []);
+            } else alert('Lỗi: ' + (d.message || ''));
         } catch (e) { alert('Network error'); }
     };
 
@@ -29,7 +45,16 @@ const AdminOrders = () => {
                 </thead>
                 <tbody>
                     {orders.map(o => (
-                        <tr key={o._id} className="border-t"><td className="p-2">{o._id}</td><td>{o.customerInfo.fullName}<br />{o.customerInfo.phone}</td><td>{o.shipping?.shippingStatus || o.status}</td><td>{o.shipping?.ghnOrderCode || 'Chưa'}</td><td><button onClick={() => pushToGHN(o._id)} className="px-2 py-1 bg-blue-600 text-white rounded">Gửi GHN</button></td></tr>
+                        <tr key={o._id} className="border-t">
+                            <td className="p-2">{o._id}</td>
+                            <td>{o.customerInfo.fullName}<br />{o.customerInfo.phone}</td>
+                            <td>{o.shipping?.shippingStatus || o.status}</td>
+                            <td>{o.ghnOrderCode || o.shipping?.ghnOrderCode || 'Chưa'}</td>
+                            <td className="space-x-2">
+                                <button onClick={() => pushToGHN(o._id)} className="px-2 py-1 bg-blue-600 text-white rounded">Gửi GHN</button>
+                                <button onClick={() => fetchGHNInfo(o._id)} className="px-2 py-1 bg-gray-600 text-white rounded">Xem GHN</button>
+                            </td>
+                        </tr>
                     ))}
                 </tbody>
             </table>

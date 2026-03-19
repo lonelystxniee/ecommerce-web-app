@@ -75,6 +75,37 @@ const OrderTracking = () => {
             <span className="px-4 py-1.5 bg-orange-100 text-[#f39200] rounded-full font-black text-xs uppercase">
               {order.status}
             </span>
+            {/* Nút hủy đơn (khách) - chỉ hiển thị khi đơn chưa có GHN và ở trạng thái cho phép */}
+            {['PENDING', 'CONFIRMED', 'PACKING'].includes((order.status || '').toUpperCase()) && !order.ghnOrderCode && (
+              <div className="mt-3">
+                <button
+                  onClick={async () => {
+                    if (!confirm('Bạn có chắc muốn hủy đơn này?')) return;
+                    try {
+                      const token = localStorage.getItem('token');
+                      const res = await fetch(`${API_URL}/api/orders/cancel/${id}`, {
+                        method: 'PUT',
+                        headers: {
+                          Authorization: `Bearer ${token}`,
+                        },
+                      });
+                      const d = await res.json();
+                      if (d.success) {
+                        alert(d.message || 'Đã hủy đơn');
+                        fetchTracking();
+                      } else {
+                        alert('Lỗi: ' + (d.message || 'Không thể hủy'));
+                      }
+                    } catch (e) {
+                      alert('Lỗi kết nối');
+                    }
+                  }}
+                  className="mt-2 px-4 py-2 rounded-xl bg-red-600 text-white font-bold"
+                >
+                  Hủy đơn
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

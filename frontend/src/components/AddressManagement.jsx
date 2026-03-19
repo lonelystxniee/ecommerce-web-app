@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { MapPin, Edit3, Trash2, PlusCircle } from "lucide-react";
+import { MapPin, Edit3, Trash2, PlusCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import toast from "react-hot-toast";
 import API_URL from "../config/apiConfig";
 
@@ -22,6 +22,8 @@ export default function AddressManagement({ user, selectable = false, onSelect =
     const [editing, setEditing] = useState(false);
     const [form, setForm] = useState(emptyForm);
     const [loading, setLoading] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(6);
 
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
@@ -51,6 +53,38 @@ export default function AddressManagement({ user, selectable = false, onSelect =
             seen.add(id);
             return true;
         });
+    };
+
+    // pagination helpers
+    const totalItems = addresses.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+
+    useEffect(() => {
+        if (currentPage > totalPages) setCurrentPage(totalPages);
+    }, [totalPages]);
+
+    useEffect(() => {
+        // reset to first page when addresses change
+        setCurrentPage(1);
+    }, [addresses]);
+
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginatedAddresses = (addresses || []).slice(startIndex, endIndex);
+
+    const getVisiblePages = () => {
+        const maxVisible = 5;
+        if (totalPages <= maxVisible) return Array.from({ length: totalPages }, (_, i) => i + 1);
+        let start = Math.max(1, currentPage - 2);
+        let end = Math.min(totalPages, currentPage + 2);
+        if (currentPage <= 2) {
+            start = 1;
+            end = maxVisible;
+        } else if (currentPage >= totalPages - 1) {
+            start = totalPages - (maxVisible - 1);
+            end = totalPages;
+        }
+        return Array.from({ length: end - start + 1 }, (_, i) => start + i);
     };
 
     const fetchProvinces = async () => {
@@ -487,7 +521,7 @@ export default function AddressManagement({ user, selectable = false, onSelect =
                     </div>
                 )}
 
-                {addresses.map((a) => (
+                {paginatedAddresses.map((a) => (
                     <div key={a.id} className="p-6 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-lg transition-shadow flex flex-col md:flex-row md:items-center gap-4">
                         <div className="flex-1">
                             <div className="flex items-center gap-3">
@@ -517,6 +551,43 @@ export default function AddressManagement({ user, selectable = false, onSelect =
                     </div>
                 ))}
             </div>
+
+            {/* Pagination controls */}
+            {totalItems > 0 && (
+                <div className="flex items-center justify-between mt-6">
+                    <div className="text-sm text-[#88694f]">Trang {currentPage} / {totalPages} — Tổng {totalItems} địa chỉ</div>
+
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className={`p-1 rounded text-gray-500 hover:text-gray-900 ${currentPage === 1 ? 'opacity-40 cursor-not-allowed' : ''}`}
+                        >
+                            <ChevronLeft size={16} />
+                        </button>
+
+                        <div className="flex items-center gap-2">
+                            {getVisiblePages().map((p) => (
+                                <button
+                                    key={p}
+                                    onClick={() => setCurrentPage(p)}
+                                    className={`px-3 py-1 text-sm font-bold ${p === currentPage ? 'bg-[#800a0d] text-white shadow-md rounded-md' : 'text-gray-700'}`}
+                                >
+                                    {p}
+                                </button>
+                            ))}
+                        </div>
+
+                        <button
+                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className={`p-1 rounded text-gray-500 hover:text-gray-900 ${currentPage === totalPages ? 'opacity-40 cursor-not-allowed' : ''}`}
+                        >
+                            <ChevronRight size={16} />
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

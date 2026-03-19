@@ -1,6 +1,7 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
+import ChatPanel from "../pages/ChatPanel";
 
 const AdminLayout = () => {
   return (
@@ -14,6 +15,7 @@ const AdminLayout = () => {
       {/* Nội dung bên phải */}
       <main className="relative z-10 flex-1 min-h-screen p-8 ml-64">
         <Outlet />
+        <ChatPanel />
       </main>
     </div>
   );

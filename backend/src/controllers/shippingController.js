@@ -72,13 +72,16 @@ exports.create = async (req, res) => {
 
     const ghnRes = await ghn.createOrder(payload);
 
-    // save to Order if orderId provided
+    // save to Order if orderId provided (persist to both top-level and nested fields)
     if (orderId) {
       const order = await Order.findById(orderId);
       if (order) {
         order.shipping = order.shipping || {};
         const orderCode = (ghnRes && ghnRes.data && (ghnRes.data.order_code || ghnRes.data.data && ghnRes.data.data.order_code)) || (ghnRes && ghnRes.data && ghnRes.data.orderId) || null;
-        order.shipping.ghnOrderCode = orderCode || order.shipping.ghnOrderCode;
+        if (orderCode) {
+          order.shipping.ghnOrderCode = orderCode;
+          order.ghnOrderCode = orderCode;
+        }
         // try to map shipping fee back
         if (ghnRes && ghnRes.data && ghnRes.data.total_fee) {
           order.shipping.shippingFee = ghnRes.data.total_fee;
@@ -103,6 +106,17 @@ exports.getDetail = async (req, res) => {
     if (!code && orderId) {
       const order = await Order.findById(orderId);
       if (!order || !order.shipping || !order.shipping.ghnOrderCode) return res.status(404).json({ success: false, message: 'GHN order code not found in order' });
+
+      // permission: allow admin, shipper, or owner
+      if (req.user) {
+        const isAdmin = req.user.role === 'ADMIN';
+        const isShipper = req.user.role === 'SHIPPER';
+        const isOwner = String(order.userId || '') === String(req.user._id || req.user.id || '');
+        if (!isAdmin && !isShipper && !isOwner) {
+          return res.status(403).json({ success: false, message: 'Không có quyền xem thông tin giao vận' });
+        }
+      }
+
       code = order.shipping.ghnOrderCode;
     }
     const detail = await ghn.getOrderDetail(code);
@@ -121,11 +135,14 @@ exports.webhook = async (req, res) => {
     const status = payload.status || (payload.data && payload.data.status) || null;
 
     if (order_code) {
-      const order = await Order.findOne({ 'shipping.ghnOrderCode': order_code });
+      const order = await Order.findOne({ $or: [{ 'shipping.ghnOrderCode': order_code }, { ghnOrderCode: order_code }] });
       if (order) {
+        order.shipping = order.shipping || {};
+        order.shipping.ghnOrderCode = order.shipping.ghnOrderCode || order.ghnOrderCode;
         order.shipping.shippingStatus = status || order.shipping.shippingStatus;
         order.shipping.shippingEvents = order.shipping.shippingEvents || [];
         order.shipping.shippingEvents.push({ time: new Date(), status: status || 'updated', note: JSON.stringify(payload) });
+        // also persist top-level status if relevant
         await order.save();
       }
     }
@@ -142,6 +159,16 @@ exports.getEvents = async (req, res) => {
     const { orderId } = req.params;
     const order = await Order.findById(orderId);
     if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+    // permission: owner/admin/shipper
+    if (req.user) {
+      const isAdmin = req.user.role === 'ADMIN';
+      const isShipper = req.user.role === 'SHIPPER';
+      const isOwner = String(order.userId || '') === String(req.user._id || req.user.id || '');
+      if (!isAdmin && !isShipper && !isOwner) {
+        return res.status(403).json({ success: false, message: 'Không có quyền xem sự kiện giao vận' });
+      }
+    }
+
     res.json({ success: true, shipping: order.shipping || {} });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message || 'Failed to get shipping events' });

@@ -46,11 +46,19 @@ exports.createOrder = async (req, res) => {
       );
     }
 
+    // Tính subtotal từ items (dự đoán trường `price` và `quantity` theo schema)
+    const subtotalFromItems = items.reduce((sum, it) => {
+      const price = Number(it.price || it.unitPrice || 0) || 0;
+      const qty = Number(it.quantity || it.qty || 1) || 0;
+      return sum + price * qty;
+    }, 0);
+
+    // chuẩn bị order nhưng chưa lưu — sẽ set shipping và total rồi save một lần
     const newOrder = new Order({
       userId,
       customerInfo,
       items,
-      totalPrice,
+      totalPrice: subtotalFromItems,
       paymentMethod,
       promoCode: promoCode || null,
       status: "PENDING",
@@ -65,16 +73,15 @@ exports.createOrder = async (req, res) => {
       ],
     });
 
-    await newOrder.save();
-    res.status(201).json({
-      success: true,
-      message: "Đặt hàng thành công!",
-      orderId: newOrder._id,
-    });
+    // shipping defaults
+    let shippingFeeValue = 0;
+
+    
 
     if (shippingInfo && typeof shippingInfo.shippingFee !== "undefined") {
       shippingFeeValue = Number(shippingInfo.shippingFee) || 0;
       newOrder.shipping.shippingFee = shippingFeeValue;
+      if (shippingInfo.shippingPaidBy) newOrder.shipping.shippingPaidBy = shippingInfo.shippingPaidBy;
       newOrder.shipping.shippingAddressStructured = {
         province:
           typeof shippingInfo.province === "string"
@@ -152,12 +159,18 @@ exports.createOrder = async (req, res) => {
       }
     }
 
+    // compute final total (subtotal + shipping)
     const computedTotal = subtotalFromItems + (shippingFeeValue || 0);
+
+    
     if (Number(totalPrice) && Number(totalPrice) === computedTotal) {
       newOrder.totalPrice = Number(totalPrice);
     } else {
       newOrder.totalPrice = computedTotal;
     }
+
+    // ensure shipping fee is persisted (default 0 if not set)
+    newOrder.shipping.shippingFee = Number(newOrder.shipping.shippingFee || shippingFeeValue || 0);
 
     await newOrder.save();
 
@@ -173,7 +186,7 @@ exports.createOrder = async (req, res) => {
       console.error("Lỗi ghi log hoạt động khi tạo đơn hàng:", err);
     }
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Đặt hàng thành công!",
       orderId: newOrder._id,
@@ -298,6 +311,66 @@ exports.adminHandover = async (req, res) => {
   }
 };
 
+// Admin: explicitly create shipment (wraps ghnController.createGHNOrder)
+exports.createShipment = async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const order = await Order.findById(orderId);
+    if (!order) return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
+    // allow forcing a recreate when caller passes ?force=true
+    const force = String(req.query.force || '').toLowerCase() === 'true';
+    if (order.ghnOrderCode && !force) {
+      return res.status(400).json({ success: false, message: 'Đã có mã GHN, nếu muốn tạo lại hãy gửi ?force=true' });
+    }
+
+    // if force, clear persisted GHN codes so createGHNOrder runs fresh
+    if (force) {
+      order.ghnOrderCode = undefined;
+      if (order.shipping) order.shipping.ghnOrderCode = undefined;
+      await order.save();
+    }
+
+    // call GHN controller (which uses ghnService)
+    const ghnCtrl = require('./ghnController');
+    try {
+      const code = await ghnCtrl.createGHNOrder(orderId);
+      const updated = await Order.findById(orderId);
+      return res.json({ success: true, message: 'Đã tạo đơn giao vận trên GHN', ghnOrderCode: updated.ghnOrderCode || code, order: updated });
+    } catch (err) {
+      // surface GHN error
+      return res.status(500).json({ success: false, message: 'GHN tạo đơn thất bại', error: err.message || err.toString() });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Get GHN info / tracking for order
+exports.getGHNInfo = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
+
+    // permission: admin, shipper or order owner
+    if (req.user) {
+      const isAdmin = req.user.role === 'ADMIN';
+      const isShipper = req.user.role === 'SHIPPER';
+      const isOwner = String(order.userId || '') === String(req.user._id || req.user.id || '');
+      if (!isAdmin && !isShipper && !isOwner) {
+        return res.status(403).json({ success: false, message: 'Không có quyền xem thông tin giao vận' });
+      }
+    }
+
+    if (!order.ghnOrderCode) return res.json({ success: true, message: 'Không có mã GHN', ghnOrderCode: null, order });
+
+    const ghnCtrl = require('./ghnController');
+    const ghnInfo = await ghnCtrl.getGHNTracking(order.ghnOrderCode);
+    return res.json({ success: true, ghnInfo, ghnOrderCode: order.ghnOrderCode, order });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // 5. User Sync: Đồng bộ trạng thái thực tế từ GHN
 exports.getOrderDetail = async (req, res) => {
   try {
@@ -343,15 +416,14 @@ exports.shipperUpdateStatus = async (req, res) => {
   try {
     const { orderId } = req.body;
     const order = await Order.findById(orderId);
-    if (!order || !order.ghnOrderCode)
-      return res
-        .status(400)
-        .json({ success: false, message: "Đơn hàng không hợp lệ" });
+    const allowNoAuthSim = process.env.ALLOW_SHIPPER_NOAUTH === 'true';
 
-    const ghnRes = await ghn.leadtimeGHNOrder(order.ghnOrderCode);
-    if (ghnRes && ghnRes.code === 200) {
-      const currentStatus = order.status.toUpperCase();
+    if (!order || (!order.ghnOrderCode && !allowNoAuthSim))
+      return res.status(400).json({ success: false, message: "Đơn hàng không hợp lệ" });
 
+    // helper to advance order state locally
+    const advanceLocalStatus = () => {
+      const currentStatus = (order.status || '').toUpperCase();
       if (currentStatus === "READY_TO_PICK") {
         order.status = "PICKING";
         addUniqueHistory(
@@ -381,13 +453,25 @@ exports.shipperUpdateStatus = async (req, res) => {
           "Giao hàng thành công! Người nhận đã ký xác nhận.",
         );
       }
+    };
 
+    // If simulation mode is enabled, skip calling GHN and just advance status
+    if (allowNoAuthSim) {
+      console.log('[shipperUpdateStatus] ALLOW_SHIPPER_NOAUTH=true — advancing status without GHN');
+      advanceLocalStatus();
+      await order.save();
+      return res.json({ success: true, message: "Cập nhật thành công (simulated)" });
+    }
+
+    // Normal flow: call GHN to advance step
+    const ghnRes = await ghn.leadtimeGHNOrder(order.ghnOrderCode);
+    if (ghnRes && ghnRes.code === 200) {
+      advanceLocalStatus();
       await order.save();
       return res.json({ success: true, message: "Cập nhật thành công!" });
     }
-    res
-      .status(400)
-      .json({ success: false, message: "Hệ thống GHN từ chối chuyển bước" });
+
+    res.status(400).json({ success: false, message: "Hệ thống GHN từ chối chuyển bước" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -448,6 +532,81 @@ exports.updateOrderStatus = async (req, res) => {
     }
 
     res.json({ success: true, message: "Cập nhật trạng thái thành công" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Khách hàng hủy đơn (yêu cầu đăng nhập và là chủ đơn)
+exports.userCancel = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng' });
+
+    if (!req.user) return res.status(401).json({ success: false, message: 'Yêu cầu đăng nhập' });
+    if (String(order.userId || '') !== String(req.user._id || req.user.id || '')) {
+      return res.status(403).json({ success: false, message: 'Bạn không có quyền hủy đơn này' });
+    }
+
+    // Nếu đã có mã GHN hoặc đã chuyển giao cho shipper thì từ chối (yêu cầu admin can thiệp)
+    if (order.ghnOrderCode) {
+      return res.status(400).json({ success: false, message: 'Đơn đã được giao cho vận chuyển, vui lòng liên hệ shop để hủy.' });
+    }
+
+    const nonCancellable = ['DELIVERING', 'COMPLETED', 'CANCELLED'];
+    if (nonCancellable.includes((order.status || '').toUpperCase())) {
+      return res.status(400).json({ success: false, message: 'Đơn hàng không thể hủy ở trạng thái hiện tại.' });
+    }
+
+    addUniqueHistory(order, 'cancelled', 'Khách hàng đã hủy đơn hàng');
+    order.status = 'CANCELLED';
+    await order.save();
+
+    if (req.user) {
+      await activityController.createLog(
+        req.user.id,
+        'Hủy đơn (khách)',
+        `Khách hàng đã hủy đơn ${order._id}`,
+        req,
+      );
+    }
+
+    return res.json({ success: true, message: 'Đã hủy đơn hàng thành công', order });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Admin hủy đơn (cố gắng hủy trên GHN nếu có mã, nhưng không block nếu GHN lỗi)
+exports.adminCancel = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng' });
+
+    let ghnError = null;
+    try {
+      if (order.ghnOrderCode) {
+        await ghn.cancelGHNOrder(req.params.id);
+      }
+    } catch (err) {
+      ghnError = err.message || err;
+      console.error('GHN cancel failed:', ghnError);
+    }
+
+    addUniqueHistory(order, 'cancelled', `Đơn hàng đã bị hủy bởi admin`);
+    order.status = 'CANCELLED';
+    await order.save();
+
+    if (req.user) {
+      await activityController.createLog(
+        req.user.id,
+        'Hủy đơn (admin)',
+        `Admin đã hủy đơn ${order._id}${ghnError ? ' (GHN lỗi: ' + ghnError + ')' : ''}`,
+        req,
+      );
+    }
+
+    return res.json({ success: true, message: ghnError ? `Đã hủy đơn nhưng GHN lỗi: ${ghnError}` : 'Đã hủy đơn thành công', ghnError, order });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

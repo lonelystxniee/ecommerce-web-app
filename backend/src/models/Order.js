@@ -36,6 +36,7 @@ const OrderSchema = new mongoose.Schema(
     ],
     ghnOrderCode: String,
     shipping: {
+      ghnOrderCode: { type: String },
       shippingFee: { type: Number, default: 0 },
       shippingServiceId: { type: String },
       shippingServiceName: { type: String },

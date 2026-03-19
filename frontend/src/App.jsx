@@ -4,6 +4,8 @@ import { Toaster } from "react-hot-toast";
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import ChatWidget from "./components/ChatWidget";
+import ChatAiWidget from "./components/ChatAiWidget";
 import Home from "./pages/Home/Home";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
@@ -48,6 +50,8 @@ function App() {
               </Routes>
             </main>
             <Footer />
+            <ChatWidget />
+            <ChatAiWidget />
             <ScrollToTop />
             <Toaster
               position="top-right"

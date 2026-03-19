@@ -22,12 +22,26 @@ function App() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("todo"); // todo, history
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [amountFilter, setAmountFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!showFilters) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") setShowFilters(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showFilters]);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -58,15 +72,23 @@ function App() {
 
   const handleUpdate = async (orderId) => {
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch(
         "http://localhost:5175/api/orders/shipper-update",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify({ orderId }),
         },
       );
       const data = await res.json();
+      if (res.status === 401) {
+        alert('Bạn chưa đăng nhập hoặc token hết hạn. Vui lòng đăng nhập lại.');
+        return;
+      }
       if (data.success) {
         alert("Cập nhật hành trình thành công!");
         fetchOrders();
@@ -78,6 +100,20 @@ function App() {
       alert("Lỗi server!");
     }
   };
+
+  // apply client-side filters
+  const filteredOrders = orders.filter((o) => {
+    if (statusFilter !== "all" && o.status !== statusFilter) return false;
+    if (amountFilter === "gt100k" && !(o.totalPrice > 100000)) return false;
+    if (amountFilter === "lt100k" && !(o.totalPrice <= 100000)) return false;
+    if (appliedSearch) {
+      const q = appliedSearch.toLowerCase();
+      const name = (o.customerInfo.fullName || "").toLowerCase();
+      const phone = (o.customerInfo.phone || "").toLowerCase();
+      return name.includes(q) || phone.includes(q);
+    }
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center p-4 py-10 font-sans">
@@ -126,7 +162,7 @@ function App() {
               onClick={() => setActiveTab("todo")}
               className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === "todo" ? "bg-[#f26522] text-white shadow-md" : "bg-white text-gray-400"}`}
             >
-              Đang giao ({activeTab === "todo" ? orders.length : "..."})
+              Đang giao ({activeTab === "todo" ? filteredOrders.length : "..."})
             </button>
             <button
               onClick={() => setActiveTab("history")}
@@ -136,15 +172,115 @@ function App() {
             </button>
           </div>
 
+          {/* FILTERS TOGGLE + POPUP */}
+          <div className="px-4 pb-2 relative">
+            <div className="flex justify-between items-center">
+              <div />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => { setStatusFilter("all"); setAmountFilter("all"); setSearchQuery(""); setAppliedSearch(""); }}
+                  className={`text-[11px] px-3 py-2 rounded-xl font-bold bg-white text-gray-600`}
+                >
+                  Reset
+                </button>
+                <button
+                  onClick={() => setShowFilters((s) => !s)}
+                  className={`text-[13px] px-3 py-2 rounded-xl font-bold bg-white text-gray-800 shadow-sm flex items-center gap-2`}
+                >
+                  <Search size={14} />
+                  Bộ lọc
+                </button>
+              </div>
+            </div>
+
+            {showFilters && (
+              <div className="mt-3 absolute left-4 right-4 bg-white p-4 rounded-xl shadow z-50 border">
+                <div className="flex gap-2 mb-3">
+                  <button
+                    onClick={() => { setStatusFilter("all"); setAmountFilter("all"); setSearchQuery(""); }}
+                    className={`text-[11px] px-3 py-2 rounded-xl font-bold ${statusFilter === "all" && amountFilter === "all" && !searchQuery ? "bg-[#f26522] text-white" : "bg-white text-gray-500"}`}
+                  >
+                    Tất cả
+                  </button>
+                  <button
+                    onClick={() => { setStatusFilter("READY_TO_PICK"); setAmountFilter("all"); }}
+                    className={`text-[11px] px-3 py-2 rounded-xl font-bold ${statusFilter === "READY_TO_PICK" ? "bg-[#f26522] text-white" : "bg-white text-gray-500"}`}
+                  >
+                    Chờ lấy
+                  </button>
+                  <button
+                    onClick={() => { setStatusFilter("PICKING"); setAmountFilter("all"); }}
+                    className={`text-[11px] px-3 py-2 rounded-xl font-bold ${statusFilter === "PICKING" ? "bg-[#f26522] text-white" : "bg-white text-gray-500"}`}
+                  >
+                    Nhập kho
+                  </button>
+                  <button
+                    onClick={() => { setStatusFilter("DELIVERING"); setAmountFilter("all"); }}
+                    className={`text-[11px] px-3 py-2 rounded-xl font-bold ${statusFilter === "DELIVERING" ? "bg-[#f26522] text-white" : "bg-white text-gray-500"}`}
+                  >
+                    Đang giao
+                  </button>
+                </div>
+
+                <div className="flex gap-2 mb-3">
+                  <button
+                    onClick={() => setAmountFilter("all")}
+                    className={`text-[11px] px-3 py-2 rounded-xl font-bold ${amountFilter === "all" ? "bg-white text-gray-800 border" : "bg-white text-gray-400"}`}
+                  >
+                    Tất cả COD
+                  </button>
+                  <button
+                    onClick={() => setAmountFilter("gt100k")}
+                    className={`text-[11px] px-3 py-2 rounded-xl font-bold ${amountFilter === "gt100k" ? "bg-[#f26522] text-white" : "bg-white text-gray-400"}`}
+                  >
+                    COD &gt; 100k
+                  </button>
+                  <button
+                    onClick={() => setAmountFilter("lt100k")}
+                    className={`text-[11px] px-3 py-2 rounded-xl font-bold ${amountFilter === "lt100k" ? "bg-[#f26522] text-white" : "bg-white text-gray-400"}`}
+                  >
+                    COD ≤ 100k
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        setAppliedSearch(searchQuery.trim());
+                      }
+                    }}
+                    placeholder="Tìm theo tên hoặc số điện thoại"
+                    className="flex-1 text-sm px-3 py-2 rounded-xl border bg-white"
+                  />
+                  <button
+                    onClick={() => setAppliedSearch(searchQuery.trim())}
+                    title="Tìm"
+                    className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-300 bg-white text-gray-600"
+                  >
+                    <Search size={16} />
+                  </button>
+                </div>
+
+                <div className="flex justify-end gap-2 mt-3">
+                  <button onClick={() => setShowFilters(false)} className="px-3 py-2 rounded-xl bg-gray-100">Đóng</button>
+                  <button onClick={() => { setAppliedSearch(searchQuery.trim()); setShowFilters(false); }} className="px-3 py-2 rounded-xl bg-[#f26522] text-white">Áp dụng</button>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* LIST ORDERS */}
           <div className="px-4 space-y-4 pb-28">
-            {orders.length === 0 ? (
+            {filteredOrders.length === 0 ? (
               <div className="text-center py-20 bg-white rounded-[32px] border border-dashed text-gray-400">
                 <Package size={48} className="mx-auto mb-2 opacity-20" />
                 <p className="text-xs">Không có đơn hàng nào!</p>
               </div>
             ) : (
-              orders.map((order) => (
+              filteredOrders.map((order) => (
                 <div
                   key={order._id}
                   className="bg-white rounded-[28px] shadow-sm border border-gray-100 overflow-hidden"
@@ -197,15 +333,14 @@ function App() {
                           onClick={() => handleUpdate(order._id)}
                           disabled={loading}
                           className={`w-44 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-90 flex items-center justify-center gap-2 shadow-lg text-white
-    ${
-      order.status === "READY_TO_PICK"
-        ? "bg-blue-600"
-        : order.status === "PICKING"
-          ? "bg-orange-500"
-          : order.status === "STORING"
-            ? "bg-purple-600"
-            : "bg-green-600"
-    }`}
+    ${order.status === "READY_TO_PICK"
+                              ? "bg-blue-600"
+                              : order.status === "PICKING"
+                                ? "bg-orange-500"
+                                : order.status === "STORING"
+                                  ? "bg-purple-600"
+                                  : "bg-green-600"
+                            }`}
                         >
                           {order.status === "READY_TO_PICK" &&
                             "Xác nhận lấy hàng"}

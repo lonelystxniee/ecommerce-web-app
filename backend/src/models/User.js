@@ -18,7 +18,7 @@ const UserSchema = new mongoose.Schema(
     },
     phone: { type: String, default: null },
     status: { type: String, enum: ["ACTIVE", "LOCKED"], default: "ACTIVE" },
-    role: { type: String, enum: ["CUSTOMER", "ADMIN"], default: "CUSTOMER" },
+    role: { type: String, enum: ["CUSTOMER", "ADMIN", "SHIPPER"], default: "CUSTOMER" },
     resetToken: { type: String, default: null },
     resetTokenExpiry: { type: Date, default: null },
     googleId: { type: String, default: null },

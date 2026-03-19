@@ -613,14 +613,7 @@ const Checkout = () => {
                   </>
                 )}
 
-                <div className="md:col-span-2">
-                  {shippingFee !== null && (
-                    <div className="mt-2 text-sm">
-                      Phí vận chuyển ước tính:{" "}
-                      <strong>{shippingFee.toLocaleString()}đ</strong>
-                    </div>
-                  )}
-                </div>
+                {/* shipping estimate removed - fee shown in order summary instead */}
                 <div className="md:col-span-2">
                   <label className="block mb-2 font-medium text-gray-500">
                     Ghi chú đơn hàng
@@ -821,8 +814,12 @@ const Checkout = () => {
                   )}
                   <div className="flex justify-between italic text-gray-500">
                     <span>Phí vận chuyển:</span>
-                    <span className="text-[#00b14f] font-bold uppercase text-[10px]">
-                      Miễn phí
+                    <span className="font-bold text-[#00b14f]">
+                      {shippingFee === null
+                        ? "Đang tính..."
+                        : shippingFee > 0
+                          ? shippingFee.toLocaleString() + 'đ'
+                          : "Miễn phí"}
                     </span>
                   </div>
                 </div>
