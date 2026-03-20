@@ -416,10 +416,26 @@ exports.shipperUpdateStatus = async (req, res) => {
   try {
     const { orderId } = req.body;
     const order = await Order.findById(orderId);
+    // Merge strategy: allow a simulation mode via env, attempt GHN update if we have a code,
+    // but do not block local state advancement on GHN failures.
     const allowNoAuthSim = process.env.ALLOW_SHIPPER_NOAUTH === 'true';
 
     if (!order || (!order.ghnOrderCode && !allowNoAuthSim))
       return res.status(400).json({ success: false, message: "Đơn hàng không hợp lệ" });
+
+    let ghnError = null;
+    if (order.ghnOrderCode) {
+      try {
+        const ghnRes = await ghn.leadtimeGHNOrder(order.ghnOrderCode);
+        if (!(ghnRes && ghnRes.code === 200)) {
+          ghnError = ghnRes && (ghnRes.message || ghnRes.error) ? (ghnRes.message || ghnRes.error) : 'GHN rejected advance';
+          console.error('GHN leadtime response not OK:', ghnRes);
+        }
+      } catch (err) {
+        ghnError = err.message || err;
+        console.error('GHN Leadtime API error, proceeding locally:', ghnError);
+      }
+    }
 
     // helper to advance order state locally
     const advanceLocalStatus = () => {
@@ -436,7 +452,7 @@ exports.shipperUpdateStatus = async (req, res) => {
         addUniqueHistory(
           order,
           "storing",
-          "Đơn hàng đã nhập kho tập kết Mega SOC Hà Nội",
+          "Đơn hàng đã nhập kho tập kết Mega SOC",
         );
       } else if (currentStatus === "STORING") {
         order.status = "DELIVERING";
@@ -452,26 +468,29 @@ exports.shipperUpdateStatus = async (req, res) => {
           "delivered",
           "Giao hàng thành công! Người nhận đã ký xác nhận.",
         );
+      } else {
+        return false;
       }
+      return true;
     };
 
-    // If simulation mode is enabled, skip calling GHN and just advance status
-    if (allowNoAuthSim) {
+    // If simulation mode is enabled and there is no GHN code, advance without GHN
+    if (allowNoAuthSim && !order.ghnOrderCode) {
       console.log('[shipperUpdateStatus] ALLOW_SHIPPER_NOAUTH=true — advancing status without GHN');
-      advanceLocalStatus();
+      const ok = advanceLocalStatus();
+      if (!ok)
+        return res.status(400).json({ success: false, message: "Trạng thái đơn hàng không hợp lệ để cập nhật" });
       await order.save();
       return res.json({ success: true, message: "Cập nhật thành công (simulated)" });
     }
 
-    // Normal flow: call GHN to advance step
-    const ghnRes = await ghn.leadtimeGHNOrder(order.ghnOrderCode);
-    if (ghnRes && ghnRes.code === 200) {
-      advanceLocalStatus();
-      await order.save();
-      return res.json({ success: true, message: "Cập nhật thành công!" });
-    }
+    // Advance locally regardless of GHN call result
+    const ok = advanceLocalStatus();
+    if (!ok)
+      return res.status(400).json({ success: false, message: "Trạng thái đơn hàng không hợp lệ để cập nhật" });
 
-    res.status(400).json({ success: false, message: "Hệ thống GHN từ chối chuyển bước" });
+    await order.save();
+    return res.json({ success: true, message: ghnError ? `Cập nhật thành công (GHN lỗi: ${ghnError})` : "Cập nhật thành công!" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

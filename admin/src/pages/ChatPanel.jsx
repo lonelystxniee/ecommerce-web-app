@@ -1,8 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 
-// allow transport fallback to avoid websocket-only failures
-const socket = io(import.meta.env.VITE_API_URL || "http://localhost:5175");
+// create socket lazily to avoid connecting during SSR or at module load
+let socket;
+function getSocket() {
+    if (!socket) socket = io(import.meta.env.VITE_API_URL || "http://localhost:5175", { transports: ["websocket", "polling"] });
+    return socket;
+}
 
 export default function ChatPanel() {
     const [open, setOpen] = useState(false);
@@ -31,12 +35,14 @@ export default function ChatPanel() {
     useEffect(() => {
         if (!conversationId) return;
 
-        socket.emit("join_conversation", { conversationId });
+        const s = getSocket();
+        // ensure join happens after socket is created/connected
+        s.emit("join_conversation", { conversationId });
 
         const fetchMessages = async () => {
             try {
-                // exclude AI-generated messages for admin view
-                const res = await fetch(`${import.meta.env.VITE_API_URL}/api/chat/conversation/${conversationId}?excludeAI=true`);
+                // exclude AI-generated messages for admin view (encode conversationId safely)
+                const res = await fetch(`${import.meta.env.VITE_API_URL}/api/chat/conversation/${encodeURIComponent(conversationId)}?excludeAI=true`);
                 const data = await res.json();
                 if (data.success) setMessages(data.messages || []);
             } catch (err) {
@@ -83,6 +89,7 @@ export default function ChatPanel() {
         fetchConversations();
 
         // listen for any incoming message globally to refresh list
+        const s = getSocket();
         const onNew = (msg) => {
             // ignore AI-generated messages in admin realtime view
             if (msg && msg.isAI) return;
@@ -109,9 +116,9 @@ export default function ChatPanel() {
                 return [...filtered, msg];
             });
         };
-        socket.on("new_message", onNew);
+        s.on("new_message", onNew);
 
-        return () => socket.off("new_message", onNew);
+        return () => s.off("new_message", onNew);
     }, [conversationId]);
 
     useEffect(() => {
@@ -123,7 +130,7 @@ export default function ChatPanel() {
         setConversationId(conv.conversationId);
         setOpen(true);
 
-        // mark read
+        // mark read (encode conversation id)
         fetch(`${import.meta.env.VITE_API_URL}/api/chat/conversation/${encodeURIComponent(conv.conversationId)}/read`, { method: 'PUT' })
             .then(() => fetchConversations())
             .catch(() => { });

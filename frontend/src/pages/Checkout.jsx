@@ -61,13 +61,10 @@ const Checkout = () => {
         if (ct.includes("application/json")) {
           const data = await res.json();
           if (data.success) {
-            setSavedAddresses(
-              (data.addresses || []).map((a) => ({ ...a, id: a._id || a.id })),
-            );
+            setSavedAddresses((data.addresses || []).map((a) => ({ ...a, id: a._id || a.id })));
             // pick default address as selected initially
             const def =
-              (data.addresses || []).find((x) => x.isDefault) ||
-              (data.addresses || [])[0];
+              (data.addresses || []).find((x) => x.isDefault) || (data.addresses || [])[0];
             if (def) {
               setSelectedAddress(def);
               // push district/ward into locationSelection so shipping can calculate
@@ -95,9 +92,7 @@ const Checkout = () => {
 
   useEffect(() => {
     if (locationSelection.provinceId) {
-      fetch(
-        `${API_URL}/api/locations/districts?provinceId=${locationSelection.provinceId}`,
-      )
+      fetch(`${API_URL}/api/locations/districts?provinceId=${locationSelection.provinceId}`)
         .then((r) => r.json())
         .then((d) => {
           if (d.success) setDistricts(d.districts || d);
@@ -108,9 +103,7 @@ const Checkout = () => {
 
   useEffect(() => {
     if (locationSelection.districtId) {
-      fetch(
-        `${API_URL}/api/locations/wards?districtId=${locationSelection.districtId}`,
-      )
+      fetch(`${API_URL}/api/locations/wards?districtId=${locationSelection.districtId}`)
         .then((r) => r.json())
         .then((d) => {
           if (d.success) setWards(d.wards || d);
@@ -129,10 +122,7 @@ const Checkout = () => {
   };
 
   const calculateShipping = async () => {
-    const weight = cartItems.reduce(
-      (sum, it) => sum + (it.weight || 300) * (it.quantity || 1),
-      0,
-    );
+    const weight = cartItems.reduce((sum, it) => sum + (it.weight || 300) * (it.quantity || 1), 0);
     if (!locationSelection.districtId || !locationSelection.wardCode) return;
     try {
       const res = await fetch(`${API_URL}/api/shipping/calculate`, {
@@ -262,11 +252,7 @@ const Checkout = () => {
   const handleOrder = async () => {
     // console.log("formData", formData);
     // require either a selectedAddress or filled address textarea
-    if (
-      !formData.fullName ||
-      !formData.phone ||
-      (!formData.address && !selectedAddress)
-    ) {
+    if (!formData.fullName || !formData.phone || (!formData.address && !selectedAddress)) {
       toast.error("Vui lòng điền đầy đủ các thông tin có dấu (*)");
       return;
     }
@@ -295,30 +281,21 @@ const Checkout = () => {
         province: selectedAddress
           ? selectedAddress.province || null
           : provinces.find(
-            (p) =>
-              String(p.ProvinceID || p.province_id) ===
-              String(locationSelection.provinceId),
+            (p) => String(p.ProvinceID || p.province_id) === String(locationSelection.provinceId),
           ) || null,
         district: selectedAddress
           ? selectedAddress.district || null
           : districts.find(
-            (d) =>
-              String(d.DistrictID || d.district_id) ===
-              String(locationSelection.districtId),
+            (d) => String(d.DistrictID || d.district_id) === String(locationSelection.districtId),
           ) || null,
         ward: selectedAddress
           ? selectedAddress.ward || null
           : wards.find(
-            (w) =>
-              String(w.WardCode || w.code) ===
-              String(locationSelection.wardCode),
+            (w) => String(w.WardCode || w.code) === String(locationSelection.wardCode),
           ) || null,
         to_district_id: Number(locationSelection.districtId) || undefined,
         to_ward_code: locationSelection.wardCode || undefined,
-        weight: cartItems.reduce(
-          (sum, it) => sum + (it.weight || 300) * (it.quantity || 1),
-          0,
-        ),
+        weight: cartItems.reduce((sum, it) => sum + (it.weight || 300) * (it.quantity || 1), 0),
       },
     };
 
@@ -357,18 +334,14 @@ const Checkout = () => {
               if (token && savedAddresses.length === 0 && !selectedAddress) {
                 const provinceObj = provinces.find(
                   (p) =>
-                    String(p.ProvinceID || p.province_id) ===
-                    String(locationSelection.provinceId),
+                    String(p.ProvinceID || p.province_id) === String(locationSelection.provinceId),
                 );
                 const districtObj = districts.find(
                   (d) =>
-                    String(d.DistrictID || d.district_id) ===
-                    String(locationSelection.districtId),
+                    String(d.DistrictID || d.district_id) === String(locationSelection.districtId),
                 );
                 const wardObj = wards.find(
-                  (w) =>
-                    String(w.WardCode || w.code) ===
-                    String(locationSelection.wardCode),
+                  (w) => String(w.WardCode || w.code) === String(locationSelection.wardCode),
                 );
                 const body = {
                   fullName: formData.fullName,
@@ -376,22 +349,14 @@ const Checkout = () => {
                   street: formData.address,
                   ward: wardObj ? wardObj.WardName || wardObj.name : undefined,
                   wardCode: locationSelection.wardCode || undefined,
-                  district: districtObj
-                    ? districtObj.DistrictName || districtObj.name
-                    : undefined,
+                  district: districtObj ? districtObj.DistrictName || districtObj.name : undefined,
                   districtId:
                     locationSelection.districtId ||
-                    (districtObj
-                      ? districtObj.DistrictID || districtObj.district_id
-                      : null),
-                  province: provinceObj
-                    ? provinceObj.ProvinceName || provinceObj.name
-                    : undefined,
+                    (districtObj ? districtObj.DistrictID || districtObj.district_id : null),
+                  province: provinceObj ? provinceObj.ProvinceName || provinceObj.name : undefined,
                   provinceId:
                     locationSelection.provinceId ||
-                    (provinceObj
-                      ? provinceObj.ProvinceID || provinceObj.province_id
-                      : null),
+                    (provinceObj ? provinceObj.ProvinceID || provinceObj.province_id : null),
                   isDefault: true,
                 };
                 await fetch(`${API_URL}/api/addresses`, {
@@ -434,9 +399,7 @@ const Checkout = () => {
             <div className="relative p-8 overflow-hidden bg-white border border-gray-200 shadow-sm rounded-xl">
               <div className="flex items-center gap-2 mb-6 text-primary">
                 <Truck size={24} />
-                <h3 className="text-xl font-bold tracking-tight uppercase">
-                  Thông tin giao hàng
-                </h3>
+                <h3 className="text-xl font-bold tracking-tight uppercase">Thông tin giao hàng</h3>
               </div>
 
               <div className="grid grid-cols-1 gap-5 text-sm md:grid-cols-2">
@@ -467,9 +430,7 @@ const Checkout = () => {
                   />
                 </div>
                 <div>
-                  <label className="block mb-2 font-medium text-gray-500">
-                    Email
-                  </label>
+                  <label className="block mb-2 font-medium text-gray-500">Email</label>
                   <input
                     type="email"
                     name="email"
@@ -483,9 +444,7 @@ const Checkout = () => {
                   <div className="md:col-span-2 p-4 border rounded-lg bg-[#fffefc]">
                     <div className="flex items-start justify-between">
                       <div>
-                        <div className="font-bold text-gray-800">
-                          Địa chỉ giao hàng
-                        </div>
+                        <div className="font-bold text-gray-800">Địa chỉ giao hàng</div>
                         <div className="mt-2 text-sm text-gray-600">
                           {selectedAddress ? (
                             <>
@@ -497,26 +456,18 @@ const Checkout = () => {
                                   </span>
                                 )}
                               </div>
-                              <div className="text-xs">
-                                {selectedAddress.phone}
-                              </div>
+                              <div className="text-xs">{selectedAddress.phone}</div>
                               <div className="mt-2 text-sm">
                                 {(selectedAddress.street || "") +
-                                  (selectedAddress.ward
-                                    ? ", " + selectedAddress.ward
-                                    : "") +
+                                  (selectedAddress.ward ? ", " + selectedAddress.ward : "") +
                                   (selectedAddress.district
                                     ? ", " + selectedAddress.district
                                     : "") +
-                                  (selectedAddress.province
-                                    ? ", " + selectedAddress.province
-                                    : "")}
+                                  (selectedAddress.province ? ", " + selectedAddress.province : "")}
                               </div>
                             </>
                           ) : (
-                            <div className="text-sm text-gray-600">
-                              Chưa chọn địa chỉ
-                            </div>
+                            <div className="text-sm text-gray-600">Chưa chọn địa chỉ</div>
                           )}
                         </div>
                       </div>
@@ -588,10 +539,7 @@ const Checkout = () => {
                       >
                         <option value="">Chọn xã/phường</option>
                         {wards.map((w) => (
-                          <option
-                            key={w.WardCode || w.code}
-                            value={w.WardCode || w.code}
-                          >
+                          <option key={w.WardCode || w.code} value={w.WardCode || w.code}>
                             {w.WardName || w.name}
                           </option>
                         ))}
@@ -613,11 +561,15 @@ const Checkout = () => {
                   </>
                 )}
 
-                {/* shipping estimate removed - fee shown in order summary instead */}
                 <div className="md:col-span-2">
-                  <label className="block mb-2 font-medium text-gray-500">
-                    Ghi chú đơn hàng
-                  </label>
+                  {shippingFee !== null && (
+                    <div className="mt-2 text-sm">
+                      Phí vận chuyển ước tính: <strong>{shippingFee.toLocaleString()}đ</strong>
+                    </div>
+                  )}
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block mb-2 font-medium text-gray-500">Ghi chú đơn hàng</label>
                   <input
                     type="text"
                     name="note"
@@ -650,9 +602,7 @@ const Checkout = () => {
                     className="w-5 h-5 accent-primary"
                   />
                   <div>
-                    <p className="font-bold text-gray-800">
-                      Thanh toán khi nhận hàng (COD)
-                    </p>
+                    <p className="font-bold text-gray-800">Thanh toán khi nhận hàng (COD)</p>
                     <p className="text-xs italic text-gray-500">
                       Quý khách thanh toán bằng tiền mặt cho bưu tá.
                     </p>
@@ -669,14 +619,8 @@ const Checkout = () => {
                     className="w-5 h-5 accent-primary"
                   />
                   <div className="flex items-center gap-3">
-                    <img
-                      src="/vnpay.png"
-                      alt="VNPAY"
-                      className="object-contain w-12 h-6"
-                    />
-                    <span className="font-bold text-gray-800">
-                      Thanh toán qua VNPAY-QR
-                    </span>
+                    <img src="/vnpay.png" alt="VNPAY" className="object-contain w-12 h-6" />
+                    <span className="font-bold text-gray-800">Thanh toán qua VNPAY-QR</span>
                   </div>
                 </label>
               </div>
@@ -691,9 +635,7 @@ const Checkout = () => {
               <div className="relative z-10">
                 <div className="flex items-center gap-2 pb-4 mb-6 border-b border-gray-200 border-dashed text-primary">
                   <Receipt size={22} />
-                  <h3 className="text-lg font-bold uppercase">
-                    Đơn hàng của bạn
-                  </h3>
+                  <h3 className="text-lg font-bold uppercase">Đơn hàng của bạn</h3>
                 </div>
 
                 <div className="max-h-62.5 overflow-y-auto pr-2 custom-scrollbar mb-6 space-y-4">
@@ -703,12 +645,8 @@ const Checkout = () => {
                       className="flex items-start justify-between pb-3 text-sm border-b border-gray-50"
                     >
                       <div className="flex-1 pr-4">
-                        <p className="font-bold text-gray-800 line-clamp-2">
-                          {item.name}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          SL: {item.quantity}
-                        </p>
+                        <p className="font-bold text-gray-800 line-clamp-2">{item.name}</p>
+                        <p className="text-xs text-gray-400">SL: {item.quantity}</p>
                       </div>
                       <span className="font-bold text-primary">
                         {(item.price * item.quantity).toLocaleString()}đ
@@ -787,9 +725,7 @@ const Checkout = () => {
                                 : "bg-gray-100 text-[#88694f] group-hover:bg-secondary group-hover:text-white"
                                 }`}
                             >
-                              {appliedCode === promo.code
-                                ? "ĐÃ ÁP DỤNG"
-                                : "ÁP DỤNG"}
+                              {appliedCode === promo.code ? "ĐÃ ÁP DỤNG" : "ÁP DỤNG"}
                             </div>
                           </div>
                         ))}
@@ -802,9 +738,7 @@ const Checkout = () => {
                 <div className="pb-6 space-y-3 text-sm border-b border-secondary/20">
                   <div className="flex justify-between italic text-gray-500">
                     <span>Tạm tính:</span>
-                    <span className="font-bold text-gray-800">
-                      {totalPrice.toLocaleString()}đ
-                    </span>
+                    <span className="font-bold text-gray-800">{totalPrice.toLocaleString()}đ</span>
                   </div>
                   {discount > 0 && (
                     <div className="flex justify-between italic font-medium text-green-600">
@@ -825,9 +759,7 @@ const Checkout = () => {
                 </div>
 
                 <div className="flex justify-between py-6">
-                  <span className="text-lg font-bold text-gray-800">
-                    TỔNG CỘNG:
-                  </span>
+                  <span className="text-lg font-bold text-gray-800">TỔNG CỘNG:</span>
                   <span className="text-2xl font-black text-primary">
                     {finalPrice.toLocaleString()}đ
                   </span>
@@ -847,10 +779,7 @@ const Checkout = () => {
                   </span>
                 </p>
                 <div className="flex justify-center mt-4">
-                  <Link
-                    to="/cart"
-                    className="text-[#88694f] text-xs font-bold hover:underline"
-                  >
+                  <Link to="/cart" className="text-[#88694f] text-xs font-bold hover:underline">
                     ← Quay về giỏ hàng
                   </Link>
                 </div>
@@ -859,30 +788,29 @@ const Checkout = () => {
           </div>
         </div>
         {/* Address management modal */}
-        {showAddressModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="w-full max-w-3xl p-6">
-              <div className="relative bg-white shadow-lg rounded-2xl">
-                <div className="flex items-center justify-between p-4 border-b">
-                  <h3 className="font-bold">Địa chỉ của tôi</h3>
-                  <button
-                    onClick={() => setShowAddressModal(false)}
-                    className="px-3 py-1"
-                  >
-                    ✕
-                  </button>
-                </div>
-                <div className="p-6">
-                  <AddressManagement
-                    user={savedUser}
-                    selectable={true}
-                    onSelect={handleSelectAddress}
-                  />
+        {
+          showAddressModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+              <div className="w-full max-w-3xl p-6">
+                <div className="relative bg-white shadow-lg rounded-2xl">
+                  <div className="flex items-center justify-between p-4 border-b">
+                    <h3 className="font-bold">Địa chỉ của tôi</h3>
+                    <button onClick={() => setShowAddressModal(false)} className="px-3 py-1">
+                      ✕
+                    </button>
+                  </div>
+                  <div className="p-6">
+                    <AddressManagement
+                      user={savedUser}
+                      selectable={true}
+                      onSelect={handleSelectAddress}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )
+        }
       </div>
     </div>
   );

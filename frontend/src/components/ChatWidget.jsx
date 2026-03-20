@@ -40,7 +40,7 @@ export default function ChatWidget() {
     const fetchMessages = async () => {
         if (!conversationId) return;
         try {
-            const res = await fetch(`${API_URL}/api/chat/conversation/${conversationId}`);
+            const res = await fetch(`${API_URL}/api/chat/conversation/${encodeURIComponent(conversationId)}`);
             const data = await res.json();
             if (data.success) setMessages(data.messages || []);
         } catch (err) { console.error(err); }
@@ -49,7 +49,7 @@ export default function ChatWidget() {
     const markConversationRead = async () => {
         if (!conversationId) return;
         try {
-            await fetch(`${API_URL}/api/chat/conversation/${conversationId}/read`, { method: 'PUT' });
+            await fetch(`${API_URL}/api/chat/conversation/${encodeURIComponent(conversationId)}/read`, { method: 'PUT' });
         } catch (err) { console.error(err); }
     };
 
