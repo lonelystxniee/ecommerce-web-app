@@ -12,6 +12,9 @@ import {
   MessageSquare,
   Shield,
   ClipboardList,
+  DollarSign,
+  Newspaper,
+  Layout,
 } from "lucide-react";
 
 const AdminSidebar = () => {
@@ -25,6 +28,11 @@ const AdminSidebar = () => {
       path: "/orders",
       icon: <ShoppingCart size={20} />,
       label: "Quản lý đơn hàng",
+    },
+    {
+      path: "/revenue",
+      icon: <DollarSign size={20} />,
+      label: "Quản lý doanh thu",
     },
     {
       path: "/promotions",
@@ -42,11 +50,20 @@ const AdminSidebar = () => {
       label: "Quản lý đánh giá",
     },
     {
+      path: "/news-video",
+      icon: <Newspaper size={20} />,
+      label: "Quản lý Tin tức & Video",
+    },
+    {
+      path: "/ads",
+      icon: <Layout size={20} />,
+      label: "Quản lý Quảng cáo",
+    },
+    {
       path: "/activities",
       icon: <ClipboardList size={20} />,
       label: "Nhật ký hệ thống",
     },
-    { path: "/warehouse", icon: <Layers size={20} />, label: "Quản lý kho" },
   ];
 
   const handleLogout = () => {

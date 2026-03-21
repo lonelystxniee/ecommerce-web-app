@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Menu, ChevronDown } from 'lucide-react';
-import { MenuItem } from './Hero';
+import { useState } from "react";
+import { Menu, ChevronDown } from "lucide-react";
+import { MenuItem } from "./Hero";
 
 export const CategoryDropdown = ({ display, categories }) => {
   const [open, setOpen] = useState(false);
@@ -18,7 +18,7 @@ export const CategoryDropdown = ({ display, categories }) => {
 
   return (
     <div
-      className={`${display ? 'flex' : 'md:hidden'} relative flex items-center justify-between bg-primary h-12 self-start p-4 w-full cursor-pointer
+      className={`${display ? "flex" : "md:hidden"} relative flex items-center justify-between bg-primary h-12 self-start p-4 w-full cursor-pointer
         before:content-[''] before:absolute before:bg-transparent before:border before:border-[#d44546] 
         before:top-1/2 before:left-1/2 before:-translate-1/2 before:w-[calc(100%-8px)] before:h-[calc(100%-8px)] before:z-1 
     `}

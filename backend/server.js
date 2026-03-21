@@ -1,4 +1,4 @@
-require("dotenv").config(); // Nạp biến môi trường đầu tiên
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 
@@ -12,6 +12,8 @@ const locationRoutes = require("./src/routes/locationRoutes");
 const shippingRoutes = require("./src/routes/shippingRoutes");
 const addressRoutes = require("./src/routes/addressRoutes");
 const adminOrderRoutes = require("./src/routes/adminOrderRoutes");
+const adRoutes = require("./src/routes/adRoutes");
+const revenueRoutes = require("./src/routes/revenueRoutes");
 
 const app = express();
 const http = require("http");
@@ -54,14 +56,13 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/promotions", require("./src/routes/promotionRoutes"));
 app.use("/api/locations", locationRoutes);
 app.use("/api/shipping", shippingRoutes);
-app.use("/api/products", productRoutes);
-app.use("/api/category", categoryRoutes);
-app.use("/api/reviews", reviewRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/wishlist", require("./src/routes/wishlistRoutes"));
 app.use('/api/admin/orders', adminOrderRoutes);
 app.use('/api/chat', require('./src/routes/chatRoutes'));
 // AI routes removed
+app.use("/api/ads", adRoutes);
+app.use("/api/admin/revenue", revenueRoutes);
 
 const PORT = process.env.PORT || 5175;
 
@@ -164,7 +165,7 @@ io.on("connection", (socket) => {
           }
         }
       } catch (aiErr) {
-              logger.error('AI reply failed:', aiErr?.message || aiErr);
+        logger.error('AI reply failed:', aiErr?.message || aiErr);
       }
     } catch (err) {
       console.error("Error saving message:", err.message);
@@ -182,8 +183,8 @@ io.on("connection", (socket) => {
 
 connectDB()
   .then(() => {
-    server.listen(PORT, () => {
-      logger.info(`Server đang chạy ở cổng ${PORT}`);
+    server.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server đang chạy ở cổng ${PORT}`);
     });
   })
   .catch((err) => {

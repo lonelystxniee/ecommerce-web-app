@@ -183,7 +183,7 @@ exports.deleteCategory = async (req, res) => {
         }
 
         // 3. Tìm các sản phẩm đang có categoryID chứa ID của danh mục sắp xóa
-        const Product = require("../models/product"); // Import tạm thời để tránh circular dependency error cục bộ nếu có
+        const Product = require("../models/Product"); // Import tạm thời để tránh circular dependency error cục bộ nếu có
 
         // Nếu một sản phẩm CHỈ CÓ 1 danh mục và đó là danh mục bị xóa -> Gán sang "Khác"
         await Product.updateMany(

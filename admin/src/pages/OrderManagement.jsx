@@ -455,7 +455,7 @@ const OrderManagement = () => {
                   <div className="p-4 bg-white border-t">
                     <div className="flex justify-between text-sm text-gray-600 mb-2">
                       <span>Phí vận chuyển:</span>
-                      <span>{shippingFeeForSelected.toLocaleString()}đ</span>
+                      <span>{(shippingFeeForSelected || 0).toLocaleString()}đ</span>
                     </div>
                     {discountForSelected > 0 && (
                       <div className="flex justify-between text-sm text-green-600 mb-2">
@@ -479,14 +479,19 @@ const OrderManagement = () => {
                 </div>
 
                 <div className="mt-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm font-bold">Mã GHN</div>
-                    <div className="text-sm font-mono text-[#3e2714]">{selectedOrder.ghnOrderCode || selectedOrder.shipping?.ghnOrderCode || 'Chưa có'}</div>
+                  <div className="flex flex-col mb-4 bg-white p-4 rounded-2xl border border-dashed border-[#9d0b0f]/20">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-[10px] font-black uppercase text-gray-400">Mã GHN (Giao hàng nhanh)</div>
+                      <div className="text-sm font-black text-[#f39200]">{selectedOrder.ghnOrderCode || selectedOrder.shipping?.ghnOrderCode || 'CHƯA CẬP NHẬT'}</div>
+                    </div>
                   </div>
-                  <div className="flex gap-2 justify-end">
-                    {!selectedOrder.ghnOrderCode && !selectedOrder.shipping?.ghnOrderCode && (
+
+                  <div className="flex gap-3 justify-end">
+                    {/* Nút Tạo GHN (nếu chưa có) */}
+                    {!selectedOrder.ghnOrderCode && !selectedOrder.shipping?.ghnOrderCode && selectedOrder.status !== 'CANCELLED' && (
                       <button
                         onClick={async () => {
+                          if (!confirm("Tạo đơn giao hàng trên hệ thống GHN?")) return;
                           try {
                             const token = localStorage.getItem('token');
                             const url = `${API_URL}/api/admin/orders/${selectedOrder._id}/ship`;
@@ -495,66 +500,69 @@ const OrderManagement = () => {
                             if (d.success) {
                               alert('Đã tạo mã GHN: ' + (d.ghnOrderCode || ''));
                               fetchOrders();
-                              setSelectedOrder((await fetch(`${API_URL}/api/orders/${selectedOrder._id}`).then(r => r.json())).order);
+                              setIsModalOpen(false);
                             } else {
-                              alert('Lỗi tạo GHN: ' + (d.message || ''));
+                              alert('Lỗi: ' + (d.message || 'Không thể tạo đơn GHN'));
                             }
                           } catch (e) {
                             alert('Lỗi kết nối');
                           }
                         }}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-bold"
+                        className="px-6 py-2.5 bg-green-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-green-700 transition-all flex items-center gap-2"
                       >
-                        Tạo GHN
+                        <Truck size={14} /> Tạo đơn GHN
                       </button>
                     )}
 
+                    {/* Nút Hủy đơn (nếu chưa hoàn thành) */}
                     {selectedOrder.status !== 'CANCELLED' && selectedOrder.status !== 'COMPLETED' && (
                       <button
                         onClick={async () => {
-                          if (!confirm('Xác nhận hủy đơn này?')) return;
+                          if (!confirm('Bạn có chắc muốn hủy đơn hàng này? Hệ thống sẽ tự động cập nhật GHN nếu có.')) return;
                           try {
                             const token = localStorage.getItem('token');
-                            const res = await fetch(`${API_URL}/api/admin/orders/${selectedOrder._id}/cancel`, { method: 'PUT', headers: { Authorization: `Bearer ${token}` } });
+                            const res = await fetch(`${API_URL}/api/admin/orders/${selectedOrder._id}/cancel`, { 
+                                method: 'PUT', 
+                                headers: { Authorization: `Bearer ${token}` } 
+                            });
                             const d = await res.json();
                             if (d.success) {
-                              alert(d.message || 'Đã hủy đơn');
+                              alert(d.message || 'Đã hủy đơn thành công');
                               fetchOrders();
                               setIsModalOpen(false);
                             } else {
-                              alert('Lỗi: ' + (d.message || 'Không thể hủy'));
+                              alert('Lỗi: ' + (d.message || 'Không thể hủy đơn'));
                             }
                           } catch (e) {
                             alert('Lỗi kết nối');
                           }
                         }}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-bold"
+                        className="px-6 py-2.5 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-red-700 transition-all flex items-center gap-2"
                       >
-                        HỦY ĐƠN
+                        <Trash2 size={14} /> Hủy đơn này
                       </button>
                     )}
 
+                    {/* Nút xem hành trình */}
                     <button
                       onClick={() => {
                         setIsModalOpen(false);
                         navigate(`/orders/track/${selectedOrder._id}`);
                       }}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold"
+                      className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-indigo-700 transition-all flex items-center gap-2"
                     >
-                      Xem GHN
+                      <Eye size={14} /> Xem hành trình
                     </button>
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 mt-6">
+                <div className="flex justify-end mt-8 border-t pt-4">
                   <button
                     onClick={() => setIsModalOpen(false)}
-                    className="px-6 py-3 rounded-2xl bg-[#3e2714] text-white font-bold text-xs hover:bg-black transition-all"
+                    className="px-8 py-3 rounded-2xl bg-stone-100 text-stone-500 font-bold text-xs hover:bg-stone-200 transition-all"
                   >
-                    ĐÓNG
+                    ĐÓNG CỬA SỔ
                   </button>
-
-
                 </div>
               </div>
             </div>

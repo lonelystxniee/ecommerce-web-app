@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Menu,
   Clock,
@@ -7,24 +7,31 @@ import {
   Gift,
   Cake,
   Coffee,
-  Wine,
   ChevronRight,
   ShoppingBag,
-  Headset,
-  CreditCard,
-  ChevronDown,
   Monitor,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { CategoryDropdown } from "./CategoryDropdown";
 
-const bannerImages = [
+// Ảnh mặc định khi API chưa có dữ liệu
+const defaultBanners = [
   "https://cdn.honglam.vn/honglam/Tet_website_ab5d5cb5d1.jpg",
   "https://cdn.honglam.vn/honglam/HL_5_04_1_91ecb38969.jpg",
   "https://cdn.honglam.vn/honglam/Sac_Hoa_1_06cf1c5837.jpg",
 ];
 
-const Hero = ({ categories }) => {
+const Hero = ({ categories, ads = [] }) => {
+  // Lọc lấy ảnh quảng cáo loại 'hero' từ API, nếu không có thì dùng ảnh mặc định
+  const bannerImages = useMemo(() => {
+    const apiHeroAds = ads.filter(
+      (ad) => ad.type === "hero" && ad.status === "ACTIVE",
+    );
+    return apiHeroAds.length > 0
+      ? apiHeroAds.map((ad) => ad.image)
+      : defaultBanners;
+  }, [ads]);
+
   const sliderImages = [
     bannerImages[bannerImages.length - 1],
     ...bannerImages,
@@ -54,19 +61,17 @@ const Hero = ({ categories }) => {
         setBannerIndex(bannerImages.length);
       }, 500);
     } else {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEnableTransition(true);
     }
-  }, [bannerIndex]);
+  }, [bannerIndex, bannerImages.length]);
 
   useEffect(() => {
     const timer = setInterval(nextBanner, 4000);
     return () => clearInterval(timer);
-  }, []);
+  }, [bannerImages.length]);
 
   return (
     <>
-      {/* SECTION 1: HERO (Sidebar + Banner) */}
       <section className="px-4 pt-4 mx-auto max-w-300">
         <div className="flex flex-col gap-3 md:flex-row h-90">
           <div className="hidden h-full md:block w-65">
@@ -90,23 +95,17 @@ const Hero = ({ categories }) => {
             </div>
           </div>
 
-          {/* Category Dropdown */}
           <CategoryDropdown categories={categories} />
 
-          {/* BANNER */}
           <div className="flex-1 h-1/2 md:h-full">
             <div className="relative h-full">
-              {/* SLIDER */}
               <div className="relative h-full overflow-hidden">
                 <div
-                  className={`flex h-full ${
-                    enableTransition
+                  className={`flex h-full ${enableTransition
                       ? "transition-transform duration-500 ease-in-out"
                       : ""
-                  }`}
-                  style={{
-                    transform: `translateX(-${bannerIndex * 100}%)`,
-                  }}
+                    }`}
+                  style={{ transform: `translateX(-${bannerIndex * 100}%)` }}
                 >
                   {sliderImages.map((img, i) => (
                     <div
@@ -129,7 +128,6 @@ const Hero = ({ categories }) => {
                 />
               </div>
 
-              {/* NEXT BUTTON */}
               <button
                 onClick={nextBanner}
                 className="absolute z-20 p-1 transition -translate-y-1/2 rounded-full cursor-pointer -right-4 top-1/2"
@@ -140,7 +138,6 @@ const Hero = ({ categories }) => {
                   className="object-cover w-6 h-6"
                 />
               </button>
-              {/* PREV BUTTON */}
               <button
                 onClick={prevBanner}
                 className="absolute z-20 p-1 transition -translate-y-1/2 rounded-full cursor-pointer -left-4 top-1/2 "
@@ -202,8 +199,8 @@ export const MenuItem = ({ categories }) => {
           </Link>
         ))
       ) : (
-        <div className="flex items-center justify-center h-full text-xs opacity-50">
-          Đang tải danh mục...
+        <div className="flex items-center justify-center h-full text-xs opacity-50 text-white font-bold">
+          Đang tải...
         </div>
       )}
     </div>

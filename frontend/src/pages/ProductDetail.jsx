@@ -17,6 +17,7 @@ import {
   X,
   Heart,
   ChevronRight,
+  Facebook,
 } from "lucide-react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
@@ -54,7 +55,7 @@ const ProductDetail = () => {
           } else {
             availableVariants = [{ label: "Giá gốc", price: data.product.price, stock: data.product.quantity || 0 }].filter(v => v.stock > 0);
           }
-          setQuantities(new Array(availableVariants.length).fill(0));
+          setQuantities(new Array(availableVariants.length).fill(1));
         }
       } catch (error) {
         console.error("Lỗi lấy chi tiết sản phẩm:", error);
@@ -263,10 +264,21 @@ const ProductDetail = () => {
   const updateQty = (index, delta) => {
     const newQty = [...quantities];
     const newAmount = newQty[index] + delta;
-    if (newAmount >= 0 && newAmount <= variants[index].stock) {
+    if (newAmount >= 1 && newAmount <= variants[index].stock) {
       newQty[index] = newAmount;
       setQuantities(newQty);
     }
+  };
+
+  const handleQtyChange = (index, val) => {
+    let num = parseInt(val);
+    if (isNaN(num)) num = 0;
+    const max = variants[index].stock;
+    if (num > max) num = max;
+    if (num < 0) num = 0;
+    const newQty = [...quantities];
+    newQty[index] = num;
+    setQuantities(newQty);
   };
 
   const handleCopyLink = () => {
@@ -297,6 +309,7 @@ const ProductDetail = () => {
       `width=${width},height=${height},top=${top},left=${left},toolbar=0,status=0,menubar=0`,
     );
   };
+
 
   const calculateTotal = () =>
     quantities.reduce(
@@ -456,9 +469,14 @@ const ProductDetail = () => {
                             >
                               <Minus size={12} />
                             </button>
-                            <span className="w-8 text-center bg-white">
-                              {quantities[i]}
-                            </span>
+                            <input
+                              type="number"
+                              min="0"
+                              max={v.stock}
+                              value={quantities[i]}
+                              onChange={(e) => handleQtyChange(i, e.target.value)}
+                              className="w-10 text-center bg-white outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border-none"
+                            />
                             <button
                               onClick={() => updateQty(i, 1)}
                               className="px-2 py-1 text-gray-400 border-l"
@@ -489,12 +507,20 @@ const ProductDetail = () => {
               )}
               <div className="flex gap-3">
                 {variants.length > 0 ? (
-                  <button
-                    onClick={() => handleAction("add_to_cart")}
-                    className="flex-1 bg-[#f39200] text-white py-4 rounded-md font-bold uppercase tracking-widest shadow-lg active:scale-95"
-                  >
-                    Thêm vào giỏ
-                  </button>
+                  <>
+                    <button
+                      onClick={() => handleAction("add_to_cart")}
+                      className="flex-1 border-2 border-[#f39200] text-[#f39200] py-4 rounded-md font-bold uppercase tracking-widest hover:bg-[#f39200] hover:text-white transition-all active:scale-95 shadow-md"
+                    >
+                      Thêm vào giỏ
+                    </button>
+                    <button
+                      onClick={() => handleAction("buy_now")}
+                      className="flex-1 bg-[#f39200] text-white py-4 rounded-md font-bold uppercase tracking-widest shadow-lg active:scale-95 hover:bg-[#d88200] transition-colors"
+                    >
+                      Mua ngay
+                    </button>
+                  </>
                 ) : (
                   <div className="flex-1" />
                 )}

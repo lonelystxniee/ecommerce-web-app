@@ -12,10 +12,11 @@ import CategoryManagement from "./pages/CategoryManagement";
 import ReviewManagement from "./pages/ReviewManagement";
 import AdminManagement from "./pages/AdminManagement";
 import ActivityLogs from "./pages/ActivityLogs";
-import ChatPanel from "./pages/ChatPanel";
 import LoginPage from "./pages/LoginPage";
-import WarehouseManagement from "./pages/WarehouseManagement";
 import ProtectedRoute from "./components/ProtectedRoute";
+import NewsAndVideoManagement from "./pages/NewsAndVideoManagement";
+import AdvertisementManagement from "./pages/AdvertisementManagement";
+import RevenueManagement from "./pages/RevenueManagement";
 
 function App() {
   return (
@@ -30,14 +31,13 @@ function App() {
             <Route path="admins" element={<AdminManagement />} />
             <Route path="products" element={<ProductManagement />} />
             <Route path="orders" element={<OrderManagement />} />
-            <Route path="orders/track/:id" element={<OrderTracking />} />
             <Route path="promotions" element={<PromotionManagement />} />
             <Route path="categories" element={<CategoryManagement />} />
             <Route path="reviews" element={<ReviewManagement />} />
             <Route path="activities" element={<ActivityLogs />} />
-            <Route path="warehouse" element={<WarehouseManagement />} />
-            <Route path="chat" element={<ChatPanel />} />
-
+            <Route path="/news-video" element={<NewsAndVideoManagement />} />
+            <Route path="/ads" element={<AdvertisementManagement />} />
+            <Route path="/revenue" element={<RevenueManagement />} />
           </Route>
         </Route>
       </Routes>

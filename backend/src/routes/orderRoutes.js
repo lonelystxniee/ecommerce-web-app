@@ -10,7 +10,6 @@ router.post("/create", orderController.createOrder);
 router.get("/my-orders/:userId", orderController.getMyOrders);
 router.get("/all", orderController.getAllOrders);
 router.put("/status/:id", orderController.updateOrderStatus);
-// Khách hàng hủy đơn (phải đăng nhập)
 router.put('/cancel/:id', verifyToken, orderController.userCancel);
 router.post("/vnpay-payment", vnpayController.createVnpayPayment);
 router.put("/confirm/:id", verifyToken, adminMiddleware, orderController.adminConfirm);
@@ -27,7 +26,6 @@ if (process.env.ALLOW_SHIPPER_NOAUTH === 'true') {
 } else {
 	router.post('/shipper-update', verifyToken, shipperMiddleware, orderController.shipperUpdateStatus);
 }
-router.get('/my-orders/:userId', orderController.getMyOrders);
 router.get('/:id', orderController.getOrderById);
 router.get('/', orderController.getAllOrders);
 

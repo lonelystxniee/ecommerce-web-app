@@ -14,7 +14,6 @@ const OrderTracking = () => {
   const { id } = useParams();
   const [order, setOrder] = useState(null);
 
-
   const fetchTracking = async () => {
     try {
       const res = await fetch(`${API_URL}/api/orders/detail/${id}`);
@@ -41,12 +40,12 @@ const OrderTracking = () => {
 
   if (!order)
     return (
-      <div className="p-20 italic text-center">Đang tìm kiếm hành trình...</div>
+      <div className="p-20 text-center italic">Đang tìm kiếm hành trình...</div>
     );
 
   return (
-    <div className="min-h-screen py-10 font-sans">
-      <div className="max-w-[1200px] mx-auto px-4">
+    <div className="min-h-screen bg-[#f7f4ef] py-10 font-sans">
+      <div className="max-w-[800px] mx-auto px-4">
         <Link
           to="/account?tab=orders"
           className="flex items-center gap-2 text-[#9d0b0f] font-bold mb-6 hover:underline"
@@ -54,9 +53,9 @@ const OrderTracking = () => {
           <ChevronLeft size={20} /> Quay lại đơn hàng của tôi
         </Link>
 
-        <div className="flex items-center justify-between p-8 mb-6 bg-white border border-gray-100 shadow-sm rounded-3xl">
+        <div className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100 mb-6 flex justify-between items-center">
           <div>
-            <p className="text-xs font-bold tracking-widest text-gray-400 uppercase">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
               Mã đơn hàng
             </p>
             <h2 className="text-2xl font-black text-[#9d0b0f]">
@@ -100,7 +99,7 @@ const OrderTracking = () => {
                       alert('Lỗi kết nối');
                     }
                   }}
-                  className="mt-2 px-4 py-2 rounded-xl bg-red-600 text-white font-bold"
+                  className="mt-2 px-4 py-2 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition-colors"
                 >
                   Hủy đơn
                 </button>
@@ -109,7 +108,7 @@ const OrderTracking = () => {
           </div>
         </div>
 
-        <div className="p-10 bg-white border border-gray-100 shadow-xl rounded-3xl">
+        <div className="bg-white p-10 rounded-[40px] shadow-xl border border-gray-100">
           <div className="relative border-l-2 border-[#9d0b0f]/20 ml-6 space-y-12">
             {order.trackingHistory?.map((step, index) => (
               <div key={index} className="relative pl-10">
@@ -118,14 +117,14 @@ const OrderTracking = () => {
       ${index === 0 ? "bg-[#9d0b0f] ring-4 ring-red-100 animate-pulse" : "bg-gray-300"}`}
                 />
 
-                <div className="flex items-start justify-between">
+                <div className="flex justify-between items-start">
                   <div>
                     <p
                       className={`text-base font-bold ${index === 0 ? "text-[#9d0b0f]" : "text-gray-500"}`}
                     >
                       {step.desc}
                     </p>
-                    <p className="flex items-center gap-1 mt-1 text-xs font-medium text-gray-400">
+                    <p className="text-xs text-gray-400 mt-1 flex items-center gap-1 font-medium">
                       <Clock size={12} />{" "}
                       {new Date(step.time).toLocaleString("vi-VN")}
                     </p>
@@ -147,17 +146,17 @@ const OrderTracking = () => {
           </div>
         </div>
 
-        <div className="mt-8 bg-white p-8 rounded-3xl shadow-sm border border-dashed border-[#9d0b0f]/30">
+        <div className="mt-8 bg-white p-8 rounded-[32px] shadow-sm border border-dashed border-[#9d0b0f]/30">
           <h3 className="text-[#9d0b0f] font-black uppercase text-xs mb-4 flex items-center gap-2">
             <MapPin size={18} /> Địa chỉ nhận hàng
           </h3>
           <p className="font-bold text-[#3e2714] text-lg">
             {order.customerInfo.fullName}
           </p>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="text-sm text-gray-500 mt-1">
             {order.customerInfo.phone}
           </p>
-          <p className="mt-2 text-sm italic text-gray-600">
+          <p className="text-sm text-gray-600 italic mt-2">
             {order.customerInfo.address}
           </p>
         </div>

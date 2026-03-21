@@ -22,6 +22,9 @@ import ForgotPassword from "./pages/ForgotPassword";
 import OrderTracking from "./pages/OrderTracking";
 import VnpayReturn from "./pages/VnpayReturn";
 import AdminOrders from "./pages/AdminOrders";
+import LuckyWheel from "./pages/LuckyWheel";
+import WelcomePopup from "./pages/Home/WelcomePopup";
+import PromoPopup from "./components/PromoPopup";
 
 function App() {
   return (
@@ -30,6 +33,8 @@ function App() {
         <Router>
           <div className="bg-transparent app-container">
             <Header />
+            <WelcomePopup />
+            <PromoPopup />
             <main className="min-h-screen">
               <Routes>
                 <Route path="/" element={<Home />} />

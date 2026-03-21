@@ -12,31 +12,31 @@ router.put("/:id", authMiddleware, upload.array("images", 10), productController
 router.get("/:id", productController.getProductById);
 
 router.post(
-    "/",
-    authMiddleware,
-    adminMiddleware,
-    upload.array("images", 10),
-    productController.createProduct
+  "/",
+  authMiddleware,
+  adminMiddleware,
+  upload.array("images", 10),
+  productController.createProduct
 );
 router.post(
-    "/import-excel",
-    authMiddleware,
-    adminMiddleware,
-    upload.single("file"),
-    productController.importExcel
+  "/import-excel",
+  authMiddleware,
+  adminMiddleware,
+  upload.single("file"),
+  productController.importExcel
 );
 router.post(
-    "/bulk-stock-in",
-    authMiddleware,
-    adminMiddleware,
-    productController.bulkStockIn
+  "/bulk-stock-in",
+  authMiddleware,
+  adminMiddleware,
+  productController.bulkStockIn
 );
 router.post(
-    "/import-warehouse-excel",
-    authMiddleware,
-    adminMiddleware,
-    upload.single("file"),
-    productController.importWarehouseExcel
+  "/import-warehouse-excel",
+  authMiddleware,
+  adminMiddleware,
+  upload.single("file"),
+  productController.importWarehouseExcel
 );
 
 module.exports = router;

@@ -195,9 +195,10 @@ exports.googleLogin = async (req, res) => {
       });
       console.log("✅ Đăng ký mới bằng Google thành công cho:", user.email);
     } else {
+      // Cập nhật thông tin Google nếu user đã có từ trước nhưng chưa link Google
       if (user.authProvider === "LOCAL" && !user.googleId) {
         user.googleId = googleId;
-        user.authProvider = "GOOGLE";
+        user.authProvider = "GOOGLE"; // Hoặc giữ LOCAL nhưng vẫn có googleId, tuỳ quy trình
         if (!user.avatar) user.avatar = avatar;
         await user.save();
       }
@@ -210,6 +211,7 @@ exports.googleLogin = async (req, res) => {
       console.log("✅ Đăng nhập Google thành công cho:", user.email);
     }
 
+    // Tạo JWT token cho session của app
     const jwtToken = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,
@@ -230,6 +232,95 @@ exports.googleLogin = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Xác thực Google thất bại",
+      error: error.message,
+    });
+  }
+};
+
+exports.facebookLogin = async (req, res) => {
+  const { accessToken, userID } = req.body;
+
+  if (!accessToken || !userID) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Thiếu thông tin từ Facebook" });
+  }
+
+  try {
+    // 1. Gọi Graph API của Facebook để xác thực token và lấy thông tin user
+    // Lưu ý: Cần lấy thêm fields email, name, picture
+    const url = `https://graph.facebook.com/v19.0/${userID}?fields=id,name,email,picture.type(large)&access_token=${accessToken}`;
+    const fbResponse = await axios.get(url);
+    const { id: facebookId, name: fullName, email, picture } = fbResponse.data;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Không lấy được email từ Facebook. Vui lòng kiểm tra quyền truy cập.",
+      });
+    }
+
+    const avatar = picture?.data?.url || "";
+
+    // 2. Kiểm tra xem user có trong DB hay chưa (dựa theo email vì email là duy nhất)
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // 3a. Tạo mới User nếu chưa tồn tại
+      user = await User.create({
+        fullName,
+        email,
+        authProvider: "FACEBOOK",
+        facebookId,
+        avatar,
+        status: "ACTIVE",
+        role: "CUSTOMER", // hoặc default role nào đó trong hệ thống
+      });
+      console.log("✅ Đăng ký mới bằng Facebook thành công cho:", user.email);
+    } else {
+      // 3b. User đã có sẵn trong hệ thống (có thể đki qua LOCAL, hoặc GOOGLE)
+      // Cập nhật facebookId nếu chưa có
+      if (!user.facebookId) {
+        user.facebookId = facebookId;
+        // Nếu user này trước đó là LOCAL, ta có thể đổi thành FACEBOOK (tùy nghiệp vụ)
+        if (user.authProvider === "LOCAL") {
+          user.authProvider = "FACEBOOK";
+        }
+        if (!user.avatar && avatar) user.avatar = avatar;
+        await user.save();
+      }
+
+      if (user.status === "LOCKED") {
+        return res
+          .status(403)
+          .json({ success: false, message: "Tài khoản của bạn đã bị khóa!" });
+      }
+      console.log("✅ Đăng nhập Facebook thành công cho:", user.email);
+    }
+
+    // 4. Tạo JWT Token trả về cho Frontend
+    const jwtToken = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "24h" },
+    );
+
+    // Không trả về password và các token secret khác
+    const { password, resetToken, resetTokenExpiry, ...userInfo } =
+      user.toObject();
+
+    return res.status(200).json({
+      success: true,
+      message: "Đăng nhập Facebook thành công!",
+      token: jwtToken,
+      user: userInfo,
+    });
+  } catch (error) {
+    console.error("❌ LỖI ĐĂNG NHẬP FACEBOOK:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Xác thực Facebook thất bại",
       error: error.message,
     });
   }
@@ -337,6 +428,14 @@ exports.forgotPassword = async (req, res) => {
     user.resetToken = token;
     user.resetTokenExpiry = expiry;
     await user.save();
+
+    console.log("------------------------------------------");
+    console.log("DEBUG: forgotPassword");
+    console.log("User Email:", email);
+    console.log("Generated Token:", token);
+    console.log("Expiry Set To:", expiry.toISOString());
+    console.log("Current Time (Server):", new Date().toISOString());
+    console.log("------------------------------------------");
 
     // Phản hồi ngay lập tức cho client, không chờ email gửi xong
     res.status(200).json({
@@ -693,10 +792,12 @@ exports.changePassword = async (req, res) => {
     // Verify old password
     const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch) {
-      return res.status(400).json({
-        success: false,
-        message: "Mật khẩu hiện tại không chính xác!",
-      });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Mật khẩu hiện tại không chính xác!",
+        });
     }
 
     // Validate new password

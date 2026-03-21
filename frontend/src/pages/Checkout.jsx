@@ -1,10 +1,33 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { ChevronRight, CreditCard, Truck, Receipt, Tag } from "lucide-react";
 import AddressManagement from "../components/AddressManagement";
 import toast from "react-hot-toast";
 import API_URL from "../config/apiConfig";
+
+const SectionHeading = ({ title }) => (
+  <div className="relative flex items-center justify-center z-1">
+    <div className="absolute h-px top-1/2 -left-25 -right-25 bg-primary z-1"></div>
+    <div className="border-primary relative z-2 flex w-fit items-center border-t border-b p-px bg-[#f7f4ef]">
+      <img
+        alt=""
+        src="https://honglam.vn/_next/static/media/btn47-bg-left-hover-solid.5a0f365f.png"
+        className="absolute -top-px -left-3 h-[calc(100%+2px)] w-3.5 object-contain"
+      />
+      <div className="bg-primary px-10 py-2 min-w-62.5 md:min-w-87.5">
+        <h3 className="text-xl font-bold tracking-wider text-center text-white uppercase md:text-2xl">
+          {title}
+        </h3>
+      </div>
+      <img
+        alt=""
+        src="https://honglam.vn/_next/static/media/btn47-bg-right-hover-solid.81fa6bf3.png"
+        className="absolute -top-px -right-3 h-[calc(100%+2px)] w-3.5 object-contain"
+      />
+    </div>
+  </div>
+);
 
 const Checkout = () => {
   const { cartItems, totalPrice, clearCart } = useCart();
@@ -42,12 +65,11 @@ const Checkout = () => {
     fetch(`${API_URL}/api/locations/provinces`)
       .then((r) => r.json())
       .then((d) => {
-        if (d.success) setProvinces(d.provinces || d.provinces || d);
+        if (d.success) setProvinces(d.provinces || d);
       })
-      .catch(() => { });
+      .catch((err) => console.error("fetch provinces error", err));
   }, []);
 
-  // load saved addresses for logged in users (to show address management)
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -56,18 +78,15 @@ const Checkout = () => {
         const res = await fetch(`${API_URL}/api/addresses`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const ct = res.headers.get("content-type") || "";
         if (!res.ok) return;
+        const ct = res.headers.get("content-type") || "";
         if (ct.includes("application/json")) {
           const data = await res.json();
           if (data.success) {
             setSavedAddresses((data.addresses || []).map((a) => ({ ...a, id: a._id || a.id })));
-            // pick default address as selected initially
-            const def =
-              (data.addresses || []).find((x) => x.isDefault) || (data.addresses || [])[0];
+            const def = (data.addresses || []).find((x) => x.isDefault) || (data.addresses || [])[0];
             if (def) {
               setSelectedAddress(def);
-              // push district/ward into locationSelection so shipping can calculate
               setLocationSelection((s) => ({
                 ...s,
                 districtId: def.districtId || def.district_id || "",
@@ -86,7 +105,9 @@ const Checkout = () => {
             }
           }
         }
-      } catch (e) { }
+      } catch (e) {
+        console.error("load addresses error", e);
+      }
     })();
   }, []);
 
@@ -97,7 +118,7 @@ const Checkout = () => {
         .then((d) => {
           if (d.success) setDistricts(d.districts || d);
         })
-        .catch(() => { });
+        .catch((err) => console.error("fetch districts error", err));
     }
   }, [locationSelection.provinceId]);
 
@@ -108,7 +129,7 @@ const Checkout = () => {
         .then((d) => {
           if (d.success) setWards(d.wards || d);
         })
-        .catch(() => { });
+        .catch((err) => console.error("fetch wards error", err));
     }
   }, [locationSelection.districtId]);
 
@@ -141,10 +162,11 @@ const Checkout = () => {
           setShippingFee(raw[0].total || raw[0].shipping_fee || 0);
         else if (raw && raw.total) setShippingFee(raw.total);
       }
-    } catch (e) { }
+    } catch (e) {
+      console.error("calculate shipping error", e);
+    }
   };
 
-  // Auto-calculate shipping when ward selection changes or cart changes
   useEffect(() => {
     if (locationSelection.wardCode) {
       calculateShipping();
@@ -154,7 +176,6 @@ const Checkout = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locationSelection.wardCode, cartItems]);
 
-  // when user selects an address from modal, update state and trigger shipping calc
   const handleSelectAddress = (addr) => {
     setSelectedAddress(addr);
     setShowAddressModal(false);
@@ -174,7 +195,7 @@ const Checkout = () => {
       wardCode: addr.wardCode || addr.ward_code || "",
     }));
   };
-  // 3. Xử lý thay đổi input
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -201,11 +222,17 @@ const Checkout = () => {
     fetchPromos();
   }, []);
 
+  const handleCancelPromo = () => {
+    setDiscount(0);
+    setAppliedCode("");
+    setPromoCode("");
+    toast.success("Đã huỷ bỏ mã giảm giá");
+  };
+
   const handleApplyPromo = async (codeOverride) => {
     const codeToApply = codeOverride || promoCode;
     if (!codeToApply.trim()) return;
 
-    // Nếu mã đang click là mã đã áp dụng -> Huỷ bỏ
     if (appliedCode === codeToApply) {
       handleCancelPromo();
       return;
@@ -232,28 +259,24 @@ const Checkout = () => {
         setAppliedCode("");
       }
     } catch (e) {
+      console.error("apply promo error", e);
       toast.error("Lỗi kết nối máy chủ khuyến mãi");
     } finally {
       setIsApplying(false);
     }
   };
 
-  const handleCancelPromo = () => {
-    setDiscount(0);
-    setAppliedCode("");
-    setPromoCode("");
-    toast.success("Đã huỷ bỏ mã giảm giá");
-  };
-
-  // --- TỔNG TIỀN SAU GIẢM GIÁ ---
-  // --- TỔNG TIỀN CUỐI CÙNG (Gồm ship, trừ giảm giá) ---
   const finalPrice = totalPrice + (shippingFee || 0) - discount;
 
   const handleOrder = async () => {
-    // console.log("formData", formData);
-    // require either a selectedAddress or filled address textarea
     if (!formData.fullName || !formData.phone || (!formData.address && !selectedAddress)) {
       toast.error("Vui lòng điền đầy đủ các thông tin có dấu (*)");
+      return;
+    }
+
+    const phoneDigits = (formData.phone || "").toString().replace(/\D/g, "");
+    if (!/^0\d{9}$/.test(phoneDigits)) {
+      toast.error("Số điện thoại không hợp lệ. Vui lòng kiểm tra lại.");
       return;
     }
 
@@ -265,9 +288,9 @@ const Checkout = () => {
         email: formData.email,
         address: selectedAddress
           ? (selectedAddress.street || "") +
-          (selectedAddress.ward ? ", " + selectedAddress.ward : "") +
-          (selectedAddress.district ? ", " + selectedAddress.district : "") +
-          (selectedAddress.province ? ", " + selectedAddress.province : "")
+            (selectedAddress.ward ? ", " + selectedAddress.ward : "") +
+            (selectedAddress.district ? ", " + selectedAddress.district : "") +
+            (selectedAddress.province ? ", " + selectedAddress.province : "")
           : formData.address,
         note: formData.note,
       },
@@ -281,18 +304,18 @@ const Checkout = () => {
         province: selectedAddress
           ? selectedAddress.province || null
           : provinces.find(
-            (p) => String(p.ProvinceID || p.province_id) === String(locationSelection.provinceId),
-          ) || null,
+              (p) => String(p.ProvinceID || p.province_id) === String(locationSelection.provinceId),
+            )?.ProvinceName || null,
         district: selectedAddress
           ? selectedAddress.district || null
           : districts.find(
-            (d) => String(d.DistrictID || d.district_id) === String(locationSelection.districtId),
-          ) || null,
+              (d) => String(d.DistrictID || d.district_id) === String(locationSelection.districtId),
+            )?.DistrictName || null,
         ward: selectedAddress
           ? selectedAddress.ward || null
           : wards.find(
-            (w) => String(w.WardCode || w.code) === String(locationSelection.wardCode),
-          ) || null,
+              (w) => String(w.WardCode || w.code) === String(locationSelection.wardCode),
+            )?.WardName || null,
         to_district_id: Number(locationSelection.districtId) || undefined,
         to_ward_code: locationSelection.wardCode || undefined,
         weight: cartItems.reduce((sum, it) => sum + (it.weight || 300) * (it.quantity || 1), 0),
@@ -309,69 +332,61 @@ const Checkout = () => {
 
       if (data.success) {
         if (formData.paymentMethod === "VNPAY") {
-          // GỌI API LẤY LINK VNPAY VỚI SỐ TIỀN ĐÃ GIẢM
           const resVnpay = await fetch(`${API_URL}/api/orders/vnpay-payment`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              amount: finalPrice, // SỐ TIỀN ĐÃ BAO GỒM PHÍ VẬN CHUYỂN VÀ TRỪ GIẢM GIÁ
-              orderId: data.orderId,
-            }),
+            body: JSON.stringify({ amount: finalPrice, orderId: data.orderId }),
           });
           const vnpayData = await resVnpay.json();
           if (vnpayData.vnpUrl) {
             window.location.href = vnpayData.vnpUrl;
-            return; // Dừng lại ở đây, không redirect về trang chủ
+            return;
           }
         } else {
-          // THANH TOÁN KHI NHẬN HÀNG (COD)
           toast.success("Đặt hàng thành công! Đơn hàng của bạn đang được xử lý.");
           if (clearCart) clearCart();
 
-          // Chạy lưu địa chỉ ngầm (nếu có logic AddressManagement lồng vào)
-          await (async () => {
+          if (token && savedAddresses.length === 0 && !selectedAddress) {
             try {
-              if (token && savedAddresses.length === 0 && !selectedAddress) {
-                const provinceObj = provinces.find(
-                  (p) =>
-                    String(p.ProvinceID || p.province_id) === String(locationSelection.provinceId),
-                );
-                const districtObj = districts.find(
-                  (d) =>
-                    String(d.DistrictID || d.district_id) === String(locationSelection.districtId),
-                );
-                const wardObj = wards.find(
-                  (w) => String(w.WardCode || w.code) === String(locationSelection.wardCode),
-                );
-                const body = {
-                  fullName: formData.fullName,
-                  phone: formData.phone,
-                  street: formData.address,
-                  ward: wardObj ? wardObj.WardName || wardObj.name : undefined,
-                  wardCode: locationSelection.wardCode || undefined,
-                  district: districtObj ? districtObj.DistrictName || districtObj.name : undefined,
-                  districtId:
-                    locationSelection.districtId ||
-                    (districtObj ? districtObj.DistrictID || districtObj.district_id : null),
-                  province: provinceObj ? provinceObj.ProvinceName || provinceObj.name : undefined,
-                  provinceId:
-                    locationSelection.provinceId ||
-                    (provinceObj ? provinceObj.ProvinceID || provinceObj.province_id : null),
-                  isDefault: true,
-                };
-                await fetch(`${API_URL}/api/addresses`, {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                  },
-                  body: JSON.stringify(body),
-                });
-              }
-            } catch (e) {
-              console.error("Save address after order failed", e);
+              const provinceObj = provinces.find(
+                (p) =>
+                  String(p.ProvinceID || p.province_id) === String(locationSelection.provinceId),
+              );
+              const districtObj = districts.find(
+                (d) =>
+                  String(d.DistrictID || d.district_id) === String(locationSelection.districtId),
+              );
+              const wardObj = wards.find(
+                (w) => String(w.WardCode || w.code) === String(locationSelection.wardCode),
+              );
+              const body = {
+                fullName: formData.fullName,
+                phone: formData.phone,
+                street: formData.address,
+                ward: wardObj ? wardObj.WardName || wardObj.name : undefined,
+                wardCode: locationSelection.wardCode || undefined,
+                district: districtObj ? districtObj.DistrictName || districtObj.name : undefined,
+                districtId:
+                  locationSelection.districtId ||
+                  (districtObj ? districtObj.DistrictID || districtObj.district_id : null),
+                province: provinceObj ? provinceObj.ProvinceName || provinceObj.name : undefined,
+                provinceId:
+                  locationSelection.provinceId ||
+                  (provinceObj ? provinceObj.ProvinceID || provinceObj.province_id : null),
+                isDefault: true,
+              };
+              await fetch(`${API_URL}/api/addresses`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(body),
+              });
+            } catch (err) {
+              console.error("Save address failed", err);
             }
-          })();
+          }
 
           navigate("/");
           setTimeout(() => {
@@ -381,7 +396,8 @@ const Checkout = () => {
       } else {
         toast.error(data.message || "Đặt hàng thất bại");
       }
-    } catch (error) {
+    } catch (err) {
+      console.error("create order error", err);
       toast.error("Lỗi kết nối hệ thống đặt hàng!");
     }
   };
@@ -394,7 +410,6 @@ const Checkout = () => {
         </div>
 
         <div className="flex flex-col gap-10 lg:flex-row">
-          {/* CỘT TRÁI: THÔNG TIN GIAO HÀNG */}
           <div className="space-y-8 flex-2">
             <div className="relative p-8 overflow-hidden bg-white border border-gray-200 shadow-sm rounded-xl">
               <div className="flex items-center gap-2 mb-6 text-primary">
@@ -460,9 +475,7 @@ const Checkout = () => {
                               <div className="mt-2 text-sm">
                                 {(selectedAddress.street || "") +
                                   (selectedAddress.ward ? ", " + selectedAddress.ward : "") +
-                                  (selectedAddress.district
-                                    ? ", " + selectedAddress.district
-                                    : "") +
+                                  (selectedAddress.district ? ", " + selectedAddress.district : "") +
                                   (selectedAddress.province ? ", " + selectedAddress.province : "")}
                               </div>
                             </>
@@ -560,14 +573,6 @@ const Checkout = () => {
                     </div>
                   </>
                 )}
-
-                <div className="md:col-span-2">
-                  {shippingFee !== null && (
-                    <div className="mt-2 text-sm">
-                      Phí vận chuyển ước tính: <strong>{shippingFee.toLocaleString()}đ</strong>
-                    </div>
-                  )}
-                </div>
                 <div className="md:col-span-2">
                   <label className="block mb-2 font-medium text-gray-500">Ghi chú đơn hàng</label>
                   <input
@@ -582,7 +587,6 @@ const Checkout = () => {
               </div>
             </div>
 
-            {/* PHƯƠNG THỨC THANH TOÁN */}
             <div className="p-8 bg-white border border-gray-200 shadow-sm rounded-xl">
               <div className="flex items-center gap-2 mb-6 text-primary">
                 <CreditCard size={24} />
@@ -592,7 +596,7 @@ const Checkout = () => {
               </div>
 
               <div className="space-y-4">
-                <label className="flex items-center gap-4 p-4 transition-all border-2 border-gray-100 cursor-pointer rounded-xl hover:border-secondary has-checked:border-secondary has-checked:bg-orange-50/30">
+                <label className="flex items-center gap-4 p-4 transition-all border-2 border-gray-100 cursor-pointer rounded-xl hover:border-secondary">
                   <input
                     type="radio"
                     name="paymentMethod"
@@ -609,7 +613,7 @@ const Checkout = () => {
                   </div>
                 </label>
 
-                <label className="flex items-center gap-4 p-4 transition-all border-2 border-gray-100 cursor-pointer rounded-xl hover:border-secondary has-checked:border-secondary has-checked:bg-blue-50/30">
+                <label className="flex items-center gap-4 p-4 transition-all border-2 border-gray-100 cursor-pointer rounded-xl hover:border-secondary">
                   <input
                     type="radio"
                     name="paymentMethod"
@@ -627,18 +631,15 @@ const Checkout = () => {
             </div>
           </div>
 
-          {/* CỘT PHẢI: TỔNG KẾT & MÃ GIẢM GIÁ */}
           <div className="flex-1">
             <div className="sticky p-8 overflow-hidden bg-white border shadow-lg rounded-xl border-secondary/30 top-28">
-              <div className="absolute inset-0 opacity-10 pointer-events-none bg-[url('https://www.toptal.com/designers/subtlepatterns/uploads/paper.png')]"></div>
-
               <div className="relative z-10">
                 <div className="flex items-center gap-2 pb-4 mb-6 border-b border-gray-200 border-dashed text-primary">
                   <Receipt size={22} />
                   <h3 className="text-lg font-bold uppercase">Đơn hàng của bạn</h3>
                 </div>
 
-                <div className="max-h-62.5 overflow-y-auto pr-2 custom-scrollbar mb-6 space-y-4">
+                <div className="max-h-60 overflow-y-auto pr-2 custom-scrollbar mb-6 space-y-4">
                   {cartItems.map((item) => (
                     <div
                       key={item.id}
@@ -655,8 +656,7 @@ const Checkout = () => {
                   ))}
                 </div>
 
-                {/* --- NHẬP MÃ GIẢM GIÁ --- */}
-                <div className="mb-6 p-4 bg-[#f7f4ef] rounded-2xl border border-dashed border-primary/30 shadow-inner">
+                <div className="mb-6 p-4 bg-[#f7f4ef] rounded-2xl border border-dashed border-primary/30">
                   <p className="text-[10px] font-black text-[#88694f] uppercase mb-2 flex items-center gap-1">
                     <Tag size={12} /> Mã khuyến mãi
                   </p>
@@ -666,12 +666,12 @@ const Checkout = () => {
                       value={promoCode}
                       onChange={(e) => setPromoCode(e.target.value)}
                       placeholder="NHẬP MÃ..."
-                      className="flex-1 p-2 text-xs font-bold uppercase border border-gray-300 rounded-lg outline-none focus:border-primary"
+                      className="flex-1 p-2 text-xs font-bold uppercase border border-gray-300 rounded-lg outline-none"
                     />
                     <button
                       onClick={() => handleApplyPromo()}
                       disabled={isApplying}
-                      className={`${appliedCode && promoCode === appliedCode ? "bg-stone-500" : "bg-primary"} text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase hover:bg-black transition-all disabled:bg-gray-400`}
+                      className="bg-primary text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase disabled:bg-gray-400"
                     >
                       {isApplying
                         ? "..."
@@ -681,12 +681,11 @@ const Checkout = () => {
                     </button>
                   </div>
                   {discount > 0 && (
-                    <p className="text-[10px] text-green-600 font-bold mt-2 italic flex items-center gap-1 animate-pulse">
+                    <p className="text-[10px] text-green-600 font-bold mt-2 italic">
                       ✓ Đã giảm: -{discount.toLocaleString()}đ ({appliedCode})
                     </p>
                   )}
 
-                  {/* DANH SÁCH MÃ GIẢM GIÁ KHẢ DỤNG */}
                   {availablePromos.length > 0 && (
                     <div className="pt-4 mt-4 border-t border-gray-200 border-dashed">
                       <p className="text-[9px] font-black text-[#88694f] uppercase mb-3 text-center">
@@ -697,15 +696,14 @@ const Checkout = () => {
                           <div
                             key={promo._id}
                             onClick={() => handleApplyPromo(promo.code)}
-                            className={`p-3 rounded-xl border-2 transition-all cursor-pointer group flex items-center justify-between ${appliedCode === promo.code
-                              ? "border-primary bg-red-50"
-                              : "border-white bg-white hover:border-secondary shadow-sm"
-                              }`}
+                            className={`p-3 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between ${
+                              appliedCode === promo.code
+                                ? "border-primary bg-red-50"
+                                : "border-white bg-white hover:border-secondary"
+                            }`}
                           >
                             <div className="flex items-center gap-3">
-                              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary">
-                                <Tag size={16} />
-                              </div>
+                              <Tag size={16} className="text-primary" />
                               <div>
                                 <p className="text-[11px] font-black text-primary uppercase">
                                   {promo.code}
@@ -716,14 +714,11 @@ const Checkout = () => {
                               </div>
                             </div>
                             <div
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleApplyPromo(promo.code);
-                              }}
-                              className={`text-[9px] font-black px-3 py-1 rounded-full transition-all ${appliedCode === promo.code
-                                ? "bg-primary text-white"
-                                : "bg-gray-100 text-[#88694f] group-hover:bg-secondary group-hover:text-white"
-                                }`}
+                              className={`text-[9px] font-black px-3 py-1 rounded-full ${
+                                appliedCode === promo.code
+                                  ? "bg-primary text-white"
+                                  : "bg-gray-100 text-[#88694f]"
+                              }`}
                             >
                               {appliedCode === promo.code ? "ĐÃ ÁP DỤNG" : "ÁP DỤNG"}
                             </div>
@@ -734,14 +729,13 @@ const Checkout = () => {
                   )}
                 </div>
 
-                {/* TỔNG TIỀN CHI TIẾT */}
-                <div className="pb-6 space-y-3 text-sm border-b border-secondary/20">
+                <div className="pb-6 space-y-3 text-sm border-b border-primary/20">
                   <div className="flex justify-between italic text-gray-500">
                     <span>Tạm tính:</span>
                     <span className="font-bold text-gray-800">{totalPrice.toLocaleString()}đ</span>
                   </div>
                   {discount > 0 && (
-                    <div className="flex justify-between italic font-medium text-green-600">
+                    <div className="flex justify-between italic text-green-600">
                       <span>Giảm giá:</span>
                       <span>-{discount.toLocaleString()}đ</span>
                     </div>
@@ -752,7 +746,7 @@ const Checkout = () => {
                       {shippingFee === null
                         ? "Đang tính..."
                         : shippingFee > 0
-                          ? shippingFee.toLocaleString() + 'đ'
+                          ? shippingFee.toLocaleString() + "đ"
                           : "Miễn phí"}
                     </span>
                   </div>
@@ -767,18 +761,12 @@ const Checkout = () => {
 
                 <button
                   onClick={handleOrder}
-                  className="flex items-center justify-center w-full gap-2 py-4 text-lg font-bold text-white transition-all rounded-full shadow-lg bg-primary hover:bg-red-800 shadow-red-100 active:scale-95"
+                  className="flex items-center justify-center w-full gap-2 py-4 text-lg font-bold text-white transition-all rounded-full bg-primary hover:bg-black active:scale-95"
                 >
                   XÁC NHẬN ĐẶT HÀNG
                 </button>
 
-                <p className="text-[10px] text-gray-400 mt-6 text-center leading-relaxed">
-                  Bằng cách nhấn đặt hàng, bạn đồng ý với{" "}
-                  <span className="font-bold underline cursor-pointer text-primary">
-                    Điều khoản dịch vụ
-                  </span>
-                </p>
-                <div className="flex justify-center mt-4">
+                <div className="flex justify-center mt-6">
                   <Link to="/cart" className="text-[#88694f] text-xs font-bold hover:underline">
                     ← Quay về giỏ hàng
                   </Link>
@@ -787,56 +775,30 @@ const Checkout = () => {
             </div>
           </div>
         </div>
-        {/* Address management modal */}
-        {
-          showAddressModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-              <div className="w-full max-w-3xl p-6">
-                <div className="relative bg-white shadow-lg rounded-2xl">
-                  <div className="flex items-center justify-between p-4 border-b">
-                    <h3 className="font-bold">Địa chỉ của tôi</h3>
-                    <button onClick={() => setShowAddressModal(false)} className="px-3 py-1">
-                      ✕
-                    </button>
-                  </div>
-                  <div className="p-6">
-                    <AddressManagement
-                      user={savedUser}
-                      selectable={true}
-                      onSelect={handleSelectAddress}
-                    />
-                  </div>
+        {showAddressModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="w-full max-w-3xl p-6">
+              <div className="relative bg-white shadow-lg rounded-2xl">
+                <div className="flex items-center justify-between p-4 border-b">
+                  <h3 className="font-bold">Địa chỉ của tôi</h3>
+                  <button onClick={() => setShowAddressModal(false)} className="px-3 py-1">
+                    ✕
+                  </button>
+                </div>
+                <div className="p-6">
+                  <AddressManagement
+                    user={savedUser}
+                    selectable={true}
+                    onSelect={handleSelectAddress}
+                  />
                 </div>
               </div>
             </div>
-          )
-        }
+          </div>
+        )}
       </div>
     </div>
   );
 };
-
-const SectionHeading = ({ title }) => (
-  <div className="relative flex items-center justify-center z-1">
-    <div className="absolute h-px top-1/2 -left-25 -right-25 bg-primary z-1"></div>
-    <div className="border-primary relative z-2 flex w-fit items-center border-t border-b p-px bg-[#f7f4ef]">
-      <img
-        alt=""
-        src="https://honglam.vn/_next/static/media/btn47-bg-left-hover-solid.5a0f365f.png"
-        className="absolute -top-px -left-3 h-[calc(100%+2px)] w-3.5 object-contain"
-      />
-      <div className="bg-primary px-10 py-2 min-w-62.5 md:min-w-87.5">
-        <h3 className="text-xl font-bold tracking-wider text-center text-white uppercase md:text-2xl">
-          {title}
-        </h3>
-      </div>
-      <img
-        alt=""
-        src="https://honglam.vn/_next/static/media/btn47-bg-right-hover-solid.81fa6bf3.png"
-        className="absolute -top-px -right-3 h-[calc(100%+2px)] w-3.5 object-contain"
-      />
-    </div>
-  </div>
-);
 
 export default Checkout;

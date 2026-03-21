@@ -25,7 +25,7 @@ const OrderSchema = new mongoose.Schema(
     ],
     totalPrice: { type: Number, required: true },
     paymentMethod: { type: String, default: "COD" },
-    status: { type: String, default: "PENDING" },
+    status: { type: String, default: "PENDING" }, // PENDING, CONFIRMED, DELIVERING, COMPLETED, CANCELLED
     promoCode: { type: String, default: null },
     trackingHistory: [
       {
@@ -34,7 +34,7 @@ const OrderSchema = new mongoose.Schema(
         time: { type: Date, default: Date.now },
       },
     ],
-    ghnOrderCode: String,
+    ghnOrderCode: String, // Mã đơn hàng từ GHN sau khi tạo đơn
     shipping: {
       ghnOrderCode: { type: String },
       shippingFee: { type: Number, default: 0 },

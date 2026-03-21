@@ -29,6 +29,8 @@ const PromotionManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
+
   const [formData, setFormData] = useState({
     code: "",
     discountType: "AMOUNT",
@@ -191,7 +193,7 @@ const PromotionManagement = () => {
       <div className="bg-white/80 backdrop-blur-md p-6 rounded-[32px] shadow-sm border border-[#9d0b0f]/5 flex flex-col lg:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full">
           <Search
-            className="absolute text-gray-400 -translate-y-1/2 left-4 top-1/2"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
             size={18}
           />
           <input
@@ -206,7 +208,7 @@ const PromotionManagement = () => {
           />
         </div>
 
-        <div className="flex w-full gap-3 lg:w-auto">
+        <div className="flex gap-3 w-full lg:w-auto">
           <select
             value={statusFilter}
             onChange={(e) => {
@@ -238,18 +240,14 @@ const PromotionManagement = () => {
 
       {/* GRID HIỂN THỊ */}
       {loading ? (
-        <div className="flex flex-col items-center py-20 italic text-gray-400">
-          <RefreshCcw className="mb-2 animate-spin" /> Đang tải khuyến mãi...
-        </div>
-      ) : currentItems.length === 0 ? (
         <div className="bg-white rounded-[32px] p-20 text-center border-2 border-dashed border-stone-200">
-          <Ticket size={48} className="mx-auto mb-4 text-stone-200" />
-          <p className="italic font-medium text-stone-400">
+          <Ticket size={48} className="mx-auto text-stone-200 mb-4" />
+          <p className="text-stone-400 font-medium italic">
             Không tìm thấy mã giảm giá nào khớp với yêu cầu.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {currentItems.map((promo) => {
             const isExpired = new Date(promo.endDate) < new Date();
             const isOut =
@@ -262,7 +260,7 @@ const PromotionManagement = () => {
                 className="relative bg-white rounded-[32px] shadow-sm border border-stone-200 overflow-hidden group hover:shadow-xl transition-all"
               >
                 {/* Actions Overlay */}
-                <div className="absolute z-10 flex gap-2 transition-opacity opacity-0 top-3 right-3 group-hover:opacity-100">
+                <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                   <button
                     onClick={() => openModal(promo)}
                     className="p-2.5 bg-white/90 rounded-xl text-blue-600 shadow-md hover:bg-blue-600 hover:text-white transition-all"
@@ -280,7 +278,7 @@ const PromotionManagement = () => {
                 <div
                   className={`bg-gradient-to-br ${isInactive ? "from-gray-400 to-gray-600" : "from-[#9d0b0f] to-[#f39200]"} p-6 text-white`}
                 >
-                  <div className="flex items-start justify-between">
+                  <div className="flex justify-between items-start">
                     <h3 className="text-3xl font-black tracking-tighter">
                       {promo.discountType === "AMOUNT"
                         ? `${promo.discountValue / 1000}K`
@@ -359,7 +357,7 @@ const PromotionManagement = () => {
         </div>
       )}
 
-      {/* MODAL FORM (Giữ nguyên cấu trúc xịn của bạn nhưng thêm mô tả) */}
+      {/* MODAL FORM */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-[#f7f4ef] w-full max-w-lg rounded-[40px] overflow-hidden shadow-2xl border-2 border-[#9d0b0f] animate-zoomIn">

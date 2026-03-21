@@ -132,6 +132,7 @@ const UserManagement = () => {
     setIsModalOpen(true);
   };
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -243,13 +244,14 @@ const UserManagement = () => {
           >
             <RefreshCcw size={20} className={loading ? "animate-spin" : ""} />
           </button>
+
         </div>
       </div>
 
       {/* Stats Quick View */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="p-4 text-blue-600 bg-blue-50 rounded-2xl">
+          <div className="bg-blue-50 p-4 rounded-2xl text-blue-600">
             <Users size={24} />
           </div>
           <div>
@@ -257,12 +259,12 @@ const UserManagement = () => {
               Tổng khách hàng
             </p>
             <h3 className="text-2xl font-black text-[#3e2714]">
-              {customerCount}
+              {users.filter((u) => u.role === "CUSTOMER").length}
             </h3>
           </div>
         </div>
         <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="p-4 text-green-600 bg-green-50 rounded-2xl">
+          <div className="bg-green-50 p-4 rounded-2xl text-green-600">
             <CheckCircle size={24} />
           </div>
           <div>
@@ -270,12 +272,16 @@ const UserManagement = () => {
               Hoạt động
             </p>
             <h3 className="text-2xl font-black text-[#3e2714]">
-              {activeCount}
+              {
+                users.filter(
+                  (u) => u.role === "CUSTOMER" && u.status === "ACTIVE",
+                ).length
+              }
             </h3>
           </div>
         </div>
         <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="p-4 text-yellow-600 bg-yellow-50 rounded-2xl">
+          <div className="bg-yellow-50 p-4 rounded-2xl text-yellow-600">
             <AlertCircle size={24} />
           </div>
           <div>
@@ -283,22 +289,30 @@ const UserManagement = () => {
               Tạm khóa
             </p>
             <h3 className="text-2xl font-black text-[#3e2714]">
-              {lockedCount}
+              {
+                users.filter(
+                  (u) => u.role === "CUSTOMER" && u.status === "LOCKED",
+                ).length
+              }
             </h3>
           </div>
         </div>
         <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="p-4 text-red-600 bg-red-50 rounded-2xl">
+          <div className="bg-red-50 p-4 rounded-2xl text-red-600">
             <Shield size={24} />
           </div>
           <div>
             <p className="text-[10px] font-black uppercase text-gray-400">
               Cấp quản trị
             </p>
-            <h3 className="text-2xl font-black text-[#3e2714]">{adminCount}</h3>
+            <h3 className="text-2xl font-black text-[#3e2714]">
+              {users.filter((u) => u.role !== "CUSTOMER").length}
+            </h3>
           </div>
         </div>
       </div>
+
+      {/* Tìm kiếm */}
 
       {/* Tìm kiếm */}
 
@@ -421,13 +435,12 @@ const UserManagement = () => {
                     </td>
                     <td className="px-8 py-6 text-center">
                       <span
-                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold flex items-center justify-center gap-1 mx-auto w-fit ${
-                          user.role === "ADMIN"
-                            ? "bg-red-100 text-red-600 border border-red-200"
-                            : user.role === "STAFF"
-                              ? "bg-blue-100 text-blue-600 border border-blue-200"
-                              : "bg-gray-100 text-gray-600 border border-gray-200"
-                        }`}
+                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold flex items-center justify-center gap-1 mx-auto w-fit ${user.role === "ADMIN"
+                          ? "bg-red-100 text-red-600 border border-red-200"
+                          : user.role === "STAFF"
+                            ? "bg-blue-100 text-blue-600 border border-blue-200"
+                            : "bg-gray-100 text-gray-600 border border-gray-200"
+                          }`}
                       >
                         <Shield size={12} />
                         {user.role}
@@ -435,11 +448,10 @@ const UserManagement = () => {
                     </td>
                     <td className="px-8 py-6 text-center">
                       <span
-                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold mx-auto w-fit block ${
-                          user.status === "ACTIVE"
-                            ? "bg-green-100 text-green-600 border border-green-200"
-                            : "bg-yellow-100 text-yellow-600 border border-yellow-200"
-                        }`}
+                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold mx-auto w-fit block ${user.status === "ACTIVE"
+                          ? "bg-green-100 text-green-600 border border-green-200"
+                          : "bg-yellow-100 text-yellow-600 border border-yellow-200"
+                          }`}
                       >
                         {user.status === "ACTIVE"
                           ? "ĐANG HOẠT ĐỘNG"
@@ -464,11 +476,10 @@ const UserManagement = () => {
                         </button>
                         <button
                           onClick={() => handleToggleStatus(user)}
-                          className={`p-2 transition-all rounded-xl ${
-                            user.status === "ACTIVE"
-                              ? "text-orange-500 hover:bg-orange-50"
-                              : "text-green-500 hover:bg-green-50"
-                          }`}
+                          className={`p-2 transition-all rounded-xl ${user.status === "ACTIVE"
+                            ? "text-orange-500 hover:bg-orange-50"
+                            : "text-green-500 hover:bg-green-50"
+                            }`}
                           title={
                             user.status === "ACTIVE"
                               ? "Khóa tài khoản"
@@ -523,11 +534,10 @@ const UserManagement = () => {
                     <button
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
-                      className={`w-10 h-10 rounded-xl text-sm font-bold transition-all shadow-sm ${
-                        currentPage === pageNum
-                          ? "bg-[#9d0b0f] text-white"
-                          : "bg-white text-[#9d0b0f] border border-[#9d0b0f]/20 hover:bg-red-50"
-                      }`}
+                      className={`w-10 h-10 rounded-xl text-sm font-bold transition-all shadow-sm ${currentPage === pageNum
+                        ? "bg-[#9d0b0f] text-white"
+                        : "bg-white text-[#9d0b0f] border border-[#9d0b0f]/20 hover:bg-red-50"
+                        }`}
                     >
                       {pageNum}
                     </button>
@@ -558,7 +568,6 @@ const UserManagement = () => {
           </div>
         </div>
       )}
-
       {/* MODAL THÊM / SỬA NGƯỜI DÙNG */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center p-4 z-100">
@@ -611,11 +620,13 @@ const UserManagement = () => {
                   </label>
                   <input
                     required
-                    className="w-full px-5 py-4 bg-gray-100 text-gray-500 rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all shadow-sm font-medium"
+                    className="w-full px-5 py-4 bg-white rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all shadow-sm font-medium"
                     type="email"
                     placeholder="example@gmail.com"
-                    disabled
                     value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
                   />
                 </div>
 
@@ -663,10 +674,11 @@ const UserManagement = () => {
                         setFormData({ ...formData, role: e.target.value })
                       }
                     >
-                      <option value="CUSTOMER">Khách hàng</option>
+                      <option value="CUSTOMER">Khách hàng</option>
+                      <option value="STAFF">Nhân viên</option>
                       <option value="ADMIN">Quản trị viên</option>
-                    </select>
-                  </div>
+                    </select >
+                  </div >
                   <div>
                     <label className="block text-[10px] font-black text-[#9d0b0f] uppercase mb-2 tracking-widest">
                       Trạng thái
@@ -682,8 +694,8 @@ const UserManagement = () => {
                       <option value="LOCKED">Tạm khóa</option>
                     </select>
                   </div>
-                </div>
-              </div>
+                </div >
+              </div >
 
               <button
                 disabled={submitting}
@@ -701,11 +713,11 @@ const UserManagement = () => {
                   "Tạo quản trị viên"
                 )}
               </button>
-            </form>
-          </div>
-        </div>
+            </form >
+          </div >
+        </div >
       )}
-    </div>
+    </div >
   );
 };
 

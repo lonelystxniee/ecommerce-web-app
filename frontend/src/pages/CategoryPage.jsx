@@ -1,8 +1,8 @@
-<<<<<<< HEAD
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useSearchParams } from "react-router-dom";
 import {
   ChevronRight,
+  ChevronLeft,
   Filter,
   ChevronDown,
   ShoppingBag,
@@ -11,12 +11,6 @@ import {
 } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
-=======
-import React, { useState, useEffect } from 'react'
-import { useParams, Link, useSearchParams } from 'react-router-dom'
-import { ChevronRight, Filter, ChevronDown, ShoppingBag, RefreshCcw } from 'lucide-react'
-import { useCart } from '../context/CartContext'
->>>>>>> 91e2ba82c8cfae43ed94887101aed516cdb41d84
 
 import toast from 'react-hot-toast'
 import API_URL from '../config/apiConfig'
@@ -25,21 +19,20 @@ const CategoryPage = () => {
   const { slug } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
 
-<<<<<<< HEAD
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const [isCatOpen, setIsCatOpen] = useState(true);
   const [isPriceOpen, setIsPriceOpen] = useState(true);
-=======
-  const { addToCart } = useCart()
-  const [isCatOpen, setIsCatOpen] = useState(true)
-  const [isPriceOpen, setIsPriceOpen] = useState(true)
->>>>>>> 91e2ba82c8cfae43ed94887101aed516cdb41d84
 
   const [products, setProducts] = useState([])
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [currentCategory, setCurrentCategory] = useState(null)
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalProducts: 0
+  })
 
   const [filters, setFilters] = useState({
     minPrice: searchParams.get('minPrice') || '',
@@ -95,11 +88,17 @@ const CategoryPage = () => {
     try {
       const params = new URLSearchParams(searchParams)
       params.append('categoryId', currentCategory._id)
+      if (!params.has('page')) params.append('page', '1')
 
       const response = await fetch(`${API_URL}/api/products/search?${params.toString()}`)
       const data = await response.json()
       if (data.success) {
         setProducts(data.products)
+        setPagination(data.pagination || {
+          currentPage: 1,
+          totalPages: 1,
+          totalProducts: data.products.length
+        })
       }
     } catch (error) {
       console.error('Lỗi khi lấy sản phẩm:', error)
@@ -117,6 +116,12 @@ const CategoryPage = () => {
     const newParams = new URLSearchParams(searchParams)
     if (value) newParams.set(name, value)
     else newParams.delete(name)
+
+    // Reset page to 1 when any filter other than 'page' changes
+    if (name !== 'page') {
+      newParams.delete('page')
+    }
+
     setSearchParams(newParams)
   }
 
@@ -262,71 +267,110 @@ const CategoryPage = () => {
               <div className="w-10 h-10 border-4 rounded-full border-primary border-t-transparent animate-spin"></div>
             </div>
           ) : products.length > 0 ? (
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
-              {products.map((p) => {
-                const displayPrice = p.price || 0
-                const displayImage = p.images?.[0] || p.image || ''
+            <>
+              <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
+                {products.map((p) => {
+                  const displayPrice = p.price || 0
+                  const displayImage = p.images?.[0] || p.image || ''
 
-                return (
-                  <div
-                    key={p._id}
-                    className="bg-white p-2 border border-transparent hover:border-[#faa51980] hover:shadow-md transition-all flex flex-col group h-full"
-                  >
-                    <Link to={`/product/${p._id}`} className="relative block overflow-hidden">
-                      <img
-                        src={displayImage}
-                        className="object-contain w-full transition-transform duration-500 aspect-square group-hover:scale-105"
-                        alt={p.productName || p.name}
-                      />
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          toggleWishlist(p._id);
-                        }}
-                        className="absolute top-2 right-2 p-1.5 bg-white/80 hover:bg-white rounded-full shadow-sm z-10 transition-all active:scale-90"
-                      >
-                        <Heart
-                          size={16}
-                          className={isInWishlist(p._id) ? "text-[#9d0b0f] fill-[#9d0b0f]" : "text-gray-400"}
+                  return (
+                    <div
+                      key={p._id}
+                      className="bg-white p-2 border border-transparent hover:border-[#faa51980] hover:shadow-md transition-all flex flex-col group h-full"
+                    >
+                      <Link to={`/product/${p._id}`} className="relative block overflow-hidden">
+                        <img
+                          src={displayImage}
+                          className="object-contain w-full transition-transform duration-500 aspect-square group-hover:scale-105"
+                          alt={p.productName || p.name}
                         />
-                      </button>
-                    </Link>
-                    <div className="flex flex-col flex-1 p-2 text-center">
-                      <Link
-                        to={`/product/${p._id}`}
-                        className="font-bold text-sm text-[#3e2714] line-clamp-1 hover:text-primary transition-colors mb-1"
-                      >
-                        {p.productName || p.name}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toggleWishlist(p._id);
+                          }}
+                          className="absolute top-2 right-2 p-1.5 bg-white/80 hover:bg-white rounded-full shadow-sm z-10 transition-all active:scale-90"
+                        >
+                          <Heart
+                            size={16}
+                            className={isInWishlist(p._id) ? "text-[#9d0b0f] fill-[#9d0b0f]" : "text-gray-400"}
+                          />
+                        </button>
                       </Link>
-                      <p className="text-[11px] text-gray-400 italic mb-3 line-clamp-1">
-                        {p.slogan || 'Tinh hoa quà Việt'}
-                      </p>
+                      <div className="flex flex-col flex-1 p-2 text-center">
+                        <Link
+                          to={`/product/${p._id}`}
+                          className="font-bold text-sm text-[#3e2714] line-clamp-1 hover:text-primary transition-colors mb-1"
+                        >
+                          {p.productName || p.name}
+                        </Link>
+                        <p className="text-[11px] text-gray-400 italic mb-3 line-clamp-1">
+                          {p.slogan || 'Tinh hoa quà Việt'}
+                        </p>
 
-                      <p className="mt-auto mb-4 text-base font-black text-primary">
-                        Chỉ từ {displayPrice.toLocaleString()}đ
-                      </p>
+                        <p className="mt-auto mb-4 text-base font-black text-primary">
+                          Chỉ từ {displayPrice.toLocaleString()}đ
+                        </p>
 
-                      <button
-                        onClick={() => {
-                          addToCart({
-                            ...p,
-                            id: `${p._id}-default`,
-                            price: displayPrice,
-                            image: displayImage,
-                            name: p.productName || p.name,
-                          })
-                          toast.success(`Đã thêm ${p.productName || p.name} vào giỏ!`)
-                        }}
-                        className="w-full border border-primary text-primary text-[11px] font-bold uppercase py-2 rounded-full hover:bg-primary hover:text-white transition-all active:scale-95 shadow-sm"
-                      >
-                        Mua nhanh
-                      </button>
+                        <button
+                          onClick={() => {
+                            addToCart({
+                              ...p,
+                              id: `${p._id}-default`,
+                              price: displayPrice,
+                              image: displayImage,
+                              name: p.productName || p.name,
+                            })
+                            toast.success(`Đã thêm ${p.productName || p.name} vào giỏ!`)
+                          }}
+                          className="w-full border border-primary text-primary text-[11px] font-bold uppercase py-2 rounded-full hover:bg-primary hover:text-white transition-all active:scale-95 shadow-sm"
+                        >
+                          Mua nhanh
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
+
+              {/* Pagination Controls */}
+              {pagination.totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-12 pb-8">
+                  <button
+                    onClick={() => handleFilterChange('page', Math.max(1, pagination.currentPage - 1))}
+                    disabled={pagination.currentPage === 1}
+                    className="p-2 rounded-full border border-gray-200 bg-white text-gray-400 hover:text-primary hover:border-primary transition-all disabled:opacity-20 disabled:pointer-events-none"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+
+                  {[...Array(pagination.totalPages)].map((_, i) => {
+                    const pNum = i + 1
+                    return (
+                      <button
+                        key={pNum}
+                        onClick={() => handleFilterChange('page', pNum)}
+                        className={`w-10 h-10 rounded-full font-bold text-xs transition-all ${pagination.currentPage === pNum
+                          ? 'bg-primary text-white shadow-lg scale-110'
+                          : 'bg-white text-gray-400 border border-gray-200 hover:border-primary hover:text-primary'
+                          }`}
+                      >
+                        {pNum}
+                      </button>
+                    )
+                  })}
+
+                  <button
+                    onClick={() => handleFilterChange('page', Math.min(pagination.totalPages, pagination.currentPage + 1))}
+                    disabled={pagination.currentPage === pagination.totalPages}
+                    className="p-2 rounded-full border border-gray-200 bg-white text-gray-400 hover:text-primary hover:border-primary transition-all disabled:opacity-20 disabled:pointer-events-none"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="py-32 text-center text-gray-400 bg-white border border-gray-200 border-dashed rounded-lg">
               <ShoppingBag size={48} className="mx-auto mb-4 opacity-10" />

@@ -149,17 +149,8 @@ exports.createGHNOrder = async (orderId) => {
 // 2. Lấy hành trình thực tế từ máy chủ GHN
 exports.getGHNTracking = async (orderCode) => {
     try {
-        const response = await axios.post(
-            "https://dev-online-gateway.ghn.vn/shiip/public-api/v2/shipping-order/detail",
-            { order_code: String(orderCode) },
-            {
-                headers: {
-                    Token: process.env.GHN_TOKEN,
-                    "Content-Type": "application/json",
-                },
-            },
-        );
-        return response.data.code === 200 ? response.data.data : null;
+        const response = await ghnService.getOrderDetail(orderCode);
+        return response?.code === 200 ? response.data : null;
     } catch (error) {
         return null;
     }
@@ -167,12 +158,13 @@ exports.getGHNTracking = async (orderCode) => {
 
 // 3. Ép GHN chuyển trạng thái tiếp theo (Leadtime)
 exports.leadtimeGHNOrder = async (orderCode) => {
+    // Note: This logic seems specific to dev sandbox testing
     try {
+        const axios = require('axios');
         const response = await axios.post(
             "https://dev-online-gateway.ghn.vn/shiip/public-api/v2/shipping-order/leadtime",
             {
                 order_code: String(orderCode),
-                // PHẢI KHỚP VỚI to_district_id 1442 lúc createGHNOrder
                 to_district_id: 1442,
                 to_ward_code: "20101",
             },

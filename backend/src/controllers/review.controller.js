@@ -157,7 +157,7 @@ exports.deleteReviewUser = async (req, res) => {
     try {
         const { id } = req.params;
         const userID = req.user._id || req.user.id;
-        
+
         const review = await Review.findOneAndDelete({ _id: id, userID });
         if (!review) {
             return res.status(404).json({ success: false, message: "Không tìm thấy đánh giá hoặc bạn không có quyền xóa!" });
@@ -207,7 +207,7 @@ exports.getUserReviews = async (req, res) => {
 exports.getPendingReviews = async (req, res) => {
     try {
         const userID = req.user._id || req.user.id;
-        
+
         // 1. Get all reviews of the user to know what they already reviewed
         const userReviews = await Review.find({ userID }).select("productID");
         const reviewedProductIds = userReviews.map(r => r.productID.toString());
@@ -226,8 +226,8 @@ exports.getPendingReviews = async (req, res) => {
             if (order.items && Array.isArray(order.items)) {
                 order.items.forEach(item => {
                     if (!item.id) return;
-                    
-                    let productIdStr = item.id.toString(); 
+
+                    let productIdStr = item.id.toString();
                     // Extract base product ID if it has a variant attached
                     if (productIdStr.includes('-')) {
                         productIdStr = productIdStr.split('-')[0];

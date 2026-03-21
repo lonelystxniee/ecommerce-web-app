@@ -4,7 +4,6 @@ import { ChevronRight, Mail, ArrowLeft, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import API_URL from "../config/apiConfig";
 
-
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,7 +32,6 @@ const ForgotPassword = () => {
         toast.error(data.message || "Đã có lỗi xảy ra");
       }
     } catch (error) {
-      console.log(error);
       toast.error("Lỗi kết nối Server!");
     } finally {
       setLoading(false);
@@ -59,7 +57,7 @@ const ForgotPassword = () => {
           <h1 className="text-2xl font-black text-[#800a0d] tracking-tight mb-3">
             Quên mật khẩu?
           </h1>
-          <p className="text-sm italic font-medium text-gray-500">
+          <p className="text-gray-500 text-sm italic font-medium">
             {submitted
               ? "Hãy kiểm tra hộp thư đến của bạn để thực hiện các bước tiếp theo."
               : "Nhập email của bạn để nhận liên kết đặt lại mật khẩu mới cho tài khoản ClickGo của bạn."}
@@ -98,8 +96,8 @@ const ForgotPassword = () => {
           </form>
         ) : (
           <div className="space-y-6 text-center">
-            <div className="p-4 border border-green-100 bg-green-50 rounded-2xl">
-              <p className="text-sm font-bold text-green-700">
+            <div className="p-4 bg-green-50 border border-green-100 rounded-2xl">
+              <p className="text-green-700 text-sm font-bold">
                 Chúng tôi đã gửi link đặt lại mật khẩu tới hòm thư: <br />
                 <span className="text-[#800a0d]">{email}</span>
               </p>
@@ -113,7 +111,7 @@ const ForgotPassword = () => {
           </div>
         )}
 
-        <div className="pt-6 mt-10 text-center border-t border-gray-100">
+        <div className="mt-10 pt-6 border-t border-gray-100 text-center">
           <Link
             to="/"
             className="inline-flex items-center gap-2 text-[#88694f] text-sm font-bold hover:text-[#800a0d] transition-colors"

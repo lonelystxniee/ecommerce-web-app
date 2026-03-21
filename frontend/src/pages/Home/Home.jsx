@@ -1,6 +1,6 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useCart } from '../../context/CartContext';
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useCart } from "../../context/CartContext";
 import {
   Truck,
   Headset,
@@ -9,20 +9,21 @@ import {
   ChevronRight,
   Filter,
   SlidersHorizontal,
-} from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { useRef } from 'react';
+  Trophy,
+} from "lucide-react";
+import { useState, useEffect } from "react";
+import { useRef } from "react";
+import API_URL from "../../config/apiConfig";
 
-import Hero from './Hero';
-import CategorySection from './CategorySection';
-import { ProductItemSmall } from './ProductItemSmall';
-import API_URL from '../../config/apiConfig';
+import Hero from "./Hero";
+import CategorySection from "./CategorySection";
+import { ProductItemSmall } from "./ProductItemSmall";
 
 export const SectionHeading = ({ title, outlined }) => (
   <div className="relative flex items-center justify-center my-10 z-1">
     <hr className="z-0 flex-1 w-40 h-px mr-3 border-primary" />
     <div
-      className={`${outlined ? 'bg-transparent' : 'bg-section'} border-primary relative z-99 flex w-fit items-center border-t border-b p-px
+      className={`${outlined ? "bg-transparent" : "bg-section"} border-primary relative z-99 flex w-fit items-center border-t border-b p-px
           
         `}
     >
@@ -30,8 +31,8 @@ export const SectionHeading = ({ title, outlined }) => (
         alt="left"
         src={
           outlined
-            ? 'https://honglam.vn/_next/static/media/btn41-bg-left-hover.a799d898.png'
-            : 'https://honglam.vn/_next/static/media/btn47-bg-left-hover-solid.5a0f365f.png'
+            ? "https://honglam.vn/_next/static/media/btn41-bg-left-hover.a799d898.png"
+            : "https://honglam.vn/_next/static/media/btn47-bg-left-hover-solid.5a0f365f.png"
         }
         className="absolute -top-px -left-3 h-[calc(100%+2px)] w-[14px] object-contain"
       />
@@ -39,14 +40,14 @@ export const SectionHeading = ({ title, outlined }) => (
         alt="right"
         src={
           outlined
-            ? 'https://honglam.vn/_next/static/media/btn41-bg-right-hover.5de6cf95.png'
-            : 'https://honglam.vn/_next/static/media/btn47-bg-right-hover-solid.81fa6bf3.png'
+            ? "https://honglam.vn/_next/static/media/btn41-bg-right-hover.5de6cf95.png"
+            : "https://honglam.vn/_next/static/media/btn47-bg-right-hover-solid.81fa6bf3.png"
         }
         className="absolute -top-px -right-3 h-[calc(100%+2px)] w-3.5 object-contain"
       />
       <div className="px-6 flex items-center justify-center min-w-50 md:min-w-77.5 h-10">
         <h3
-          className={`${outlined ? 'text-primary' : 'text-white'} text-xl md:text-2xl lg:text-[30px] capitalize font-seagull font-bold tracking-tighter leading-none flex items-center`}
+          className={`${outlined ? "text-primary" : "text-white"} text-xl md:text-2xl lg:text-[30px] capitalize font-seagull font-bold tracking-tighter leading-none flex items-center`}
         >
           {title}
         </h3>
@@ -64,6 +65,7 @@ const Home = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [ads, setAds] = useState([]);
 
   // Pagination and Filter states
   const [paginatedProducts, setPaginatedProducts] = useState([]);
@@ -71,13 +73,18 @@ const Home = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [isPaginatedLoading, setIsPaginatedLoading] = useState(false);
   const [filters, setFilters] = useState({
-    categoryId: '',
-    minPrice: '',
-    maxPrice: '',
-    sort: 'newest',
+    categoryId: "",
+    minPrice: "",
+    maxPrice: "",
+    sort: "newest",
   });
 
   const allProductRef = useRef();
+
+  useEffect(() => {
+    // Scroll to top on mount
+    window.scrollTo(0, 0);
+  }, []);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -89,6 +96,8 @@ const Home = () => {
 
         const prodData = await prodRes.json();
         const catData = await catRes.json();
+        const adsRes = await fetch(`${API_URL}/api/ads`);
+        const adsData = await adsRes.json();
 
         if (prodData.success) {
           const mapped = prodData.products.map((p) => ({
@@ -98,7 +107,7 @@ const Home = () => {
             image:
               p.images && p.images.length > 0
                 ? p.images[0]
-                : p.image || 'https://via.placeholder.com/300',
+                : p.image || "https://via.placeholder.com/300",
           }));
           setAllProducts(mapped);
           setProducts(mapped);
@@ -109,11 +118,15 @@ const Home = () => {
         }
 
         if (!prodData.success && !catData.success) {
-          setError('Failed to fetch data');
+          setError("Failed to fetch data");
+        }
+
+        if (adsData.success) {
+          setAds(adsData.ads);
         }
       } catch (err) {
-        setError('Error connecting to the server');
-        console.error('Fetch error:', err);
+        setError("Error connecting to the server");
+        console.error("Fetch error:", err);
       } finally {
         setLoading(false);
       }
@@ -128,7 +141,7 @@ const Home = () => {
       let url = `${API_URL}/api/products?page=${page}&limit=12`;
 
       const { categoryId, minPrice, maxPrice, sort } = filters;
-      if (categoryId || minPrice || maxPrice || sort !== 'newest') {
+      if (categoryId || minPrice || maxPrice || sort !== "newest") {
         const queryParams = new URLSearchParams({
           page,
           limit: 12,
@@ -150,23 +163,32 @@ const Home = () => {
           image:
             p.images && p.images.length > 0
               ? p.images[0]
-              : p.image || 'https://via.placeholder.com/300',
+              : p.image || "https://via.placeholder.com/300",
         }));
         setPaginatedProducts(mapped);
         setTotalPages(data.pagination.totalPages);
         setCurrentPage(data.pagination.currentPage);
       }
     } catch (err) {
-      console.error('Fetch paginated products error:', err);
+      console.error("Fetch paginated products error:", err);
     } finally {
       setIsPaginatedLoading(false);
     }
   };
 
+  const leftSidebarAds = ads.filter(
+    (ad) =>
+      ad.type === "sidebar" && ad.status === "ACTIVE" && ad.position === 1,
+  );
+  const rightSidebarAds = ads.filter(
+    (ad) =>
+      ad.type === "sidebar" && ad.status === "ACTIVE" && ad.position === 2,
+  );
+
   const scrollIntoAllProducts = () => {
     allProductRef.current.scrollIntoView({
-      block: 'start',
-      behavior: 'smooth',
+      block: "start",
+      behavior: "smooth",
     });
   };
 
@@ -198,8 +220,42 @@ const Home = () => {
 
   return (
     <div className="min-h-screen pb-20 bg-transparent">
+      {/* QUẢNG CÁO SIDEBAR TRÁI  */}
+      <div className="hidden min-[1400px]:block fixed left-4 top-[20%] z-50 w-35">
+        {leftSidebarAds.map((ad) => (
+          <a
+            href={ad.link}
+            key={ad._id}
+            className="block mb-4 transition-transform hover:scale-105"
+          >
+            <img
+              src={ad.image}
+              alt={ad.title}
+              className="w-full h-auto rounded-lg shadow-lg border border-stone-200"
+            />
+          </a>
+        ))}
+      </div>
+
+      {/* QUẢNG CÁO SIDEBAR PHẢI  */}
+      <div className="hidden min-[1400px]:block fixed right-4 top-[20%] z-50 w-35">
+        {rightSidebarAds.map((ad) => (
+          <a
+            href={ad.link}
+            key={ad._id}
+            className="block mb-4 transition-transform hover:scale-105"
+          >
+            <img
+              src={ad.image}
+              alt={ad.title}
+              className="w-full h-auto rounded-lg shadow-lg border border-stone-200"
+            />
+          </a>
+        ))}
+      </div>
+
       {/* HERO */}
-      <Hero categories={categories} />
+      <Hero categories={categories} ads={ads} />
       {/* SECTION 2: SERVICE BAR */}
       <div className="mx-auto mt-2.5 max-w-300 px-4">
         <div className="relative bg-[rgba(255,255,255,.6)]">
@@ -315,7 +371,9 @@ const Home = () => {
               <h3 className="relative mb-1 md:text-[26px] font-bold tracking-tight uppercase z-1 font-seagull ">
                 {products[1]?.name}
               </h3>
-              <p className="relative mb-2 text-sm md:text-[15px] z-1">{products[1]?.slogan}</p>
+              <p className="relative mb-2 text-sm md:text-[15px] z-1">
+                {products[1]?.slogan}
+              </p>
 
               <img
                 src={products[1]?.images?.[0] || products[1]?.image}
@@ -361,11 +419,11 @@ const Home = () => {
       </div>
 
       {/* SECTION 8: TẤT CẢ SẢN PHẨM (PAGINATION) */}
-      <div ref={allProductRef} className="px-4 mx-auto mt-35 max-w-300">
+      <div ref={allProductRef} className="px-4 mx-auto mt-20 max-w-300">
         <SectionHeading title="Khám phá tất cả sản phẩm" />
 
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8 bg-white/50 p-6 rounded-[32px] border border-[#e0be91]/30 backdrop-blur-sm">
-          <div className="flex flex-wrap items-center w-full gap-4 md:w-auto">
+          <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
             <div className="flex flex-col gap-1">
               <span className="text-[10px] font-black uppercase text-[#88694f] ml-1 tracking-widest">
                 Danh mục
@@ -420,7 +478,7 @@ const Home = () => {
             </div>
           </div>
 
-          <div className="flex flex-col w-full gap-1 md:w-auto">
+          <div className="flex flex-col gap-1 w-full md:w-auto">
             <span className="text-[10px] font-black uppercase text-[#88694f] ml-1 tracking-widest">
               Sắp xếp
             </span>
@@ -462,7 +520,7 @@ const Home = () => {
                       scrollIntoAllProducts();
                     }}
                     disabled={currentPage === 1}
-                    className={`px-4 py-2 rounded-lg border text-sm font-bold cursor-pointer transition-all ${currentPage === 1 ? 'text-gray-300 border-gray-100 cursor-not-allowed' : 'text-primary border-gray-200 hover:bg-primary hover:text-white'}`}
+                    className={`px-4 py-2 rounded-lg border text-sm font-bold cursor-pointer transition-all ${currentPage === 1 ? "text-gray-300 border-gray-100 cursor-not-allowed" : "text-primary border-gray-200 hover:bg-primary hover:text-white"}`}
                   >
                     Trước
                   </button>
@@ -474,7 +532,7 @@ const Home = () => {
                         setCurrentPage(i + 1);
                         scrollIntoAllProducts();
                       }}
-                      className={`w-10 h-10 cursor-pointer rounded-lg border text-sm font-bold transition-all ${currentPage === i + 1 ? 'bg-primary text-white border-primary' : 'text-gray-500 border-gray-200 hover:border-primary hover:text-primary'}`}
+                      className={`w-10 h-10 cursor-pointer rounded-lg border text-sm font-bold transition-all ${currentPage === i + 1 ? "bg-primary text-white border-primary" : "text-gray-500 border-gray-200 hover:border-primary hover:text-primary"}`}
                     >
                       {i + 1}
                     </button>
@@ -486,7 +544,7 @@ const Home = () => {
                       scrollIntoAllProducts();
                     }}
                     disabled={currentPage === totalPages}
-                    className={`px-4 py-2 rounded-lg cursor-pointer border text-sm font-bold transition-all ${currentPage === totalPages ? 'text-gray-300 border-gray-100 cursor-not-allowed' : 'text-primary border-gray-200 hover:bg-primary hover:text-white'}`}
+                    className={`px-4 py-2 rounded-lg cursor-pointer border text-sm font-bold transition-all ${currentPage === totalPages ? "text-gray-300 border-gray-100 cursor-not-allowed" : "text-primary border-gray-200 hover:bg-primary hover:text-white"}`}
                   >
                     Sau
                   </button>
@@ -499,11 +557,12 @@ const Home = () => {
       </div>
 
       {/* SECTION 4: GIẢI PHÁP QUÀ TẶNG */}
-      <div className="px-4 mx-auto mt-20 text-center max-w-300">
+      <div className="px-4 mx-auto text-center mt-30 max-w-300">
         <SectionHeading title="Thực phẩm tươi sạch" />
         <p className="text-secondary-2 my-5 hidden px-[12%] text-center text-sm lg:block text-gray-600 font-light leading-relaxed italic">
-          ClickGo Mart cam kết cung cấp các loại thực phẩm tươi sạch mỗi ngày, đảm bảo an toàn vệ
-          sinh và nguồn gốc rõ ràng cho bữa ăn gia đình bạn thêm trọn vẹn.
+          ClickGo Mart cam kết cung cấp các loại thực phẩm tươi sạch mỗi ngày,
+          đảm bảo an toàn vệ sinh và nguồn gốc rõ ràng cho bữa ăn gia đình bạn
+          thêm trọn vẹn.
         </p>
         <div className="grid grid-cols-1 gap-8 mt-10 md:grid-cols-3">
           {products.slice(5, 8).map((p) => (
@@ -521,7 +580,7 @@ const Home = () => {
             to="/category/giai-phap-qua-tang"
             className="hover:text-primary group inline-flex items-center gap-2 text-base text-[#917359] font-bold transition-all underline-offset-4"
           >
-            Xem tất cả sản phẩm{' '}
+            Xem tất cả sản phẩm{" "}
             <img
               src="https://honglam.vn/_next/static/media/btn-more.c2bbf147.png"
               className="h-4 transition-all group-hover:translate-x-2"
@@ -534,25 +593,27 @@ const Home = () => {
       {/* DYNAMIC CATEGORY SECTIONS */}
       {categories.slice(0, 4).map((cat, index) => {
         const banners = [
-          'https://cdn.honglam.vn/honglam/HL_5_04_1_91ecb38969.jpg',
-          'https://cdn.honglam.vn/honglam/Anh_web_Banh_keo_2_d4d154866e.jpg',
-          'https://cdn.honglam.vn/honglam/Anh_web_Tra_1_a6f8a30e3a.jpg',
-          'https://cdn.honglam.vn/honglam/Tet_website_ab5d5cb5d1.jpg',
+          "https://cdn.honglam.vn/honglam/HL_5_04_1_91ecb38969.jpg",
+          "https://cdn.honglam.vn/honglam/Anh_web_Banh_keo_2_d4d154866e.jpg",
+          "https://cdn.honglam.vn/honglam/Anh_web_Tra_1_a6f8a30e3a.jpg",
+          "https://cdn.honglam.vn/honglam/Tet_website_ab5d5cb5d1.jpg",
         ];
 
         const getSlug = (name) => {
-          return (name || '')
+          return (name || "")
             .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/[đĐ]/g, 'd')
-            .replace(/([^a-z0-9\s-]|(?<=\s)\s)/g, '')
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[đĐ]/g, "d")
+            .replace(/([^a-z0-9\s-]|(?<=\s)\s)/g, "")
             .trim()
-            .replace(/\s+/g, '-');
+            .replace(/\s+/g, "-");
         };
 
         const categoryProducts = allProducts.filter((p) =>
-          (p.categoryID || []).some((c) => c._id === cat._id || c.name === cat.name),
+          (p.categoryID || []).some(
+            (c) => c._id === cat._id || c.name === cat.name,
+          ),
         );
 
         if (categoryProducts.length === 0) return null;
@@ -577,7 +638,10 @@ const Home = () => {
 
           <div className="flex-1 hidden h-px -ml-1 bg-primary z-1 md:block"></div>
 
-          <a href="/tap-chi-hong-lam" className="hidden text-sm text-primary text-nowrap md:block">
+          <a
+            href="/tap-chi-hong-lam"
+            className="hidden text-sm text-primary text-nowrap md:block"
+          >
             Xem thêm
           </a>
 
@@ -608,9 +672,9 @@ const Home = () => {
               </a>
 
               <div className="mt-2 text-sm text-secondary-2 line-clamp-3">
-                Ngày 14/12 vừa qua, ClickGo Mart chính thức khai trương chi nhánh mới tại khu vực
-                Lạc Long Quân, mang đến không gian mua sắm hiện đại và tiện lợi cho người dân thủ
-                đô…
+                Ngày 14/12 vừa qua, ClickGo Mart chính thức khai trương chi
+                nhánh mới tại khu vực Lạc Long Quân, mang đến không gian mua sắm
+                hiện đại và tiện lợi cho người dân thủ đô…
               </div>
             </div>
           </div>
@@ -636,8 +700,8 @@ const Home = () => {
               </a>
 
               <div className="mt-2 text-sm text-secondary-2 line-clamp-3">
-                Ô mai Hồng Lam tham gia Hội nghị EFSC 2025 ngày 14–15/11, lan tỏa tinh hoa quà Việt
-                đến đông đảo đối tác và khách tham quan…
+                Ô mai Hồng Lam tham gia Hội nghị EFSC 2025 ngày 14–15/11, lan
+                tỏa tinh hoa quà Việt đến đông đảo đối tác và khách tham quan…
               </div>
             </div>
           </div>
@@ -659,12 +723,14 @@ const Home = () => {
                 href="/hong-lam-chung-tay-ho-tro-truong-mam-non-kim-lu-thai-nguyen-sau-bao-lu"
                 className="text-base font-bold transition-all text-secondary-2 group-hover:text-primary line-clamp-2 md:text-lg"
               >
-                ClickGo Mart đồng hành cùng cộng đồng trong các hoạt động an sinh xã hội
+                ClickGo Mart đồng hành cùng cộng đồng trong các hoạt động an
+                sinh xã hội
               </a>
 
               <div className="mt-2 text-sm text-secondary-2 line-clamp-3">
-                Không chỉ chú trọng vào chất lượng sản phẩm, ClickGo Mart còn luôn tích cực tham gia
-                các hoạt động thiện nguyện, hỗ trợ những hoàn cảnh khó khăn tại nhiều địa phương…
+                Không chỉ chú trọng vào chất lượng sản phẩm, ClickGo Mart còn
+                luôn tích cực tham gia các hoạt động thiện nguyện, hỗ trợ những
+                hoàn cảnh khó khăn tại nhiều địa phương…
               </div>
             </div>
           </div>
@@ -679,7 +745,10 @@ const Home = () => {
 
           <div className="flex-1 hidden h-px -ml-1 bg-primary z-1 md:block"></div>
 
-          <a href="/video" className="hidden text-sm text-primary text-nowrap md:block">
+          <a
+            href="/video"
+            className="hidden text-sm text-primary text-nowrap md:block"
+          >
             Xem thêm
           </a>
 
@@ -714,7 +783,9 @@ const Home = () => {
                     <path d="M6 4v16a1 1 0 0 0 1.524.852l13-8a1 1 0 0 0 0-1.704l-13-8A1 1 0 0 0 6 4z" />
                   </svg>
                 </div>
-                <span className="text-xl font-bold text-primary">Click Go gửi dáng quê nhà</span>
+                <span className="text-xl font-bold text-primary">
+                  Click Go gửi dáng quê nhà
+                </span>
               </div>
             </a>
 
@@ -722,18 +793,27 @@ const Home = () => {
             <div className="grid grid-cols-2 gap-3">
               {[
                 {
-                  title: 'Ô mai Click Go - Bốn khúc tinh hoa',
-                  link: '/o-mai-hong-lam-bon-khuc-tinh-hoa',
-                  img: 'https://cdn.honglam.vn/honglam/hqdefault_e8477e15b1.jpg',
+                  title: "Ô mai Click Go - Bốn khúc tinh hoa",
+                  link: "/o-mai-hong-lam-bon-khuc-tinh-hoa",
+                  img: "https://cdn.honglam.vn/honglam/hqdefault_e8477e15b1.jpg",
                 },
                 {
-                  title: 'The Best Friends | Cuộc thi làm Clip "Ơn thầy nghĩa bạn"',
-                  link: '/the-best-friends-cuoc-thi-lam-clip-on-thay-nghia-ban-o-mai-hong-lam',
-                  img: 'https://cdn.honglam.vn/honglam/hqdefault_f5fa524c39.jpg',
+                  title:
+                    'The Best Friends | Cuộc thi làm Clip "Ơn thầy nghĩa bạn"',
+                  link: "/the-best-friends-cuoc-thi-lam-clip-on-thay-nghia-ban-o-mai-hong-lam",
+                  img: "https://cdn.honglam.vn/honglam/hqdefault_f5fa524c39.jpg",
                 },
               ].map((video, index) => (
-                <a key={index} href={video.link} className="relative block cursor-pointer group">
-                  <img src={video.img} alt={video.title} className="object-cover w-full h-40" />
+                <a
+                  key={index}
+                  href={video.link}
+                  className="relative block cursor-pointer group"
+                >
+                  <img
+                    src={video.img}
+                    alt={video.title}
+                    className="object-cover w-full h-40"
+                  />
 
                   <div className="flex items-center gap-2 mt-2">
                     <div className="bg-primary group-hover:bg-secondary w-fit rounded-full p-1.5 transition-all">
@@ -748,7 +828,9 @@ const Home = () => {
                         <path d="M6 4v16a1 1 0 0 0 1.524.852l13-8a1 1 0 0 0 0-1.704l-13-8A1 1 0 0 0 6 4z" />
                       </svg>
                     </div>
-                    <span className="font-medium line-clamp-2 text-primary">{video.title}</span>
+                    <span className="font-medium line-clamp-2 text-primary">
+                      {video.title}
+                    </span>
                   </div>
                 </a>
               ))}
@@ -762,7 +844,7 @@ const Home = () => {
 
 const ServiceItem = ({ img, text, last }) => (
   <div
-    className={`flex items-center gap-3 justify-center ${!last ? 'border-r border-[#ded3c2]' : ''} px-4 py-2`}
+    className={`flex items-center gap-3 justify-center ${!last ? "border-r border-[#ded3c2]" : ""} px-4 py-2`}
   >
     <img src={img} className="h-8" alt="" />
     <div className="text-primary uppercase text-[11px] font-bold text-left leading-tight">
@@ -786,11 +868,15 @@ const OrangeCard = ({ product }) => {
         <h3 className="relative text-xs font-bold sm:text-base lg:text-xl whitespace-nowrap z-1">
           {product?.name}
         </h3>
-        <p className="relative text-xs lg:text-[15px] z-1 text-red">{product?.slogan}</p>
+        <p className="relative text-xs lg:text-[15px] z-1 text-red">
+          {product?.slogan}
+        </p>
 
-        <p className="md:text-xs lg:text-[15px] relative z-1 md:block hidden">Chỉ từ</p>
+        <p className="md:text-xs lg:text-[15px] relative z-1 md:block hidden">
+          Chỉ từ
+        </p>
         <p className="relative text-xl lg:text-[30px] z-1 font-uvnvan italic mb-2">
-          {product?.price.toLocaleString('vi')}đ
+          {product?.price.toLocaleString("vi")}đ
         </p>
         <button
           onClick={() => navigate(`/product/${product.id}`)}
@@ -816,8 +902,9 @@ const GiftCard = ({ id, title, price, img }) => {
     <div
       className="group relative mx-1 mt-10 p-0.5 shadow-sm transition-all hover:shadow-xl"
       style={{
-        boxShadow: 'rgb(250, 165, 25) 0px 0px 0px 1px',
-        background: 'linear-gradient(to left, rgb(253, 216, 155), rgb(251, 242, 226))',
+        boxShadow: "rgb(250, 165, 25) 0px 0px 0px 1px",
+        background:
+          "linear-gradient(to left, rgb(253, 216, 155), rgb(251, 242, 226))",
       }}
     >
       {/* TIÊU ĐỀ MÀU CAM */}
@@ -860,7 +947,9 @@ const GiftCard = ({ id, title, price, img }) => {
           className="absolute left-0 object-cover w-full h-8 bottom-full z-3"
           alt=""
         />
-        <p className="text-[#88694f] font-bold text-sm italic">Chỉ từ {price}K</p>
+        <p className="text-[#88694f] font-bold text-sm italic">
+          Chỉ từ {price}K
+        </p>
 
         {/* NÚT BẤM: Sửa thành điều hướng sang trang chi tiết */}
         <button
@@ -874,4 +963,36 @@ const GiftCard = ({ id, title, price, img }) => {
   );
 };
 
-export default Home;
+{
+  /* FLOATING LUCKY WHEEL BUTTON */
+}
+const LuckyWheelButton = () => {
+  return (
+    <Link
+      to="/lucky-wheel"
+      className="fixed bottom-24 right-6 z-[100] flex flex-col items-center group"
+    >
+      <div className="relative">
+        <div className="absolute inset-0 bg-[#f39200] rounded-full blur-lg opacity-40 group-hover:opacity-70 animate-pulse"></div>
+        <div className="relative bg-gradient-to-br from-[#9d0b0f] to-[#f39200] p-4 rounded-full shadow-2xl border-4 border-white transform group-hover:scale-110 transition-all duration-300 active:scale-95">
+          <Trophy className="text-white w-8 h-8 md:w-10 md:h-10 animate-bounce" />
+        </div>
+        <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-white px-4 py-2 rounded-xl shadow-xl border border-[#9d0b0f]/20 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0 pointer-events-none">
+          <p className="text-[#9d0b0f] font-black text-xs uppercase tracking-widest">
+            Săn Voucher 🎁
+          </p>
+          <div className="absolute top-1/2 -right-2 -translate-y-1/2 w-4 h-4 bg-white rotate-45 border-r border-t border-[#9d0b0f]/20"></div>
+        </div>
+      </div>
+    </Link>
+  );
+};
+
+const HomeWithButton = () => (
+  <>
+    <Home />
+    <LuckyWheelButton />
+  </>
+);
+
+export default HomeWithButton;
