@@ -146,7 +146,6 @@ exports.importExcel = async (req, res) => {
           if (categoryMap[name]) {
             categoryIds.push(categoryMap[name]);
           } else {
-            // Category does not exist, create it
             try {
               const newCategory = await Category.create({ name: name });
               categoryMap[name] = newCategory._id; // Update map for future rows

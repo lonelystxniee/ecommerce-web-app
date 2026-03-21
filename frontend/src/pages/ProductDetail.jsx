@@ -47,12 +47,14 @@ const ProductDetail = () => {
         const data = await res.json();
         if (data.success) {
           setProduct(data.product);
-          // Initialize quantities based on the number of variants
+          // Initialize quantities based on available variants with stock > 0
+          let availableVariants = [];
           if (data.product.variants && data.product.variants.length > 0) {
-            setQuantities(new Array(data.product.variants.length).fill(0));
+            availableVariants = data.product.variants.filter(v => v.stock > 0);
           } else {
-            setQuantities([0]);
+            availableVariants = [{ label: "Giá gốc", price: data.product.price, stock: data.product.quantity || 0 }].filter(v => v.stock > 0);
           }
+          setQuantities(new Array(availableVariants.length).fill(0));
         }
       } catch (error) {
         console.error("Lỗi lấy chi tiết sản phẩm:", error);
@@ -73,9 +75,9 @@ const ProductDetail = () => {
         const res = await fetch(`${API_URL}/api/products/search?categoryId=${categoryId}&limit=6`);
         const data = await res.json();
         if (data.success) {
-          // Filter out the current product and limit to 5
+          // Filter out the current product, limit to 5 and only show products in stock
           const filtered = data.products
-            .filter(p => p._id !== id)
+            .filter(p => p._id !== id && p.quantity > 0)
             .slice(0, 5);
           setRelatedProducts(filtered);
         }
@@ -255,13 +257,16 @@ const ProductDetail = () => {
 
   // Logic: Use variants from backend, fallback to flat fields if none
   const variants = product?.variants && product.variants.length > 0
-    ? product.variants
-    : (product ? [{ label: "Giá gốc", price: product.price }] : []);
+    ? product.variants.filter(v => v.stock > 0)
+    : (product ? [{ label: "Giá gốc", price: product.price, stock: product.quantity || 0 }].filter(v => v.stock > 0) : []);
 
   const updateQty = (index, delta) => {
     const newQty = [...quantities];
-    newQty[index] = Math.max(0, newQty[index] + delta);
-    setQuantities(newQty);
+    const newAmount = newQty[index] + delta;
+    if (newAmount >= 0 && newAmount <= variants[index].stock) {
+      newQty[index] = newAmount;
+      setQuantities(newQty);
+    }
   };
 
   const handleCopyLink = () => {
@@ -415,66 +420,84 @@ const ProductDetail = () => {
             </p>
 
             <div className="bg-[#efe7db] rounded-lg p-1 shadow-inner overflow-hidden">
-              <table className="w-full text-[13px]">
-                <thead>
-                  <tr className="text-[#88694f] font-bold border-b border-gray-300">
-                    <th className="py-2 text-left pl-3 uppercase text-[10px]">
-                      Khối lượng
-                    </th>
-                    <th className="py-2 text-center uppercase text-[10px]">
-                      Giá
-                    </th>
-                    <th className="py-2 text-center uppercase text-[10px]">
-                      Số lượng
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {variants.map((v, i) => (
-                    <tr key={i} className="font-bold hover:bg-white/30">
-                      <td className="py-4 pl-3 text-gray-700">{v.label}</td>
-                      <td className="py-4 text-center text-primary">
-                        {v.price.toLocaleString()}đ
-                      </td>
-                      <td className="flex justify-center py-4">
-                        <div className="flex items-center overflow-hidden bg-white border border-gray-300 rounded">
-                          <button
-                            onClick={() => updateQty(i, -1)}
-                            className="px-2 py-1 text-gray-400 border-r"
-                          >
-                            <Minus size={12} />
-                          </button>
-                          <span className="w-8 text-center">
-                            {quantities[i]}
-                          </span>
-                          <button
-                            onClick={() => updateQty(i, 1)}
-                            className="px-2 py-1 text-gray-400 border-l"
-                          >
-                            <Plus size={12} />
-                          </button>
-                        </div>
-                      </td>
+              {variants.length > 0 ? (
+                <table className="w-full text-[13px]">
+                  <thead>
+                    <tr className="text-[#88694f] font-bold border-b border-gray-300">
+                      <th className="py-2 text-left pl-3 uppercase text-[10px]">
+                        Phân loại
+                      </th>
+                      <th className="py-2 text-center uppercase text-[10px]">
+                        Giá
+                      </th>
+                      <th className="py-2 text-center uppercase text-[10px]">
+                        Còn lại
+                      </th>
+                      <th className="py-2 text-center uppercase text-[10px]">
+                        Số lượng
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {variants.map((v, i) => (
+                      <tr key={i} className="font-bold hover:bg-white/30">
+                        <td className="py-4 pl-3 text-gray-700">{v.label}</td>
+                        <td className="py-4 text-center text-primary">
+                          {v.price.toLocaleString()}đ
+                        </td>
+                        <td className="py-4 text-center font-medium text-gray-700">
+                          {v.stock}
+                        </td>
+                        <td className="flex justify-center py-4">
+                          <div className="flex items-center overflow-hidden bg-white border border-gray-300 rounded">
+                            <button
+                              onClick={() => updateQty(i, -1)}
+                              className="px-2 py-1 text-gray-400 border-r"
+                            >
+                              <Minus size={12} />
+                            </button>
+                            <span className="w-8 text-center bg-white">
+                              {quantities[i]}
+                            </span>
+                            <button
+                              onClick={() => updateQty(i, 1)}
+                              className="px-2 py-1 text-gray-400 border-l"
+                            >
+                              <Plus size={12} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="p-6 text-center text-red-500 font-bold text-lg bg-white/50">
+                  Sản phẩm hiện tại đã hết hàng!
+                </div>
+              )}
             </div>
 
             <div className="mt-8">
-              <p className="mb-6 text-xl italic font-bold">
-                Thành tiền:{" "}
-                <span className="text-2xl font-black text-primary">
-                  {calculateTotal().toLocaleString()}đ
-                </span>
-              </p>
+              {variants.length > 0 && (
+                <p className="mb-6 text-xl italic font-bold">
+                  Thành tiền:{" "}
+                  <span className="text-2xl font-black text-primary">
+                    {calculateTotal().toLocaleString()}đ
+                  </span>
+                </p>
+              )}
               <div className="flex gap-3">
-                <button
-                  onClick={() => handleAction("add_to_cart")}
-                  className="flex-1 bg-[#f39200] text-white py-4 rounded-md font-bold uppercase tracking-widest shadow-lg active:scale-95"
-                >
-                  Thêm vào giỏ
-                </button>
+                {variants.length > 0 ? (
+                  <button
+                    onClick={() => handleAction("add_to_cart")}
+                    className="flex-1 bg-[#f39200] text-white py-4 rounded-md font-bold uppercase tracking-widest shadow-lg active:scale-95"
+                  >
+                    Thêm vào giỏ
+                  </button>
+                ) : (
+                  <div className="flex-1" />
+                )}
                 <button
                   onClick={() => toggleWishlist(product._id)}
                   className={`px-4 py-4 rounded-md shadow-lg transition-all active:scale-95 border-2 ${isInWishlist(product._id)
