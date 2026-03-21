@@ -1,7 +1,11 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
+
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import ChatWidget from "./components/ChatWidget";
+import ChatAiWidget from "./components/ChatAiWidget";
 import Home from "./pages/Home/Home";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
@@ -15,10 +19,9 @@ import AccountPage from "./pages/AccountPage";
 import ResetPassword from "./pages/ResetPassword";
 import SearchPage from "./pages/SearchPage";
 import ForgotPassword from "./pages/ForgotPassword";
-import LuckyWheel from "./pages/LuckyWheel";
 import OrderTracking from "./pages/OrderTracking";
 import VnpayReturn from "./pages/VnpayReturn";
-import { Toaster } from "react-hot-toast";
+import AdminOrders from "./pages/AdminOrders";
 
 function App() {
   return (
@@ -42,12 +45,13 @@ function App() {
                 <Route path="/profile" element={<AccountPage />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/lucky-wheel" element={<LuckyWheel />} />
                 <Route path="/order-tracking/:id" element={<OrderTracking />} />
                 <Route path="/vnpay-return" element={<VnpayReturn />} />
               </Routes>
             </main>
             <Footer />
+            <ChatWidget />
+            <ChatAiWidget />
             <ScrollToTop />
             <Toaster
               position="top-right"

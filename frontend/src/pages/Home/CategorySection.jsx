@@ -1,16 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
-import { SectionHeading } from "./Home";
-import { ProductItemSmall } from "./ProductItemSmall";
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { ChevronRight } from 'lucide-react';
+import { SectionHeading } from './Home';
+import { ProductItemSmall } from './ProductItemSmall';
 
-const CategorySection = ({
-  title,
-  subtitle,
-  bannerImage,
-  products,
-  categoryLink,
-}) => {
+const CategorySection = ({ title, subtitle, bannerImage, products, categoryLink }) => {
   const [itemsPerSlide, setItemsPerSlide] = useState(3);
 
   useEffect(() => {
@@ -23,8 +17,8 @@ const CategorySection = ({
     };
 
     handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const totalSlides = Math.ceil(products.length / itemsPerSlide);
@@ -47,9 +41,7 @@ const CategorySection = ({
   return (
     <div className="px-4 mx-auto mt-16 text-center max-w-300">
       <SectionHeading title={title} />
-      {subtitle && (
-        <p className="text-[#88694f] my-1 text-center text-sm">{subtitle}</p>
-      )}
+      {subtitle && <p className="text-[#88694f] my-1 text-center text-sm">{subtitle}</p>}
 
       <div className="flex items-stretch h-auto gap-6 mt-10">
         {/* Banner Column (Left) */}
@@ -70,7 +62,7 @@ const CategorySection = ({
               <>
                 <button
                   onClick={prevSlide}
-                  className={`absolute w-10 h-10 -translate-y-1/2 cursor-pointer top-1/2 -left-3 md:-left-5 z-10 transition-all duration-300 hover:scale-110 ${slideIndex === 0 ? "opacity-0 pointer-events-none" : "opacity-100"}`}
+                  className={`absolute w-10 h-10 -translate-y-1/2 cursor-pointer top-1/2 -left-3 md:-left-5 z-10 transition-all duration-300 hover:scale-110 ${slideIndex === 0 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
                 >
                   <img
                     alt="prev"
@@ -80,7 +72,7 @@ const CategorySection = ({
                 </button>
                 <button
                   onClick={nextSlide}
-                  className={`absolute w-10 h-10 -translate-y-1/2 cursor-pointer top-1/2 -right-3 md:-right-5 z-10 transition-all duration-300 hover:scale-110 ${slideIndex === totalSlides - 1 ? "opacity-0 pointer-events-none" : "opacity-100"}`}
+                  className={`absolute w-10 h-10 -translate-y-1/2 cursor-pointer top-1/2 -right-3 md:-right-5 z-10 transition-all duration-300 hover:scale-110 ${slideIndex === totalSlides - 1 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
                 >
                   <img
                     alt="next"
@@ -108,10 +100,7 @@ const CategorySection = ({
                     }}
                   >
                     {products
-                      .slice(
-                        i * itemsPerSlide,
-                        i * itemsPerSlide + itemsPerSlide,
-                      )
+                      .slice(i * itemsPerSlide, i * itemsPerSlide + itemsPerSlide)
                       .map((p) => (
                         <ProductItemSmall key={p.id || p.name} product={p} />
                       ))}
@@ -133,8 +122,8 @@ const CategorySection = ({
                   <img
                     src={
                       slideIndex === i
-                        ? "https://honglam.vn/_next/static/media/slick-dot-active.e0c701e2.png"
-                        : "https://honglam.vn/_next/static/media/slick-dot.1e11291d.png"
+                        ? 'https://honglam.vn/_next/static/media/slick-dot-active.e0c701e2.png'
+                        : 'https://honglam.vn/_next/static/media/slick-dot.1e11291d.png'
                     }
                     className="w-4"
                     alt={`dot-${i}`}
@@ -152,7 +141,7 @@ const CategorySection = ({
           to={categoryLink}
           className="hover:text-primary group inline-flex items-center gap-2 text-base text-[#917359] font-bold transition-all underline-offset-4"
         >
-          Xem tất cả sản phẩm{" "}
+          Xem tất cả sản phẩm{' '}
           <img
             src="https://honglam.vn/_next/static/media/btn-more.c2bbf147.png"
             className="h-4 transition-all group-hover:translate-x-2"

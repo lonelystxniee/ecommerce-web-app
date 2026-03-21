@@ -22,6 +22,15 @@ const AdminManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [activeCount, setActiveCount] = useState(0);
+  const [lockedCount, setLockedCount] = useState(0);
+  const [adminCount, setAdminCount] = useState(0);
+  const [limit] = useState(5);
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [sortOrder, setSortOrder] = useState("newest");
 
   // State cho Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -46,17 +55,28 @@ const AdminManagement = () => {
       const token = localStorage.getItem("token");
       if (!token) return;
 
-      const response = await fetch(`${API_URL}/api/auth/users`, {
+      const params = new URLSearchParams({
+        page: currentPage,
+        limit: limit,
+        search: searchTerm,
+        role: "ADMIN", // Only fetch admins
+        status: statusFilter === "ALL" ? "" : statusFilter,
+        sort: sortOrder,
+      });
+
+      const response = await fetch(`${API_URL}/api/auth/users?${params}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       const data = await response.json();
-      // Lọc chỉ lấy ADMIN và STAFF
       if (data.success) {
-        setUsers(
-          data.users.filter((u) => u.role === "ADMIN" || u.role === "STAFF"),
-        );
+        setUsers(data.users);
+        setTotalPages(data.totalPages);
+        setTotalUsers(data.totalUsers);
+        setActiveCount(data.activeCount);
+        setLockedCount(data.lockedCount);
+        setAdminCount(data.adminCount);
       }
     } catch (error) {
       console.error(error);
@@ -66,9 +86,16 @@ const AdminManagement = () => {
   };
 
   useEffect(() => {
-    fetchUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const timeoutId = setTimeout(() => {
+      fetchUsers();
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [currentPage, searchTerm, statusFilter, sortOrder]);
+
+  // Reset to page 1 when filters or search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, sortOrder]);
 
   const handleOpenAddModal = () => {
     setEditMode(false);
@@ -193,11 +220,7 @@ const AdminManagement = () => {
     }
   };
 
-  const filteredUsers = users.filter(
-    (user) =>
-      user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  const displayUsers = users;
 
   return (
     <div className="p-6 space-y-6 animate-fadeIn">
@@ -238,7 +261,7 @@ const AdminManagement = () => {
               Tổng Quản trị
             </p>
             <h3 className="text-2xl font-black text-[#3e2714]">
-              {users.length}
+              {adminCount >= 0 ? adminCount : totalUsers}
             </h3>
           </div>
         </div>
@@ -251,7 +274,7 @@ const AdminManagement = () => {
               Đang hoạt động
             </p>
             <h3 className="text-2xl font-black text-[#3e2714]">
-              {users.filter((u) => u.status === "ACTIVE").length}
+              {activeCount}
             </h3>
           </div>
         </div>
@@ -264,7 +287,7 @@ const AdminManagement = () => {
               Đang bị khóa
             </p>
             <h3 className="text-2xl font-black text-[#3e2714]">
-              {users.filter((u) => u.status === "LOCKED").length}
+              {lockedCount}
             </h3>
           </div>
         </div>
@@ -272,18 +295,45 @@ const AdminManagement = () => {
 
       {/* Tìm kiếm */}
       <div className="bg-white/80 p-6 rounded-3xl shadow-sm border border-[#9d0b0f]/10">
-        <div className="relative max-w-2xl">
-          <Search
-            className="absolute left-4 top-3.5 text-[#9d0b0f]"
-            size={20}
-          />
-          <input
-            type="text"
-            placeholder="Tìm kiếm quản trị viên..."
-            className="w-full pl-12 pr-4 py-3.5 bg-[#f7f4ef] rounded-2xl outline-none focus:border-[#f39200] border-2 border-transparent transition-all"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex flex-col gap-4 md:flex-row">
+          <div className="relative flex-1">
+            <Search
+              className="absolute left-4 top-3.5 text-[#9d0b0f]"
+              size={20}
+            />
+            <input
+              type="text"
+              placeholder="Tìm kiếm quản trị viên..."
+              className="w-full pl-12 pr-4 py-3.5 bg-[#f7f4ef] rounded-2xl outline-none focus:border-[#f39200] border-2 border-transparent transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-wrap gap-4">
+            <div className="min-w-[160px]">
+              <select
+                className="w-full px-4 py-3.5 bg-[#f7f4ef] rounded-2xl outline-none focus:border-[#f39200] border-2 border-transparent transition-all font-bold text-[#3e2714]"
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+              >
+                <option value="newest">Mới nhất</option>
+                <option value="oldest">Cũ nhất</option>
+                <option value="name_asc">Tên A-Z</option>
+                <option value="name_desc">Tên Z-A</option>
+              </select>
+            </div>
+            <div className="min-w-[160px]">
+              <select
+                className="w-full px-4 py-3.5 bg-[#f7f4ef] rounded-2xl outline-none focus:border-[#f39200] border-2 border-transparent transition-all font-bold text-[#3e2714]"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="ALL">Tất cả trạng thái</option>
+                <option value="ACTIVE">Hoạt động</option>
+                <option value="LOCKED">Tạm khóa</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -291,7 +341,7 @@ const AdminManagement = () => {
       <div className="overflow-hidden border border-gray-100 shadow-xl bg-white/90 rounded-4xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
-            <thead className="bg-[#9d0b0f] text-white text-[10px] uppercase font-bold tracking-widest">
+            <thead className="bg-[#9d0b0f] text-white text-xs uppercase font-bold tracking-widest">
               <tr>
                 <th className="px-8 py-5">Thành viên</th>
                 <th className="px-8 py-5">Liên hệ</th>
@@ -310,7 +360,7 @@ const AdminManagement = () => {
                     Đang tải...
                   </td>
                 </tr>
-              ) : filteredUsers.length === 0 ? (
+              ) : displayUsers.length === 0 ? (
                 <tr>
                   <td
                     colSpan="5"
@@ -320,7 +370,7 @@ const AdminManagement = () => {
                   </td>
                 </tr>
               ) : (
-                filteredUsers.map((user) => (
+                displayUsers.map((user) => (
                   <tr
                     key={user._id}
                     className="hover:bg-[#f7f4ef]/50 transition-colors group"
@@ -421,6 +471,74 @@ const AdminManagement = () => {
         </div>
       </div>
 
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex flex-col items-center justify-between gap-4 mt-8 md:flex-row">
+          <p className="text-sm font-medium text-[#88694f]">
+            Hiển thị{" "}
+            <span className="font-bold text-[#3e2714]">
+              {displayUsers.length}
+            </span>{" "}
+            trên <span className="font-bold text-[#3e2714]">{totalUsers}</span>{" "}
+            quản trị viên
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              className="px-4 py-2 text-sm font-bold text-[#9d0b0f] bg-white border border-[#9d0b0f]/20 rounded-xl hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+            >
+              Trước
+            </button>
+
+            <div className="flex items-center gap-1">
+              {[...Array(totalPages)].map((_, i) => {
+                const pageNum = i + 1;
+                if (
+                  pageNum === 1 ||
+                  pageNum === totalPages ||
+                  (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                ) {
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-10 h-10 rounded-xl text-sm font-bold transition-all shadow-sm ${
+                        currentPage === pageNum
+                          ? "bg-[#9d0b0f] text-white"
+                          : "bg-white text-[#9d0b0f] border border-[#9d0b0f]/20 hover:bg-red-50"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                } else if (
+                  (pageNum === 2 && currentPage > 3) ||
+                  (pageNum === totalPages - 1 && currentPage < totalPages - 2)
+                ) {
+                  return (
+                    <span key={pageNum} className="px-1 text-[#88694f]">
+                      ...
+                    </span>
+                  );
+                }
+                return null;
+              })}
+            </div>
+
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              className="px-4 py-2 text-sm font-bold text-[#9d0b0f] bg-white border border-[#9d0b0f]/20 rounded-xl hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+            >
+              Sau
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* MODAL THÊM / SỬA */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center p-4 z-200">
@@ -499,7 +617,6 @@ const AdminManagement = () => {
                       }
                     >
                       <option value="ADMIN">ADMIN</option>
-                      <option value="STAFF">STAFF</option>
                     </select>
                   </div>
                 </div>

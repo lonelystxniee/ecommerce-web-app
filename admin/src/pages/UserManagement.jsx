@@ -21,6 +21,16 @@ const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [activeCount, setActiveCount] = useState(0);
+  const [lockedCount, setLockedCount] = useState(0);
+  const [customerCount, setCustomerCount] = useState(0);
+  const [adminCount, setAdminCount] = useState(0);
+  const [limit] = useState(5);
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [sortOrder, setSortOrder] = useState("newest");
 
   // State cho Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,14 +59,29 @@ const UserManagement = () => {
         return;
       }
 
-      const response = await fetch(`${API_URL}/api/auth/users`, {
+      const params = new URLSearchParams({
+        page: currentPage,
+        limit: limit,
+        search: searchTerm,
+        role: "CUSTOMER", // Only fetch customers here
+        status: statusFilter === "ALL" ? "" : statusFilter,
+        sort: sortOrder,
+      });
+
+      const response = await fetch(`${API_URL}/api/auth/users?${params}`, {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
       const data = await response.json();
       if (data.success) {
         setUsers(data.users);
+        setTotalPages(data.totalPages);
+        setTotalUsers(data.totalUsers);
+        setActiveCount(data.activeCount);
+        setLockedCount(data.lockedCount);
+        setCustomerCount(data.customerCount);
+        setAdminCount(data.adminCount);
       } else {
         alert(`Lỗi: ${data.message || "Không thể lấy danh sách người dùng"}`);
       }
@@ -69,8 +94,16 @@ const UserManagement = () => {
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    const timeoutId = setTimeout(() => {
+      fetchUsers();
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [currentPage, searchTerm, statusFilter, sortOrder]);
+
+  // Reset to page 1 when filters or search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, sortOrder]);
 
   const handleOpenAddModal = () => {
     setEditMode(false);
@@ -119,15 +152,13 @@ const UserManagement = () => {
         method,
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (data.success) {
-        alert(
-          editMode ? "Cập nhật thành công!" : "Tạo người dùng thành công!",
-        );
+        alert(editMode ? "Cập nhật thành công!" : "Tạo người dùng thành công!");
         setIsModalOpen(false);
         fetchUsers();
       } else {
@@ -151,7 +182,7 @@ const UserManagement = () => {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ status: newStatus }),
         });
@@ -175,8 +206,8 @@ const UserManagement = () => {
         const res = await fetch(`${API_URL}/api/auth/users/${id}`, {
           method: "DELETE",
           headers: {
-            "Authorization": `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         });
         const data = await res.json();
         if (data.success) {
@@ -191,12 +222,7 @@ const UserManagement = () => {
     }
   };
 
-  const filteredUsers = users.filter(
-    (user) =>
-      user.role === "CUSTOMER" && (
-        user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const displayUsers = users;
 
   return (
     <div className="p-6 space-y-6 animate-fadeIn">
@@ -221,41 +247,55 @@ const UserManagement = () => {
       </div>
 
       {/* Stats Quick View */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
         <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="bg-blue-50 p-4 rounded-2xl text-blue-600">
+          <div className="p-4 text-blue-600 bg-blue-50 rounded-2xl">
             <Users size={24} />
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase text-gray-400">Tổng khách hàng</p>
-            <h3 className="text-2xl font-black text-[#3e2714]">{users.filter(u => u.role === "CUSTOMER").length}</h3>
+            <p className="text-[10px] font-black uppercase text-gray-400">
+              Tổng khách hàng
+            </p>
+            <h3 className="text-2xl font-black text-[#3e2714]">
+              {customerCount}
+            </h3>
           </div>
         </div>
         <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="bg-green-50 p-4 rounded-2xl text-green-600">
+          <div className="p-4 text-green-600 bg-green-50 rounded-2xl">
             <CheckCircle size={24} />
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase text-gray-400">Hoạt động</p>
-            <h3 className="text-2xl font-black text-[#3e2714]">{users.filter(u => u.role === "CUSTOMER" && u.status === "ACTIVE").length}</h3>
+            <p className="text-[10px] font-black uppercase text-gray-400">
+              Hoạt động
+            </p>
+            <h3 className="text-2xl font-black text-[#3e2714]">
+              {activeCount}
+            </h3>
           </div>
         </div>
         <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="bg-yellow-50 p-4 rounded-2xl text-yellow-600">
+          <div className="p-4 text-yellow-600 bg-yellow-50 rounded-2xl">
             <AlertCircle size={24} />
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase text-gray-400">Tạm khóa</p>
-            <h3 className="text-2xl font-black text-[#3e2714]">{users.filter(u => u.role === "CUSTOMER" && u.status === "LOCKED").length}</h3>
+            <p className="text-[10px] font-black uppercase text-gray-400">
+              Tạm khóa
+            </p>
+            <h3 className="text-2xl font-black text-[#3e2714]">
+              {lockedCount}
+            </h3>
           </div>
         </div>
         <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="bg-red-50 p-4 rounded-2xl text-red-600">
+          <div className="p-4 text-red-600 bg-red-50 rounded-2xl">
             <Shield size={24} />
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase text-gray-400">Cấp quản trị</p>
-            <h3 className="text-2xl font-black text-[#3e2714]">{users.filter(u => u.role !== "CUSTOMER").length}</h3>
+            <p className="text-[10px] font-black uppercase text-gray-400">
+              Cấp quản trị
+            </p>
+            <h3 className="text-2xl font-black text-[#3e2714]">{adminCount}</h3>
           </div>
         </div>
       </div>
@@ -264,18 +304,45 @@ const UserManagement = () => {
 
       {/* Tìm kiếm */}
       <div className="bg-white/80 p-6 rounded-3xl shadow-sm border border-[#9d0b0f]/10">
-        <div className="relative max-w-2xl">
-          <Search
-            className="absolute left-4 top-3.5 text-[#9d0b0f]"
-            size={20}
-          />
-          <input
-            type="text"
-            placeholder="Tìm nhanh người dùng theo tên hoặc email..."
-            className="w-full pl-12 pr-4 py-3.5 bg-[#f7f4ef] rounded-2xl outline-none focus:border-[#f39200] border-2 border-transparent transition-all"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex flex-col gap-4 md:flex-row">
+          <div className="relative flex-1">
+            <Search
+              className="absolute left-4 top-3.5 text-[#9d0b0f]"
+              size={20}
+            />
+            <input
+              type="text"
+              placeholder="Tìm nhanh người dùng theo tên hoặc email..."
+              className="w-full pl-12 pr-4 py-3.5 bg-[#f7f4ef] rounded-2xl outline-none focus:border-[#f39200] border-2 border-transparent transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-wrap gap-4">
+            <div className="min-w-[160px]">
+              <select
+                className="w-full px-4 py-3.5 bg-[#f7f4ef] rounded-2xl outline-none focus:border-[#f39200] border-2 border-transparent transition-all font-bold text-[#3e2714]"
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+              >
+                <option value="newest">Mới nhất</option>
+                <option value="oldest">Cũ nhất</option>
+                <option value="name_asc">Tên A-Z</option>
+                <option value="name_desc">Tên Z-A</option>
+              </select>
+            </div>
+            <div className="min-w-[160px]">
+              <select
+                className="w-full px-4 py-3.5 bg-[#f7f4ef] rounded-2xl outline-none focus:border-[#f39200] border-2 border-transparent transition-all font-bold text-[#3e2714]"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="ALL">Tất cả trạng thái</option>
+                <option value="ACTIVE">Hoạt động</option>
+                <option value="LOCKED">Bị khóa</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -283,7 +350,7 @@ const UserManagement = () => {
       <div className="overflow-hidden border border-gray-100 shadow-xl bg-white/90 rounded-4xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
-            <thead className="bg-[#9d0b0f] text-white text-[10px] uppercase font-bold tracking-widest">
+            <thead className="bg-[#9d0b0f] text-white text-xs uppercase font-bold tracking-widest">
               <tr>
                 <th className="px-8 py-5">Người dùng</th>
                 <th className="px-8 py-5">Liên hệ</th>
@@ -307,16 +374,17 @@ const UserManagement = () => {
                     </div>
                   </td>
                 </tr>
-              ) : filteredUsers.length === 0 ? (
+              ) : displayUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-8 py-20 text-center">
-                    <p className="text-[#88694f] font-medium">
-                      Không tìm thấy người dùng nào
-                    </p>
+                  <td
+                    colSpan="7"
+                    className="px-8 py-20 text-center text-[#88694f]"
+                  >
+                    Không tìm thấy người dùng nào
                   </td>
                 </tr>
               ) : (
-                filteredUsers.map((user) => (
+                displayUsers.map((user) => (
                   <tr
                     key={user._id}
                     className="hover:bg-[#f7f4ef]/50 transition-colors group"
@@ -353,12 +421,13 @@ const UserManagement = () => {
                     </td>
                     <td className="px-8 py-6 text-center">
                       <span
-                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold flex items-center justify-center gap-1 mx-auto w-fit ${user.role === "ADMIN"
-                          ? "bg-red-100 text-red-600 border border-red-200"
-                          : user.role === "STAFF"
-                            ? "bg-blue-100 text-blue-600 border border-blue-200"
-                            : "bg-gray-100 text-gray-600 border border-gray-200"
-                          }`}
+                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold flex items-center justify-center gap-1 mx-auto w-fit ${
+                          user.role === "ADMIN"
+                            ? "bg-red-100 text-red-600 border border-red-200"
+                            : user.role === "STAFF"
+                              ? "bg-blue-100 text-blue-600 border border-blue-200"
+                              : "bg-gray-100 text-gray-600 border border-gray-200"
+                        }`}
                       >
                         <Shield size={12} />
                         {user.role}
@@ -366,10 +435,11 @@ const UserManagement = () => {
                     </td>
                     <td className="px-8 py-6 text-center">
                       <span
-                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold mx-auto w-fit block ${user.status === "ACTIVE"
-                          ? "bg-green-100 text-green-600 border border-green-200"
-                          : "bg-yellow-100 text-yellow-600 border border-yellow-200"
-                          }`}
+                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold mx-auto w-fit block ${
+                          user.status === "ACTIVE"
+                            ? "bg-green-100 text-green-600 border border-green-200"
+                            : "bg-yellow-100 text-yellow-600 border border-yellow-200"
+                        }`}
                       >
                         {user.status === "ACTIVE"
                           ? "ĐANG HOẠT ĐỘNG"
@@ -394,13 +464,22 @@ const UserManagement = () => {
                         </button>
                         <button
                           onClick={() => handleToggleStatus(user)}
-                          className={`p-2 transition-all rounded-xl ${user.status === "ACTIVE"
-                            ? "text-orange-500 hover:bg-orange-50"
-                            : "text-green-500 hover:bg-green-50"
-                            }`}
-                          title={user.status === "ACTIVE" ? "Khóa tài khoản" : "Mở khóa tài khoản"}
+                          className={`p-2 transition-all rounded-xl ${
+                            user.status === "ACTIVE"
+                              ? "text-orange-500 hover:bg-orange-50"
+                              : "text-green-500 hover:bg-green-50"
+                          }`}
+                          title={
+                            user.status === "ACTIVE"
+                              ? "Khóa tài khoản"
+                              : "Mở khóa tài khoản"
+                          }
                         >
-                          {user.status === "ACTIVE" ? <Lock size={18} /> : <Unlock size={18} />}
+                          {user.status === "ACTIVE" ? (
+                            <Lock size={18} />
+                          ) : (
+                            <Unlock size={18} />
+                          )}
                         </button>
                       </div>
                     </td>
@@ -411,6 +490,74 @@ const UserManagement = () => {
           </table>
         </div>
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex flex-col items-center justify-between gap-4 mt-8 md:flex-row">
+          <p className="text-sm font-medium text-[#88694f]">
+            Hiển thị{" "}
+            <span className="font-bold text-[#3e2714]">
+              {displayUsers.length}
+            </span>{" "}
+            trên <span className="font-bold text-[#3e2714]">{totalUsers}</span>{" "}
+            người dùng
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              className="px-4 py-2 text-sm font-bold text-[#9d0b0f] bg-white border border-[#9d0b0f]/20 rounded-xl hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+            >
+              Trước
+            </button>
+
+            <div className="flex items-center gap-1">
+              {[...Array(totalPages)].map((_, i) => {
+                const pageNum = i + 1;
+                if (
+                  pageNum === 1 ||
+                  pageNum === totalPages ||
+                  (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                ) {
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-10 h-10 rounded-xl text-sm font-bold transition-all shadow-sm ${
+                        currentPage === pageNum
+                          ? "bg-[#9d0b0f] text-white"
+                          : "bg-white text-[#9d0b0f] border border-[#9d0b0f]/20 hover:bg-red-50"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                } else if (
+                  (pageNum === 2 && currentPage > 3) ||
+                  (pageNum === totalPages - 1 && currentPage < totalPages - 2)
+                ) {
+                  return (
+                    <span key={pageNum} className="px-1 text-[#88694f]">
+                      ...
+                    </span>
+                  );
+                }
+                return null;
+              })}
+            </div>
+
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              className="px-4 py-2 text-sm font-bold text-[#9d0b0f] bg-white border border-[#9d0b0f]/20 rounded-xl hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+            >
+              Sau
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* MODAL THÊM / SỬA NGƯỜI DÙNG */}
       {isModalOpen && (
@@ -464,13 +611,11 @@ const UserManagement = () => {
                   </label>
                   <input
                     required
-                    className="w-full px-5 py-4 bg-white rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all shadow-sm font-medium"
+                    className="w-full px-5 py-4 bg-gray-100 text-gray-500 rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all shadow-sm font-medium"
                     type="email"
                     placeholder="example@gmail.com"
+                    disabled
                     value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
                   />
                 </div>
 
@@ -518,8 +663,7 @@ const UserManagement = () => {
                         setFormData({ ...formData, role: e.target.value })
                       }
                     >
-                      <option value="CUSTOMER">Khách hàng</option>
-                      <option value="STAFF">Nhân viên</option>
+                      <option value="CUSTOMER">Khách hàng</option>
                       <option value="ADMIN">Quản trị viên</option>
                     </select>
                   </div>

@@ -1,9 +1,11 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const logger = require("../utils/logger");
 
 const verifyToken = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
+    logger.auth('[authMiddleware] Authorization header:', authHeader);
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res
         .status(401)
@@ -20,10 +22,11 @@ const verifyToken = async (req, res, next) => {
         .json({ success: false, message: "Người dùng không tồn tại!" });
     }
 
+    logger.auth('[authMiddleware] Resolved user id:', user._id.toString(), 'role:', user.role);
     req.user = user;
     next();
   } catch (error) {
-    console.error("Auth Middleware Error:", error.message);
+    logger.error("Auth Middleware Error:", error.message);
     return res
       .status(401)
       .json({ success: false, message: "Token không hợp lệ hoặc đã hết hạn!" });

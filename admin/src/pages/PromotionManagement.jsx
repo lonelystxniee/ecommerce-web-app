@@ -37,12 +37,19 @@ const PromotionManagement = () => {
     usageLimit: 100,
     endDate: "",
     description: "",
+    isBannerActive: false,
+    bannerText: "",
+    bannerColor: "linear-gradient(90deg, #FF416C 0%, #FF4B2B 100%)",
+    isPopupActive: false,
   });
 
   const fetchPromos = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5175/api/promotions/all");
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_URL}/api/promotions/all`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const data = await res.json();
       if (data.success) setPromos(data.promos);
     } catch (e) {
@@ -95,6 +102,12 @@ const PromotionManagement = () => {
         usageLimit: promo.usageLimit,
         endDate: promo.endDate ? promo.endDate.split("T")[0] : "",
         description: promo.description || "",
+        isBannerActive: promo.isBannerActive || false,
+        bannerText: promo.bannerText || "",
+        bannerColor:
+          promo.bannerColor ||
+          "linear-gradient(90deg, #FF416C 0%, #FF4B2B 100%)",
+        isPopupActive: promo.isPopupActive || false,
       });
     } else {
       setEditingId(null);
@@ -106,6 +119,10 @@ const PromotionManagement = () => {
         usageLimit: 100,
         endDate: "",
         description: "",
+        isBannerActive: false,
+        bannerText: "",
+        bannerColor: "linear-gradient(90deg, #FF416C 0%, #FF4B2B 100%)",
+        isPopupActive: false,
       });
     }
     setIsModalOpen(true);
@@ -119,9 +136,13 @@ const PromotionManagement = () => {
 
     const method = editingId ? "PUT" : "POST";
 
+    const token = localStorage.getItem("token");
     const res = await fetch(url, {
       method: method,
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify(formData),
     });
 
@@ -134,10 +155,11 @@ const PromotionManagement = () => {
 
   const handleDelete = async (id) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa mã giảm giá này?")) {
-      const res = await fetch(
-        `http://localhost:5175/api/promotions/delete/${id}`,
-        { method: "DELETE" },
-      );
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_URL}/api/promotions/delete/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (res.ok) {
         alert("Đã xóa");
         fetchPromos();
@@ -169,7 +191,7 @@ const PromotionManagement = () => {
       <div className="bg-white/80 backdrop-blur-md p-6 rounded-[32px] shadow-sm border border-[#9d0b0f]/5 flex flex-col lg:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full">
           <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+            className="absolute text-gray-400 -translate-y-1/2 left-4 top-1/2"
             size={18}
           />
           <input
@@ -184,7 +206,7 @@ const PromotionManagement = () => {
           />
         </div>
 
-        <div className="flex gap-3 w-full lg:w-auto">
+        <div className="flex w-full gap-3 lg:w-auto">
           <select
             value={statusFilter}
             onChange={(e) => {
@@ -216,18 +238,18 @@ const PromotionManagement = () => {
 
       {/* GRID HIỂN THỊ */}
       {loading ? (
-        <div className="flex flex-col items-center py-20 text-gray-400 italic">
-          <RefreshCcw className="animate-spin mb-2" /> Đang tải khuyến mãi...
+        <div className="flex flex-col items-center py-20 italic text-gray-400">
+          <RefreshCcw className="mb-2 animate-spin" /> Đang tải khuyến mãi...
         </div>
       ) : currentItems.length === 0 ? (
         <div className="bg-white rounded-[32px] p-20 text-center border-2 border-dashed border-stone-200">
-          <Ticket size={48} className="mx-auto text-stone-200 mb-4" />
-          <p className="text-stone-400 font-medium italic">
+          <Ticket size={48} className="mx-auto mb-4 text-stone-200" />
+          <p className="italic font-medium text-stone-400">
             Không tìm thấy mã giảm giá nào khớp với yêu cầu.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {currentItems.map((promo) => {
             const isExpired = new Date(promo.endDate) < new Date();
             const isOut =
@@ -240,7 +262,7 @@ const PromotionManagement = () => {
                 className="relative bg-white rounded-[32px] shadow-sm border border-stone-200 overflow-hidden group hover:shadow-xl transition-all"
               >
                 {/* Actions Overlay */}
-                <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                <div className="absolute z-10 flex gap-2 transition-opacity opacity-0 top-3 right-3 group-hover:opacity-100">
                   <button
                     onClick={() => openModal(promo)}
                     className="p-2.5 bg-white/90 rounded-xl text-blue-600 shadow-md hover:bg-blue-600 hover:text-white transition-all"
@@ -258,7 +280,7 @@ const PromotionManagement = () => {
                 <div
                   className={`bg-gradient-to-br ${isInactive ? "from-gray-400 to-gray-600" : "from-[#9d0b0f] to-[#f39200]"} p-6 text-white`}
                 >
-                  <div className="flex justify-between items-start">
+                  <div className="flex items-start justify-between">
                     <h3 className="text-3xl font-black tracking-tighter">
                       {promo.discountType === "AMOUNT"
                         ? `${promo.discountValue / 1000}K`
@@ -272,7 +294,7 @@ const PromotionManagement = () => {
                           : promo.status}
                     </span>
                   </div>
-                  <p className="font-bold text-lg uppercase mt-2 tracking-widest">
+                  <p className="mt-2 text-lg font-bold tracking-widest uppercase">
                     {promo.code}
                   </p>
                 </div>
@@ -287,7 +309,7 @@ const PromotionManagement = () => {
                         {promo.usedCount} / {promo.usageLimit}
                       </span>
                     </div>
-                    <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                    <div className="w-full h-2 overflow-hidden bg-gray-100 rounded-full">
                       <div
                         className={`h-full transition-all duration-1000 ${isOut ? "bg-red-500" : "bg-[#f39200]"}`}
                         style={{
@@ -316,7 +338,7 @@ const PromotionManagement = () => {
 
       {/* PHÂN TRANG */}
       {totalPages > 0 && (
-        <div className="flex justify-center items-center gap-4 pt-6">
+        <div className="flex items-center justify-center gap-4 pt-6">
           <button
             disabled={currentPage === 1}
             onClick={() => setCurrentPage((prev) => prev - 1)}
@@ -342,12 +364,12 @@ const PromotionManagement = () => {
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-[#f7f4ef] w-full max-w-lg rounded-[40px] overflow-hidden shadow-2xl border-2 border-[#9d0b0f] animate-zoomIn">
             <div className="bg-[#9d0b0f] p-6 text-white flex justify-between items-center">
-              <h3 className="text-xl font-bold uppercase tracking-tight flex items-center gap-2">
+              <h3 className="flex items-center gap-2 text-xl font-bold tracking-tight uppercase">
                 <Tag size={20} />{" "}
                 {editingId ? "Cập nhật khuyến mãi" : "Tạo chương trình mới"}
               </h3>
               <X
-                className="cursor-pointer hover:rotate-90 transition-transform"
+                className="transition-transform cursor-pointer hover:rotate-90"
                 onClick={() => setIsModalOpen(false)}
               />
             </div>
@@ -392,7 +414,7 @@ const PromotionManagement = () => {
                     Hình thức giảm
                   </label>
                   <select
-                    className="w-full p-3 rounded-2xl border border-stone-200 outline-none font-bold text-xs"
+                    className="w-full p-3 text-xs font-bold border outline-none rounded-2xl border-stone-200"
                     value={formData.discountType}
                     onChange={(e) =>
                       setFormData({ ...formData, discountType: e.target.value })
@@ -409,7 +431,7 @@ const PromotionManagement = () => {
                   <input
                     required
                     type="number"
-                    className="w-full p-3 rounded-2xl border border-stone-200 outline-none font-black"
+                    className="w-full p-3 font-black border outline-none rounded-2xl border-stone-200"
                     value={formData.discountValue}
                     onChange={(e) =>
                       setFormData({
@@ -425,7 +447,7 @@ const PromotionManagement = () => {
                   </label>
                   <input
                     type="number"
-                    className="w-full p-3 rounded-2xl border border-stone-200 outline-none font-bold"
+                    className="w-full p-3 font-bold border outline-none rounded-2xl border-stone-200"
                     value={formData.minOrderValue}
                     onChange={(e) =>
                       setFormData({
@@ -441,7 +463,7 @@ const PromotionManagement = () => {
                   </label>
                   <input
                     type="number"
-                    className="w-full p-3 rounded-2xl border border-stone-200 outline-none font-bold"
+                    className="w-full p-3 font-bold border outline-none rounded-2xl border-stone-200"
                     value={formData.usageLimit}
                     onChange={(e) =>
                       setFormData({ ...formData, usageLimit: e.target.value })
@@ -455,7 +477,7 @@ const PromotionManagement = () => {
                   <input
                     required
                     type="date"
-                    className="w-full p-3 rounded-2xl border border-stone-200 outline-none font-bold"
+                    className="w-full p-3 font-bold border outline-none rounded-2xl border-stone-200"
                     value={formData.endDate}
                     onChange={(e) =>
                       setFormData({ ...formData, endDate: e.target.value })

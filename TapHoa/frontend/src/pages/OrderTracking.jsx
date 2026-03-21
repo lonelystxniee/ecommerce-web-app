@@ -1,0 +1,141 @@
+import React, { useState, useEffect } from "react";
+import { useParams, Link } from "react-router-dom";
+import {
+  Package,
+  Truck,
+  CheckCircle,
+  Clock,
+  MapPin,
+  ChevronLeft,
+} from "lucide-react";
+
+const OrderTracking = () => {
+  const { id } = useParams();
+  const [order, setOrder] = useState(null);
+
+  const fetchTracking = async () => {
+    try {
+      const res = await fetch(`http://localhost:5175/api/orders/detail/${id}`);
+      if (!res.ok) return;
+
+      const data = await res.json();
+      if (data.success) {
+        // SỬA TẠI ĐÂY: Sắp xếp mảng trackingHistory từ mới nhất đến cũ nhất
+        const sortedHistory = data.order.trackingHistory.sort(
+          (a, b) => new Date(b.time) - new Date(a.time),
+        );
+
+        setOrder({ ...data.order, trackingHistory: sortedHistory });
+      }
+    } catch (e) {
+      console.log("Đang chờ hành trình...");
+    }
+  };
+
+  useEffect(() => {
+    fetchTracking();
+    const interval = setInterval(fetchTracking, 10000); // Tự động cập nhật mỗi 10s
+    return () => clearInterval(interval);
+  }, [id]);
+
+  if (!order)
+    return (
+      <div className="p-20 text-center italic">Đang tìm kiếm hành trình...</div>
+    );
+
+  return (
+    <div className="min-h-screen bg-[#f7f4ef] py-10 font-sans">
+      <div className="max-w-[800px] mx-auto px-4">
+        {/* Quay lại */}
+        <Link
+          to="/account?tab=orders"
+          className="flex items-center gap-2 text-[#9d0b0f] font-bold mb-6 hover:underline"
+        >
+          <ChevronLeft size={20} /> Quay lại đơn hàng của tôi
+        </Link>
+
+        {/* Thông tin chung */}
+        <div className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100 mb-6 flex justify-between items-center">
+          <div>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+              Mã vận đơn GHN
+            </p>
+            <h2 className="text-2xl font-black text-[#9d0b0f]">
+              {order.ghnOrderCode || "ĐANG XỬ LÝ"}
+            </h2>
+          </div>
+          <div className="text-right">
+            <p className="text-xs font-bold text-gray-400 uppercase">
+              Trạng thái hiện tại
+            </p>
+            <span className="px-4 py-1.5 bg-orange-100 text-[#f39200] rounded-full font-black text-xs uppercase">
+              {order.status}
+            </span>
+          </div>
+        </div>
+
+        {/* TIMELINE PHONG CÁCH SHOPEE */}
+        <div className="bg-white p-10 rounded-[40px] shadow-xl border border-gray-100">
+          <div className="relative border-l-2 border-[#9d0b0f]/20 ml-6 space-y-12">
+            {/* Trong phần render timeline, tìm đoạn map và sửa lại: */}
+            {order.trackingHistory?.map((step, index) => (
+              <div key={index} className="relative pl-10">
+                {/* Vòng tròn timeline */}
+                <div
+                  className={`absolute -left-[11px] top-0 w-5 h-5 rounded-full border-4 border-white shadow-md
+      ${index === 0 ? "bg-[#9d0b0f] ring-4 ring-red-100 animate-pulse" : "bg-gray-300"}`}
+                />
+
+                <div className="flex justify-between items-start">
+                  <div>
+                    {/* Tiêu đề trạng thái: index 0 (mới nhất) sẽ có màu đỏ */}
+                    <p
+                      className={`text-base font-bold ${index === 0 ? "text-[#9d0b0f]" : "text-gray-500"}`}
+                    >
+                      {step.desc}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1 flex items-center gap-1 font-medium">
+                      <Clock size={12} />{" "}
+                      {new Date(step.time).toLocaleString("vi-VN")}
+                    </p>
+                  </div>
+
+                  {/* Icon trạng thái */}
+                  <div
+                    className={index === 0 ? "text-[#f39200]" : "text-gray-300"}
+                  >
+                    {/* Nếu trạng thái là DELIVERED hoặc desc chứa chữ "thành công" thì hiện icon check */}
+                    {step.status === "DELIVERED" ||
+                    step.desc.includes("thành công") ? (
+                      <CheckCircle size={24} />
+                    ) : (
+                      <Truck size={24} />
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Địa chỉ nhận hàng */}
+        <div className="mt-8 bg-white p-8 rounded-[32px] shadow-sm border border-dashed border-[#9d0b0f]/30">
+          <h3 className="text-[#9d0b0f] font-black uppercase text-xs mb-4 flex items-center gap-2">
+            <MapPin size={18} /> Địa chỉ nhận hàng
+          </h3>
+          <p className="font-bold text-[#3e2714] text-lg">
+            {order.customerInfo.fullName}
+          </p>
+          <p className="text-sm text-gray-500 mt-1">
+            {order.customerInfo.phone}
+          </p>
+          <p className="text-sm text-gray-600 italic mt-2">
+            {order.customerInfo.address}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default OrderTracking;

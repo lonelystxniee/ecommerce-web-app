@@ -6,6 +6,12 @@ const upload = require("../middlewares/upload.middleware");
 
 const adminMiddleware = require("../middlewares/admin.middleware");
 
+// Get user's submitted reviews (Protected, User)
+router.get("/my-reviews", authMiddleware, reviewController.getUserReviews);
+
+// Get user's pending reviews (Protected, User)
+router.get("/pending", authMiddleware, reviewController.getPendingReviews);
+
 // Get all reviews for a product
 router.get("/:productID", reviewController.getProductReviews);
 
@@ -21,6 +27,9 @@ router.post(
 );
 
 // Admin: Delete a review (Protected, Admin)
-router.delete("/:id", authMiddleware, adminMiddleware, reviewController.deleteReviewAdmin);
+router.delete("/admin/:id", authMiddleware, adminMiddleware, reviewController.deleteReviewAdmin);
+
+// User: Delete own review (Protected, User)
+router.delete("/:id", authMiddleware, reviewController.deleteReviewUser);
 
 module.exports = router;

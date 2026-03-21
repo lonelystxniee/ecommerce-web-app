@@ -10,12 +10,12 @@ import {
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import toast from "react-hot-toast";
+import API_URL from "../config/apiConfig";
 
 const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get("q") || "";
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
 
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);

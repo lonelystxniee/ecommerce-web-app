@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const Product = require("../models/product");
+const Product = require("../models/Product");
 const Category = require("../models/category");
 const uploadToCloudinary = require("../../utils/uploadToCloudinary");
 const XLSX = require("xlsx");
