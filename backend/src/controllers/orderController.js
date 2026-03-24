@@ -1,6 +1,7 @@
 const Order = require("../models/Order");
 const Product = require("../models/Product");
 const Promotion = require("../models/Promotion");
+const Notification = require("../models/Notification");
 const ghn = require("./ghnController");
 const activityController = require("./activityController");
 
@@ -210,6 +211,18 @@ exports.createOrder = async (req, res) => {
 
     try {
       await newOrder.save();
+      const notif = new Notification({
+        type: "admin",
+        message: `Đơn hàng mới: ${newOrder.totalPrice.toLocaleString()}đ`,
+        orderId: newOrder._id,
+        link: `/orders?highlight=${newOrder._id}`
+      });
+      await notif.save();
+      
+      const io = req.app.get("io");
+      if (io) {
+        io.emit("new_order", notif);
+      }
     } catch (saveError) {
       for (const dItem of deductedItems) {
         const pIdRaw = dItem.id || dItem._id;
@@ -267,6 +280,18 @@ exports.adminConfirm = async (req, res) => {
       );
     }
 
+    const notif = new Notification({
+      userId: order.userId,
+      type: "user",
+      message: `Đơn hàng #${order._id.toString().slice(-8).toUpperCase()} của bạn đã được xác nhận`,
+      orderId: order._id,
+      link: `/order-tracking/${order._id}`
+    });
+    await notif.save();
+
+    const io = req.app.get("io");
+    if (io) io.emit("order_status_updated", notif);
+
     res.json({ success: true, message: "Đã xác nhận đơn hàng thành công", order });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -294,6 +319,18 @@ exports.adminPacking = async (req, res) => {
         req,
       );
     }
+
+    const notif = new Notification({
+      userId: order.userId,
+      type: "user",
+      message: `Đơn hàng #${order._id.toString().slice(-8).toUpperCase()} của bạn đang được đóng gói`,
+      orderId: order._id,
+      link: `/order-tracking/${order._id}`
+    });
+    await notif.save();
+
+    const io = req.app.get("io");
+    if (io) io.emit("order_status_updated", notif);
 
     res.json({ success: true, message: "Đã đóng gói thành công", order });
   } catch (error) {
@@ -336,6 +373,18 @@ exports.adminHandover = async (req, res) => {
       }
       await updatedOrder.save();
     }
+
+    const notif = new Notification({
+      userId: updatedOrder.userId,
+      type: "user",
+      message: `Đơn hàng #${updatedOrder._id.toString().slice(-8).toUpperCase()} đã sẵn sàng để giao cho đơn vị vận chuyển`,
+      orderId: updatedOrder._id,
+      link: `/order-tracking/${updatedOrder._id}`
+    });
+    await notif.save();
+
+    const io = req.app.get("io");
+    if (io) io.emit("order_status_updated", notif);
 
     return res.json({
       success: true,
@@ -460,22 +509,27 @@ exports.shipperUpdateStatus = async (req, res) => {
 
     const advanceLocalStatus = () => {
       const currentStatus = (order.status || '').toUpperCase();
+      let d = "";
       if (currentStatus === "READY_TO_PICK") {
         order.status = "PICKING";
-        addUniqueHistory(order, "picking", "Shipper đã lấy hàng thành công và đang chuyển về bưu cục");
+        d = "Shipper đã lấy hàng thành công và đang chuyển về bưu cục";
+        addUniqueHistory(order, "picking", d);
       } else if (currentStatus === "PICKING") {
         order.status = "STORING";
-        addUniqueHistory(order, "storing", "Đơn hàng đã nhập kho tập kết Mega SOC");
+        d = "Đơn hàng đã nhập kho tập kết Mega SOC";
+        addUniqueHistory(order, "storing", d);
       } else if (currentStatus === "STORING") {
         order.status = "DELIVERING";
-        addUniqueHistory(order, "delivering", "Shipper đang trên đường giao hàng đến bạn");
+        d = "Shipper đang trên đường giao hàng đến bạn";
+        addUniqueHistory(order, "delivering", d);
       } else if (currentStatus === "DELIVERING") {
         order.status = "COMPLETED";
-        addUniqueHistory(order, "delivered", "Giao hàng thành công! Người nhận đã ký xác nhận.");
+        d = "Giao hàng thành công! Người nhận đã ký xác nhận.";
+        addUniqueHistory(order, "delivered", d);
       } else {
-        return false;
+        return { ok: false };
       }
-      return true;
+      return { ok: true, desc: d };
     };
 
     if (allowNoAuthSim && !order.ghnOrderCode) {
@@ -485,10 +539,23 @@ exports.shipperUpdateStatus = async (req, res) => {
       return res.json({ success: true, message: "Cập nhật thành công (simulated)" });
     }
 
-    const ok = advanceLocalStatus();
+    const { ok, desc } = advanceLocalStatus();
     if (!ok) return res.status(400).json({ success: false, message: "Trạng thái đơn hàng không hợp lệ để cập nhật" });
 
     await order.save();
+    
+    const notif = new Notification({
+      userId: order.userId,
+      type: "user",
+      message: desc || "Trạng thái vận chuyển đơn hàng của bạn đã được cập nhật",
+      orderId: order._id,
+      link: `/order-tracking/${order._id}`
+    });
+    await notif.save();
+    
+    const io = req.app.get("io");
+    if (io) io.emit("order_status_updated", notif);
+
     return res.json({ success: true, message: ghnError ? `Cập nhật thành công (GHN lỗi: ${ghnError})` : "Cập nhật thành công!" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -530,6 +597,33 @@ exports.updateOrderStatus = async (req, res) => {
     if (updated && req.user) {
       await activityController.createLog(req.user.id, "Cập nhật đơn hàng", `Đã cập nhật trạng thái đơn hàng ${updated._id} thành ${status}`, req);
     }
+    
+    let notif = null;
+    if (updated) {
+      const statusLabels = {
+        'PENDING': 'Đang chờ xử lý',
+        'CONFIRMED': 'Đã xác nhận',
+        'PACKING': 'Đang đóng gói',
+        'READY_TO_PICK': 'Chờ lấy hàng',
+        'PICKING': 'Đang lấy hàng',
+        'DELIVERING': 'Đang giao hàng',
+        'COMPLETED': 'Hoàn tất',
+        'CANCELLED': 'Đã hủy'
+      };
+      
+      notif = new Notification({
+        userId: updated.userId,
+        type: "user",
+        message: `Đơn hàng #${updated._id.toString().slice(-8).toUpperCase()} đã cập nhật trạng thái: ${statusLabels[status.toUpperCase()] || status}`,
+        orderId: updated._id,
+        link: `/order-tracking/${updated._id}`
+      });
+      await notif.save();
+    }
+    
+    const io = req.app.get("io");
+    if (io && notif) io.emit("order_status_updated", notif);
+
     res.json({ success: true, message: "Cập nhật trạng thái thành công" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -538,6 +632,7 @@ exports.updateOrderStatus = async (req, res) => {
 
 exports.userCancel = async (req, res) => {
   try {
+    const { reason } = req.body;
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng' });
     if (!req.user) return res.status(401).json({ success: false, message: 'Yêu cầu đăng nhập' });
@@ -551,7 +646,9 @@ exports.userCancel = async (req, res) => {
     if (nonCancellable.includes((order.status || '').toUpperCase())) {
       return res.status(400).json({ success: false, message: 'Đơn hàng không thể hủy ở trạng thái hiện tại.' });
     }
-    addUniqueHistory(order, 'cancelled', 'Khách hàng đã hủy đơn hàng');
+    
+    order.cancelReason = reason || "Không có lý do cụ thể";
+    addUniqueHistory(order, 'cancelled', `Khách hàng đã hủy đơn hàng. Lý do: ${order.cancelReason}`);
     order.status = 'CANCELLED';
     await order.save();
     if (req.user) {
@@ -581,6 +678,19 @@ exports.adminCancel = async (req, res) => {
     if (req.user) {
       await activityController.createLog(req.user.id, 'Hủy đơn (admin)', `Admin đã hủy đơn ${order._id}${ghnError ? ' (GHN lỗi: ' + ghnError + ')' : ''}`, req);
     }
+    
+    const notif = new Notification({
+      userId: order.userId,
+      type: "user",
+      message: `Đơn hàng #${order._id.toString().slice(-8).toUpperCase()} của bạn đã bị hủy`,
+      orderId: order._id,
+      link: `/order-tracking/${order._id}`
+    });
+    await notif.save();
+    
+    const io = req.app.get("io");
+    if (io) io.emit("order_status_updated", notif);
+
     return res.json({ success: true, message: ghnError ? `Đã hủy đơn nhưng GHN lỗi: ${ghnError}` : 'Đã hủy đơn thành công', ghnError, order });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

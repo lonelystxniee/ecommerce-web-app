@@ -68,6 +68,7 @@ const OrderSchema = new mongoose.Schema(
         default: "customer",
       },
     },
+    cancelReason: String,
   },
   { timestamps: true },
 );

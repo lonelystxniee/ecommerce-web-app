@@ -35,10 +35,33 @@ export const validateRegister = (data) => {
     errors.confirmPassword = "Mật khẩu xác nhận không khớp";
   }
 
+  if (!data.birthday) {
+    errors.birthday = "Ngày sinh không được để trống";
+  } else {
+    const birthDate = new Date(data.birthday);
+    const today = new Date();
+    const hundredYearsAgo = new Date();
+    hundredYearsAgo.setFullYear(today.getFullYear() - 100);
+
+    if (birthDate > today) {
+      errors.birthday = "Ngày sinh không thể ở tương lai";
+    } else if (birthDate < hundredYearsAgo) {
+      errors.birthday = "Ngày sinh không hợp lệ (không quá 100 tuổi)";
+    }
+  }
+
   if (data.phone && !/^\d{10}$/.test(data.phone)) {
     errors.phone = "Số điện thoại phải là 10 số";
   } else if (data.phone && !/^0/.test(data.phone)) {
     errors.phone = "Số điện thoại phải bắt đầu với 0";
+  }
+
+  if (data.hasOwnProperty('otp')) {
+    if (!data.otp) {
+      errors.otp = "Vui lòng nhập mã xác nhận";
+    } else if (!/^\d{6}$/.test(data.otp)) {
+      errors.otp = "Mã xác nhận phải là 6 chữ số";
+    }
   }
 
   return errors;

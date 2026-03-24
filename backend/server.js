@@ -45,8 +45,8 @@ app.use(
   })
 );
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/orders", orderRoutes);
@@ -63,7 +63,8 @@ app.use('/api/chat', require('./src/routes/chatRoutes'));
 // AI routes removed
 app.use("/api/ads", adRoutes);
 app.use("/api/admin/revenue", revenueRoutes);
-
+app.use("/api/articles", require("./src/routes/articleRoutes"));
+app.use("/api/notifications", require("./src/routes/notificationRoutes"));
 const PORT = process.env.PORT || 5175;
 
 const server = http.createServer(app);
@@ -80,6 +81,8 @@ const io = new Server(server, {
     credentials: true,
   },
 });
+
+app.set("io", io); // Export io for controllers to use
 
 // Basic socket handlers for chat
 const logger = require("./src/utils/logger");
