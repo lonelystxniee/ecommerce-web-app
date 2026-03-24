@@ -110,6 +110,24 @@ const AdminManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    // Validation
+    if (!formData.fullName || formData.fullName.trim() === '') {
+      alert('Họ và tên không được để trống!')
+      return
+    }
+
+    if (formData.phone) {
+      if (!/^\d{10}$/.test(formData.phone)) {
+        alert('Số điện thoại phải là 10 số!')
+        return
+      }
+      if (!/^0/.test(formData.phone)) {
+        alert('Số điện thoại phải bắt đầu bằng số 0!')
+        return
+      }
+    }
+
     setSubmitting(true)
     try {
       const url = editMode ? `${API_URL}/api/auth/users/${selectedUserId}` : `${API_URL}/api/auth/users`

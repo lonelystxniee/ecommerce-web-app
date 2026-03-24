@@ -189,8 +189,12 @@ exports.register = async (req, res) => {
   }
 
   try {
+    console.log("--- BẮT ĐẦU ĐĂNG KÝ ---");
+    console.log("Email:", email);
+    
     const existing = await User.findOne({ email });
     if (existing) {
+      console.log("❌ Lỗi: Email đã tồn tại:", email);
       return res.status(409).json({
         success: false,
         message: "Email này đã được sử dụng!",
@@ -198,8 +202,21 @@ exports.register = async (req, res) => {
     }
 
     if (phone) {
+      if (!/^\d{10}$/.test(phone)) {
+        return res.status(400).json({
+          success: false,
+          message: "Số điện thoại phải là 10 số!",
+        });
+      }
+      if (!/^0/.test(phone)) {
+        return res.status(400).json({
+          success: false,
+          message: "Số điện thoại phải bắt đầu bằng số 0!",
+        });
+      }
       const existingPhone = await User.findOne({ phone });
       if (existingPhone) {
+        console.log("❌ Lỗi: Số điện thoại đã tồn tại:", phone);
         return res.status(409).json({
           success: false,
           message: "Số điện thoại này đã được sử dụng!",
@@ -224,6 +241,7 @@ exports.register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    console.log("Đang tạo User mới...");
     const newUser = await User.create({
       fullName,
       email,
@@ -233,6 +251,7 @@ exports.register = async (req, res) => {
       birthday,
     });
 
+    console.log("✅ Đăng ký thành công:", newUser._id);
     return res.status(201).json({
       success: true,
       message: "Đăng ký tài khoản thành công!",
@@ -243,7 +262,7 @@ exports.register = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("❌ LỖI ĐĂNG KÝ:", error.message);
+    console.error("❌ LỖI ĐĂNG KÝ:", error);
     return res.status(500).json({
       success: false,
       message: "Đã có lỗi xảy ra tại Server",
@@ -437,9 +456,38 @@ exports.updateProfile = async (req, res) => {
   const userId = req.user.id;
   const { fullName, phone, avatar, gender, birthday } = req.body;
 
+  if (fullName !== undefined && (!fullName || fullName.trim() === "")) {
+    return res.status(400).json({
+      success: false,
+      message: "Họ và tên không được để trống!",
+    });
+  }
+
   const updateData = {};
   if (fullName) updateData.fullName = fullName;
-  if (phone) updateData.phone = phone;
+  if (phone) {
+    if (!/^\d{10}$/.test(phone)) {
+      return res.status(400).json({
+        success: false,
+        message: "Số điện thoại phải là 10 số!",
+      });
+    }
+    if (!/^0/.test(phone)) {
+      return res.status(400).json({
+        success: false,
+        message: "Số điện thoại phải bắt đầu bằng số 0!",
+      });
+    }
+    // Check if phone is already taken by another user
+    const existingPhone = await User.findOne({ phone, _id: { $ne: userId } });
+    if (existingPhone) {
+      return res.status(409).json({
+        success: false,
+        message: "Số điện thoại này đã được sử dụng bởi tài khoản khác!",
+      });
+    }
+    updateData.phone = phone;
+  }
   if (avatar) updateData.avatar = avatar;
   if (gender) updateData.gender = gender;
   if (birthday) {
@@ -853,6 +901,13 @@ exports.adminCreateUser = async (req, res) => {
   try {
     const { fullName, email, phone, password, role, status } = req.body;
 
+    if (!fullName || fullName.trim() === "") {
+      return res.status(400).json({
+        success: false,
+        message: "Họ và tên không được để trống!",
+      });
+    }
+
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res
@@ -861,6 +916,18 @@ exports.adminCreateUser = async (req, res) => {
     }
 
     if (phone) {
+      if (!/^\d{10}$/.test(phone)) {
+        return res.status(400).json({
+          success: false,
+          message: "Số điện thoại phải là 10 số!",
+        });
+      }
+      if (!/^0/.test(phone)) {
+        return res.status(400).json({
+          success: false,
+          message: "Số điện thoại phải bắt đầu bằng số 0!",
+        });
+      }
       const phoneExists = await User.findOne({ phone });
       if (phoneExists) {
         return res.status(400).json({
@@ -893,8 +960,39 @@ exports.adminCreateUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const { fullName, email, phone, role, status } = req.body;
+    const userId = req.params.id;
+
+    if (fullName !== undefined && (!fullName || fullName.trim() === "")) {
+      return res.status(400).json({
+        success: false,
+        message: "Họ và tên không được để trống!",
+      });
+    }
+
+    if (phone) {
+      if (!/^\d{10}$/.test(phone)) {
+        return res.status(400).json({
+          success: false,
+          message: "Số điện thoại phải là 10 số!",
+        });
+      }
+      if (!/^0/.test(phone)) {
+        return res.status(400).json({
+          success: false,
+          message: "Số điện thoại phải bắt đầu bằng số 0!",
+        });
+      }
+      const phoneExists = await User.findOne({ phone, _id: { $ne: userId } });
+      if (phoneExists) {
+        return res.status(400).json({
+          success: false,
+          message: "Số điện thoại đã tồn tại trong hệ thống!",
+        });
+      }
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
-      req.params.id,
+      userId,
       { fullName, email, phone, role, status },
       { new: true },
     );

@@ -146,7 +146,13 @@ const AuthForm = ({ isOpen, onClose }) => {
         setOtpTimer(60)
         toast.success('Mã xác nhận đã được gửi vào email của bạn!')
       } else {
-        toast.error(data.message || 'Không thể gửi mã xác nhận')
+        if (res.status === 409) {
+          toast.error('Email này đã được đăng ký. Vui lòng chuyển sang Đăng nhập!')
+          // Optional: switch to login mode after a delay
+          setTimeout(() => setViewMode('login'), 2000)
+        } else {
+          toast.error(data.message || 'Không thể gửi mã xác nhận')
+        }
       }
     } catch {
       toast.error('Lỗi kết nối khi gửi mã xác nhận!')

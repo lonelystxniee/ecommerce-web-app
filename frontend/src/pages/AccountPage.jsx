@@ -175,6 +175,23 @@ const PersonalInfo = ({ user: initialUser }) => {
   }
 
   const handleSaveProfile = async () => {
+    // Frontend validation
+    if (!formData.fullName || formData.fullName.trim() === "") {
+      toast.error('Họ và tên không được để trống!')
+      return
+    }
+
+    if (formData.phone) {
+      if (!/^\d{10}$/.test(formData.phone)) {
+        toast.error('Số điện thoại phải là 10 số!')
+        return
+      }
+      if (!/^0/.test(formData.phone)) {
+        toast.error('Số điện thoại phải bắt đầu bằng số 0!')
+        return
+      }
+    }
+
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
