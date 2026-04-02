@@ -29,6 +29,18 @@ const OrderManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
   const navigate = useNavigate();
+  
+  const STATUS_MAP = {
+    PENDING: "Chờ xác nhận",
+    CONFIRMED: "Đã xác nhận",
+    PACKING: "Đang đóng gói",
+    READY_TO_PICK: "Chờ vận chuyển",
+    PICKING: "Đang lấy hàng",
+    STORING: "Đã vào kho",
+    DELIVERING: "Đang giao hàng",
+    COMPLETED: "Hoàn tất",
+    CANCELLED: "Đã hủy",
+  };
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
 
@@ -129,6 +141,7 @@ const OrderManagement = () => {
       PACKING: "bg-orange-100 text-orange-600",
       READY_TO_PICK: "bg-indigo-100 text-indigo-600",
       PICKING: "bg-purple-100 text-purple-600",
+      STORING: "bg-amber-100 text-amber-600",
       DELIVERING: "bg-blue-600 text-white",
       COMPLETED: "bg-green-100 text-green-600",
       CANCELLED: "bg-red-100 text-red-600",
@@ -186,7 +199,7 @@ const OrderManagement = () => {
       </div>
 
       <div className="bg-white rounded-[32px] shadow-xl border border-gray-100 overflow-hidden">
-        <table className="w-full text-sm text-left">
+        <table className="w-full text-sm text-left min-w-[1000px]">
           <thead className="bg-[#9d0b0f] text-white text-[10px] uppercase font-bold tracking-widest">
             <tr>
               <th className="px-8 py-5">Mã đơn</th>
@@ -255,7 +268,7 @@ const OrderManagement = () => {
                   <span
                     className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase ${getStatusBadge(order.status)}`}
                   >
-                    {order.status}
+                    {STATUS_MAP[order.status] || order.status}
                   </span>
                 </td>
                 <td className="px-8 py-6 text-right">

@@ -4,6 +4,7 @@ const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
 const { OAuth2Client } = require("google-auth-library");
 const User = require("../models/User");
+const OTP = require("../models/OTP");
 const activityController = require("./activityController");
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -23,7 +24,7 @@ const transporter = nodemailer.createTransport({
 });
 
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, isAdminLogin } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({
@@ -60,27 +61,83 @@ exports.login = async (req, res) => {
       });
     }
 
-    const token = jwt.sign(
-      { id: user._id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "48h" },
-    );
+    // Xử lý phân quyền đăng nhập
+    if (user.role === "ADMIN") {
+      if (!isAdminLogin) {
+        return res.status(403).json({
+          success: false,
+          message: "Tài khoản quản trị không được phép đăng nhập tại đây!",
+        });
+      }
 
-    console.log("✅ Đăng nhập thành công cho:", user.fullName);
-    await activityController.createLog(
-      user._id,
-      "Đăng nhập",
-      "Người dùng đã đăng nhập vào hệ thống",
-      req,
-    );
+      // Admin: Token 7 ngày, không cần Refresh Token
+      const token = jwt.sign(
+        { id: user._id, email: user.email, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: "7d" },
+      );
 
-    const { password: _, ...userInfo } = user.toObject();
-    return res.status(200).json({
-      success: true,
-      message: "Đăng nhập thành công!",
-      token,
-      user: userInfo,
-    });
+      // Xóa refresh token cũ nếu có
+      user.refreshToken = null;
+      await user.save();
+
+      console.log("✅ Admin đăng nhập thành công:", user.fullName);
+      await activityController.createLog(
+        user._id,
+        "Đăng nhập Admin",
+        "Quản trị viên đã đăng nhập vào hệ thống",
+        req,
+      );
+
+      const { password: _, ...userInfo } = user.toObject();
+      return res.status(200).json({
+        success: true,
+        message: "Đăng nhập Quản trị thành công!",
+        token,
+        user: userInfo,
+      });
+    } else {
+      // Customer
+      if (isAdminLogin) {
+        return res.status(403).json({
+          success: false,
+          message: "Bạn không có quyền truy cập quản trị!",
+        });
+      }
+
+      // Customer: Token 15p + Refresh Token 7 ngày
+      const token = jwt.sign(
+        { id: user._id, email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: "15m" },
+      );
+
+      const refreshToken = jwt.sign(
+        { id: user._id, email: user.email },
+        process.env.JWT_REFRESH_SECRET,
+        { expiresIn: "7d" },
+      );
+
+      user.refreshToken = refreshToken;
+      await user.save();
+
+      console.log("✅ Đăng nhập thành công cho:", user.fullName);
+      await activityController.createLog(
+        user._id,
+        "Đăng nhập",
+        "Người dùng đã đăng nhập vào hệ thống",
+        req,
+      );
+
+      const { password: _, ...userInfo } = user.toObject();
+      return res.status(200).json({
+        success: true,
+        message: "Đăng nhập thành công!",
+        token,
+        refreshToken,
+        user: userInfo,
+      });
+    }
   } catch (error) {
     console.error("❌ LỖI ĐĂNG NHẬP:", error.message);
     return res.status(500).json({
@@ -92,22 +149,79 @@ exports.login = async (req, res) => {
 };
 
 exports.register = async (req, res) => {
-  const { fullName, email, password, phone, gender, birthday } = req.body;
+  const { fullName, email, password, phone, gender, birthday, otp } = req.body;
 
-  if (!fullName || !email || !password) {
+  if (!fullName || !email || !password || !birthday || !otp) {
     return res.status(400).json({
       success: false,
-      message: "Vui lòng nhập đầy đủ họ tên, email và mật khẩu",
+      message: "Vui lòng nhập đầy đủ họ tên, email, mật khẩu, ngày sinh và mã xác nhận!",
+    });
+  }
+
+  const otpRecord = await OTP.findOne({ email, otp });
+  if (!otpRecord) {
+    return res.status(400).json({
+      success: false,
+      message: "Mã xác nhận không đúng hoặc đã hết hạn!",
+    });
+  }
+
+  // Xóa mã sau khi kiểm tra xong
+  await OTP.deleteOne({ _id: otpRecord._id });
+
+  // Check age (100 years max)
+  const birthDate = new Date(birthday);
+  const today = new Date();
+  const hundredYearsAgo = new Date();
+  hundredYearsAgo.setFullYear(today.getFullYear() - 100);
+
+  if (birthDate > today) {
+    return res.status(400).json({
+      success: false,
+      message: "Ngày sinh không hợp lệ (không thể ở tương lai)!",
+    });
+  }
+  if (birthDate < hundredYearsAgo) {
+    return res.status(400).json({
+      success: false,
+      message: "Ngày sinh không hợp lệ (không quá 100 tuổi)!",
     });
   }
 
   try {
+    console.log("--- BẮT ĐẦU ĐĂNG KÝ ---");
+    console.log("Email:", email);
+    
     const existing = await User.findOne({ email });
     if (existing) {
+      console.log("❌ Lỗi: Email đã tồn tại:", email);
       return res.status(409).json({
         success: false,
         message: "Email này đã được sử dụng!",
       });
+    }
+
+    if (phone) {
+      if (!/^\d{10}$/.test(phone)) {
+        return res.status(400).json({
+          success: false,
+          message: "Số điện thoại phải là 10 số!",
+        });
+      }
+      if (!/^0/.test(phone)) {
+        return res.status(400).json({
+          success: false,
+          message: "Số điện thoại phải bắt đầu bằng số 0!",
+        });
+      }
+      const existingPhone = await User.findOne({ phone });
+      if (existingPhone) {
+        console.log("❌ Lỗi: Số điện thoại đã tồn tại:", phone);
+        return res.status(409).json({
+          success: false,
+          message: "Số điện thoại này đã được sử dụng!",
+        });
+      }
     }
 
     if (password.length < 6) {
@@ -127,6 +241,7 @@ exports.register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    console.log("Đang tạo User mới...");
     const newUser = await User.create({
       fullName,
       email,
@@ -136,6 +251,7 @@ exports.register = async (req, res) => {
       birthday,
     });
 
+    console.log("✅ Đăng ký thành công:", newUser._id);
     return res.status(201).json({
       success: true,
       message: "Đăng ký tài khoản thành công!",
@@ -146,7 +262,7 @@ exports.register = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("❌ LỖI ĐĂNG KÝ:", error.message);
+    console.error("❌ LỖI ĐĂNG KÝ:", error);
     return res.status(500).json({
       success: false,
       message: "Đã có lỗi xảy ra tại Server",
@@ -215,8 +331,17 @@ exports.googleLogin = async (req, res) => {
     const jwtToken = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: "24h" },
+      { expiresIn: "5s" },
     );
+
+    const refreshToken = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: "7d" },
+    );
+
+    user.refreshToken = refreshToken;
+    await user.save();
 
     const { password, resetToken, resetTokenExpiry, ...userInfo } =
       user.toObject();
@@ -225,6 +350,7 @@ exports.googleLogin = async (req, res) => {
       success: true,
       message: "Đăng nhập Google thành công!",
       token: jwtToken,
+      refreshToken,
       user: userInfo,
     });
   } catch (error) {
@@ -330,12 +456,60 @@ exports.updateProfile = async (req, res) => {
   const userId = req.user.id;
   const { fullName, phone, avatar, gender, birthday } = req.body;
 
+  if (fullName !== undefined && (!fullName || fullName.trim() === "")) {
+    return res.status(400).json({
+      success: false,
+      message: "Họ và tên không được để trống!",
+    });
+  }
+
   const updateData = {};
   if (fullName) updateData.fullName = fullName;
-  if (phone) updateData.phone = phone;
+  if (phone) {
+    if (!/^\d{10}$/.test(phone)) {
+      return res.status(400).json({
+        success: false,
+        message: "Số điện thoại phải là 10 số!",
+      });
+    }
+    if (!/^0/.test(phone)) {
+      return res.status(400).json({
+        success: false,
+        message: "Số điện thoại phải bắt đầu bằng số 0!",
+      });
+    }
+    // Check if phone is already taken by another user
+    const existingPhone = await User.findOne({ phone, _id: { $ne: userId } });
+    if (existingPhone) {
+      return res.status(409).json({
+        success: false,
+        message: "Số điện thoại này đã được sử dụng bởi tài khoản khác!",
+      });
+    }
+    updateData.phone = phone;
+  }
   if (avatar) updateData.avatar = avatar;
   if (gender) updateData.gender = gender;
-  if (birthday) updateData.birthday = birthday;
+  if (birthday) {
+    const bDate = new Date(birthday);
+    const today = new Date();
+    const hundredYearsAgo = new Date();
+    hundredYearsAgo.setFullYear(today.getFullYear() - 100);
+
+    if (bDate > today) {
+      return res.status(400).json({
+        success: false,
+        message: "Ngày sinh không hợp lệ (không thể ở tương lai)!",
+      });
+    }
+    if (bDate < hundredYearsAgo) {
+      return res.status(400).json({
+        success: false,
+        message: "Ngày sinh không hợp lệ (không quá 100 tuổi)!",
+      });
+    }
+    updateData.birthday = birthday;
+  }
 
   if (Object.keys(updateData).length === 0) {
     return res.status(400).json({
@@ -727,11 +901,40 @@ exports.adminCreateUser = async (req, res) => {
   try {
     const { fullName, email, phone, password, role, status } = req.body;
 
+    if (!fullName || fullName.trim() === "") {
+      return res.status(400).json({
+        success: false,
+        message: "Họ và tên không được để trống!",
+      });
+    }
+
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res
         .status(400)
         .json({ success: false, message: "Email đã tồn tại trong hệ thống!" });
+    }
+
+    if (phone) {
+      if (!/^\d{10}$/.test(phone)) {
+        return res.status(400).json({
+          success: false,
+          message: "Số điện thoại phải là 10 số!",
+        });
+      }
+      if (!/^0/.test(phone)) {
+        return res.status(400).json({
+          success: false,
+          message: "Số điện thoại phải bắt đầu bằng số 0!",
+        });
+      }
+      const phoneExists = await User.findOne({ phone });
+      if (phoneExists) {
+        return res.status(400).json({
+          success: false,
+          message: "Số điện thoại đã tồn tại trong hệ thống!",
+        });
+      }
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -757,8 +960,39 @@ exports.adminCreateUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const { fullName, email, phone, role, status } = req.body;
+    const userId = req.params.id;
+
+    if (fullName !== undefined && (!fullName || fullName.trim() === "")) {
+      return res.status(400).json({
+        success: false,
+        message: "Họ và tên không được để trống!",
+      });
+    }
+
+    if (phone) {
+      if (!/^\d{10}$/.test(phone)) {
+        return res.status(400).json({
+          success: false,
+          message: "Số điện thoại phải là 10 số!",
+        });
+      }
+      if (!/^0/.test(phone)) {
+        return res.status(400).json({
+          success: false,
+          message: "Số điện thoại phải bắt đầu bằng số 0!",
+        });
+      }
+      const phoneExists = await User.findOne({ phone, _id: { $ne: userId } });
+      if (phoneExists) {
+        return res.status(400).json({
+          success: false,
+          message: "Số điện thoại đã tồn tại trong hệ thống!",
+        });
+      }
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
-      req.params.id,
+      userId,
       { fullName, email, phone, role, status },
       { new: true },
     );
@@ -840,5 +1074,136 @@ exports.changePassword = async (req, res) => {
     res
       .status(500)
       .json({ success: false, message: "Lỗi máy chủ khi đổi mật khẩu!" });
+  }
+};
+
+// Làm mới Access Token bằng Refresh Token
+exports.refreshToken = async (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return res.status(401).json({
+      success: false,
+      message: "Không tìm thấy refresh token!",
+    });
+  }
+
+  try {
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+
+    const user = await User.findById(decoded.id);
+    if (!user || user.refreshToken !== refreshToken) {
+      return res.status(403).json({
+        success: false,
+        message: "Refresh token không hợp lệ hoặc đã bị thu hồi!",
+      });
+    }
+
+    if (user.status === "LOCKED") {
+      return res.status(403).json({
+        success: false,
+        message: "Tài khoản của bạn đã bị khóa!",
+      });
+    }
+
+    const newAccessToken = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "5s" },
+    );
+
+    return res.status(200).json({
+      success: true,
+      token: newAccessToken,
+    });
+  } catch (error) {
+    console.error("❌ LỖI REFRESH TOKEN:", error.message);
+    return res.status(403).json({
+      success: false,
+      message: "Refresh token không hợp lệ hoặc đã hết hạn!",
+    });
+  }
+};
+
+// Đăng xuất — xóa refresh token khỏi DB
+exports.logout = async (req, res) => {
+  const { refreshToken } = req.body;
+
+  try {
+    if (refreshToken) {
+      await User.findOneAndUpdate(
+        { refreshToken },
+        { $set: { refreshToken: null } },
+      );
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Đăng xuất thành công!",
+    });
+  } catch (error) {
+    console.error("❌ LỖI LOGOUT:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Đã có lỗi xảy ra tại Server",
+    });
+  }
+};
+
+exports.sendOTP = async (req, res) => {
+  const { email, phone } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ success: false, message: "Vui lòng cung cấp email!" });
+  }
+
+  try {
+    // 1. Kiểm tra Email/Phone đã được dùng chưa
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
+      return res.status(409).json({ success: false, message: "Email này đã được sử dụng!" });
+    }
+
+    if (phone) {
+      const existingPhone = await User.findOne({ phone });
+      if (existingPhone) {
+        return res.status(409).json({ success: false, message: "Số điện thoại này đã được sử dụng!" });
+      }
+    }
+
+    // 2. Tạo mã OTP 6 số
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // 3. Lưu vào DB (Upsert)
+    await OTP.findOneAndUpdate(
+      { email },
+      { otp, createdAt: new Date() },
+      { upsert: true, new: true }
+    );
+
+    // 4. Gửi Email
+    await transporter.sendMail({
+      from: `"ClickGo Shop" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Mã xác nhận đăng ký tài khoản ClickGo",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #800a0d; text-align: center; margin-bottom: 30px;">XÁC NHẬN ĐĂNG KÝ</h2>
+          <p>Chào bạn,</p>
+          <p>Chúng tôi nhận được yêu cầu đăng ký tài khoản ClickGo bằng email này. Mã xác nhận của bạn là:</p>
+          <div style="background: #fdfaf5; padding: 20px; border-radius: 12px; text-align: center; margin: 30px 0; border: 1px dashed #800a0d;">
+            <span style="font-size: 36px; font-weight: bold; color: #800a0d; letter-spacing: 6px;">${otp}</span>
+          </div>
+          <p style="color: #666; font-size: 14px; line-height: 1.6;">Mã này sẽ hết hạn sau <strong>5 phút</strong>. Vui lòng tuyệt đối không chia sẻ mã này với bất kỳ ai để bảo mật tài khoản.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
+          <p style="font-size: 12px; color: #aaa; text-align: center;">© 2025 ClickGo – Hệ thống bán hàng Hồng Lam. Mọi quyền được bảo lưu.</p>
+        </div>
+      `,
+    });
+
+    return res.status(200).json({ success: true, message: "Mã xác nhận đã được gửi đến email!" });
+  } catch (error) {
+    console.error("LỖI GỬI OTP:", error);
+    return res.status(500).json({ success: false, message: "Lỗi Server: Không thể gửi email xác nhận!", error: error.message });
   }
 };

@@ -1,294 +1,266 @@
 /* eslint-disable no-unused-vars */
-import React, { useEffect, useState } from "react";
-import {
-  Search,
-  Plus,
-  Edit2,
-  Trash2,
-  RefreshCcw,
-  X,
-  User as UserIcon,
-  Shield,
-  Phone,
-  Mail,
-  UserPlus,
-  CheckCircle,
-  AlertCircle,
-  Lock,
-  Unlock,
-} from "lucide-react";
+import React, { useEffect, useState } from 'react'
+import { Search, Plus, Edit2, Trash2, RefreshCcw, X, User as UserIcon, Shield, Phone, Mail, UserPlus, CheckCircle, AlertCircle, Lock, Unlock } from 'lucide-react'
 
 const AdminManagement = () => {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalUsers, setTotalUsers] = useState(0);
-  const [activeCount, setActiveCount] = useState(0);
-  const [lockedCount, setLockedCount] = useState(0);
-  const [adminCount, setAdminCount] = useState(0);
-  const [limit] = useState(5);
-  const [statusFilter, setStatusFilter] = useState("ALL");
-  const [sortOrder, setSortOrder] = useState("newest");
+  const [users, setUsers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalUsers, setTotalUsers] = useState(0)
+  const [activeCount, setActiveCount] = useState(0)
+  const [lockedCount, setLockedCount] = useState(0)
+  const [adminCount, setAdminCount] = useState(0)
+  const [limit] = useState(5)
+  const [statusFilter, setStatusFilter] = useState('ALL')
+  const [sortOrder, setSortOrder] = useState('newest')
 
   // State cho Modal
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editMode, setEditMode] = useState(false)
+  const [selectedUserId, setSelectedUserId] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
 
   const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    password: "",
-    role: "ADMIN",
-    status: "ACTIVE",
-  });
+    fullName: '',
+    email: '',
+    phone: '',
+    password: '',
+    role: 'ADMIN',
+    status: 'ACTIVE',
+  })
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5175'
 
   const fetchUsers = async () => {
-    setLoading(true);
+    setLoading(true)
     try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
+      const token = localStorage.getItem('token')
+      if (!token) return
 
       const params = new URLSearchParams({
         page: currentPage,
         limit: limit,
         search: searchTerm,
-        role: "ADMIN", // Only fetch admins
-        status: statusFilter === "ALL" ? "" : statusFilter,
+        role: 'ADMIN', // Only fetch admins
+        status: statusFilter === 'ALL' ? '' : statusFilter,
         sort: sortOrder,
-      });
+      })
 
       const response = await fetch(`${API_URL}/api/auth/users?${params}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      });
-      const data = await response.json();
+      })
+      const data = await response.json()
       if (data.success) {
-        setUsers(data.users);
-        setTotalPages(data.totalPages);
-        setTotalUsers(data.totalUsers);
-        setActiveCount(data.activeCount);
-        setLockedCount(data.lockedCount);
-        setAdminCount(data.adminCount);
+        setUsers(data.users)
+        setTotalPages(data.totalPages)
+        setTotalUsers(data.totalUsers)
+        setActiveCount(data.activeCount)
+        setLockedCount(data.lockedCount)
+        setAdminCount(data.adminCount)
       }
     } catch (error) {
-      console.error(error);
+      console.error(error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      fetchUsers();
-    }, 500);
-    return () => clearTimeout(timeoutId);
-  }, [currentPage, searchTerm, statusFilter, sortOrder]);
+      fetchUsers()
+    }, 500)
+    return () => clearTimeout(timeoutId)
+  }, [currentPage, searchTerm, statusFilter, sortOrder])
 
   // Reset to page 1 when filters or search change
   useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, statusFilter, sortOrder]);
+    setCurrentPage(1)
+  }, [searchTerm, statusFilter, sortOrder])
 
   const handleOpenAddModal = () => {
-    setEditMode(false);
+    setEditMode(false)
     setFormData({
-      fullName: "",
-      email: "",
-      phone: "",
-      password: "",
-      role: "ADMIN",
-      status: "ACTIVE",
-    });
-    setIsModalOpen(true);
-  };
+      fullName: '',
+      email: '',
+      phone: '',
+      password: '',
+      role: 'ADMIN',
+      status: 'ACTIVE',
+    })
+    setIsModalOpen(true)
+  }
 
   const handleOpenEditModal = (user) => {
-    setEditMode(true);
-    setSelectedUserId(user._id);
+    setEditMode(true)
+    setSelectedUserId(user._id)
     setFormData({
       fullName: user.fullName,
       email: user.email,
-      phone: user.phone || "",
-      password: "",
+      phone: user.phone || '',
+      password: '',
       role: user.role,
       status: user.status,
-    });
-    setIsModalOpen(true);
-  };
+    })
+    setIsModalOpen(true)
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
+    e.preventDefault()
+
+    // Validation
+    if (!formData.fullName || formData.fullName.trim() === '') {
+      alert('Họ và tên không được để trống!')
+      return
+    }
+
+    if (formData.phone) {
+      if (!/^\d{10}$/.test(formData.phone)) {
+        alert('Số điện thoại phải là 10 số!')
+        return
+      }
+      if (!/^0/.test(formData.phone)) {
+        alert('Số điện thoại phải bắt đầu bằng số 0!')
+        return
+      }
+    }
+
+    setSubmitting(true)
     try {
-      const url = editMode
-        ? `${API_URL}/api/auth/users/${selectedUserId}`
-        : `${API_URL}/api/auth/users`;
+      const url = editMode ? `${API_URL}/api/auth/users/${selectedUserId}` : `${API_URL}/api/auth/users`
 
-      const method = editMode ? "PUT" : "POST";
-      const token = localStorage.getItem("token");
+      const method = editMode ? 'PUT' : 'POST'
+      const token = localStorage.getItem('token')
 
-      const payload = { ...formData };
+      const payload = { ...formData }
       if (editMode && !payload.password) {
-        delete payload.password;
+        delete payload.password
       }
 
       const res = await fetch(url, {
         method,
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
-      });
-      const data = await res.json();
+      })
+      const data = await res.json()
       if (data.success) {
-        alert(
-          editMode ? "Cập nhật thành công!" : "Tạo quản trị viên thành công!",
-        );
-        setIsModalOpen(false);
-        fetchUsers();
+        alert(editMode ? 'Cập nhật thành công!' : 'Tạo quản trị viên thành công!')
+        setIsModalOpen(false)
+        fetchUsers()
       } else {
-        alert(data.message || "Thao tác thất bại");
+        alert(data.message || 'Thao tác thất bại')
       }
     } catch (error) {
-      alert("Lỗi kết nối server!");
+      alert('Lỗi kết nối server!')
     } finally {
-      setSubmitting(false);
+      setSubmitting(false)
     }
-  };
+  }
 
   const handleToggleStatus = async (user) => {
-    const newStatus = user.status === "ACTIVE" ? "LOCKED" : "ACTIVE";
-    const actionText = newStatus === "LOCKED" ? "khóa" : "mở khóa";
+    const newStatus = user.status === 'ACTIVE' ? 'LOCKED' : 'ACTIVE'
+    const actionText = newStatus === 'LOCKED' ? 'khóa' : 'mở khóa'
 
-    if (
-      window.confirm(
-        `Bạn có chắc chắn muốn ${actionText} tài khoản quản trị này?`,
-      )
-    ) {
+    if (window.confirm(`Bạn có chắc chắn muốn ${actionText} tài khoản quản trị này?`)) {
       try {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem('token')
         const res = await fetch(`${API_URL}/api/auth/users/${user._id}`, {
-          method: "PUT",
+          method: 'PUT',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ status: newStatus }),
-        });
-        const data = await res.json();
+        })
+        const data = await res.json()
         if (data.success) {
-          alert(`${newStatus === "LOCKED" ? "Khóa" : "Mở khóa"} thành công!`);
-          fetchUsers();
+          alert(`${newStatus === 'LOCKED' ? 'Khóa' : 'Mở khóa'} thành công!`)
+          fetchUsers()
         } else {
-          alert(data.message || "Thao tác thất bại");
+          alert(data.message || 'Thao tác thất bại')
         }
       } catch (error) {
-        alert("Lỗi kết nối server!");
+        alert('Lỗi kết nối server!')
       }
     }
-  };
+  }
 
   const handleDeleteUser = async (id) => {
-    if (window.confirm("Xóa quyền quản trị của người dùng này?")) {
+    if (window.confirm('Xóa quyền quản trị của người dùng này?')) {
       try {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem('token')
         const res = await fetch(`${API_URL}/api/auth/users/${id}`, {
-          method: "DELETE",
+          method: 'DELETE',
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        });
-        const data = await res.json();
+        })
+        const data = await res.json()
         if (data.success) {
-          alert("Xóa thành công!");
-          fetchUsers();
+          alert('Xóa thành công!')
+          fetchUsers()
         } else {
-          alert(data.message || "Lỗi khi xóa!");
+          alert(data.message || 'Lỗi khi xóa!')
         }
       } catch (error) {
-        alert("Lỗi kết nối server!");
+        alert('Lỗi kết nối server!')
       }
     }
-  };
+  }
 
-  const displayUsers = users;
+  const displayUsers = users
 
   return (
-    <div className="p-6 space-y-6 animate-fadeIn">
+    <div className="space-y-6 animate-fadeIn">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-2 border-[#9d0b0f] pb-4">
         <div>
-          <h2 className="text-3xl font-black text-[#9d0b0f] uppercase tracking-tighter">
-            Đội ngũ Quản trị
-          </h2>
-          <p className="text-[#88694f] font-medium italic">
-            Quản lý tài khoản Admin và Nhân viên hệ thống
-          </p>
+          <h2 className="text-3xl font-black text-[#9d0b0f] uppercase tracking-tighter">Đội ngũ Quản trị</h2>
+          <p className="text-[#88694f] font-medium italic">Quản lý tài khoản Admin và Nhân viên hệ thống</p>
         </div>
         <div className="flex gap-2">
-          <button
-            onClick={fetchUsers}
-            className="p-3 bg-white border border-[#9d0b0f]/20 rounded-2xl text-[#9d0b0f] hover:bg-red-50 transition-colors"
-          >
-            <RefreshCcw size={20} className={loading ? "animate-spin" : ""} />
+          <button onClick={fetchUsers} className="p-3 bg-white border border-[#9d0b0f]/20 rounded-2xl text-[#9d0b0f] hover:bg-red-50 transition-colors">
+            <RefreshCcw size={20} className={loading ? 'animate-spin' : ''} />
           </button>
-          <button
-            onClick={handleOpenAddModal}
-            className="bg-[#9d0b0f] text-white px-6 py-3 rounded-2xl font-bold text-sm flex items-center gap-2 hover:bg-[#f39200] transition-all shadow-lg"
-          >
+          <button onClick={handleOpenAddModal} className="bg-[#9d0b0f] text-white px-6 py-3 rounded-2xl font-bold text-sm flex items-center gap-2 hover:bg-[#f39200] transition-all shadow-lg">
             <UserPlus size={20} /> Thêm Quản trị viên
           </button>
         </div>
       </div>
 
       {/* Stats Quick View */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <div className="flex items-center gap-4 p-6 bg-white border border-gray-100 shadow-sm rounded-4xl">
-          <div className="bg-red-50 p-4 rounded-2xl text-[#9d0b0f]">
-            <Shield size={24} />
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex items-center gap-3 p-4 bg-white border border-gray-100 shadow-sm rounded-[24px]">
+          <div className="bg-red-50 p-3 rounded-xl text-[#9d0b0f] shrink-0">
+            <Shield size={20} />
           </div>
-          <div>
-            <p className="text-[10px] font-black uppercase text-gray-400">
-              Tổng Quản trị
-            </p>
-            <h3 className="text-2xl font-black text-[#3e2714]">
-              {adminCount >= 0 ? adminCount : totalUsers}
-            </h3>
+          <div className="min-w-0">
+            <p className="text-[9px] font-black uppercase text-gray-400 truncate">Tổng Quản trị</p>
+            <h3 className="text-xl font-black text-[#3e2714]">{adminCount >= 0 ? adminCount : totalUsers}</h3>
           </div>
         </div>
-        <div className="flex items-center gap-4 p-6 bg-white border border-gray-100 shadow-sm rounded-4xl">
-          <div className="p-4 text-green-600 bg-green-50 rounded-2xl">
-            <CheckCircle size={24} />
+        <div className="flex items-center gap-3 p-4 bg-white border border-gray-100 shadow-sm rounded-[24px]">
+          <div className="p-3 text-green-600 bg-green-50 rounded-xl shrink-0">
+            <CheckCircle size={20} />
           </div>
-          <div>
-            <p className="text-[10px] font-black uppercase text-gray-400">
-              Đang hoạt động
-            </p>
-            <h3 className="text-2xl font-black text-[#3e2714]">
-              {activeCount}
-            </h3>
+          <div className="min-w-0">
+            <p className="text-[9px] font-black uppercase text-gray-400 truncate">Đang hoạt động</p>
+            <h3 className="text-xl font-black text-[#3e2714]">{activeCount}</h3>
           </div>
         </div>
-        <div className="flex items-center gap-4 p-6 bg-white border border-gray-100 shadow-sm rounded-4xl">
-          <div className="p-4 text-yellow-600 bg-yellow-50 rounded-2xl">
-            <AlertCircle size={24} />
+        <div className="flex items-center gap-3 p-4 bg-white border border-gray-100 shadow-sm rounded-[24px]">
+          <div className="p-3 text-yellow-600 bg-yellow-50 rounded-xl shrink-0">
+            <AlertCircle size={20} />
           </div>
-          <div>
-            <p className="text-[10px] font-black uppercase text-gray-400">
-              Đang bị khóa
-            </p>
-            <h3 className="text-2xl font-black text-[#3e2714]">
-              {lockedCount}
-            </h3>
+          <div className="min-w-0">
+            <p className="text-[9px] font-black uppercase text-gray-400 truncate">Đang bị khóa</p>
+            <h3 className="text-xl font-black text-[#3e2714]">{lockedCount}</h3>
           </div>
         </div>
       </div>
@@ -297,10 +269,7 @@ const AdminManagement = () => {
       <div className="bg-white/80 p-6 rounded-3xl shadow-sm border border-[#9d0b0f]/10">
         <div className="flex flex-col gap-4 md:flex-row">
           <div className="relative flex-1">
-            <Search
-              className="absolute left-4 top-3.5 text-[#9d0b0f]"
-              size={20}
-            />
+            <Search className="absolute left-4 top-3.5 text-[#9d0b0f]" size={20} />
             <input
               type="text"
               placeholder="Tìm kiếm quản trị viên..."
@@ -338,13 +307,14 @@ const AdminManagement = () => {
       </div>
 
       {/* Bảng Dữ Liệu */}
-      <div className="overflow-hidden border border-gray-100 shadow-xl bg-white/90 rounded-4xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
+      <div className="overflow-x-auto border border-gray-100 shadow-xl bg-white/90 rounded-[32px]">
+          <table className="w-full text-left min-w-[1000px]">
             <thead className="bg-[#9d0b0f] text-white text-xs uppercase font-bold tracking-widest">
               <tr>
+                <th className="px-8 py-5 text-center w-20">STT</th>
                 <th className="px-8 py-5">Thành viên</th>
                 <th className="px-8 py-5">Liên hệ</th>
+                <th className="px-8 py-5 text-center">Ngày tạo</th>
                 <th className="px-8 py-5 text-center">Vai trò</th>
                 <th className="px-8 py-5 text-center">Trạng thái</th>
                 <th className="px-8 py-5 text-right">Thao tác</th>
@@ -353,113 +323,74 @@ const AdminManagement = () => {
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td
-                    colSpan="5"
-                    className="px-8 py-20 text-center text-[#88694f]"
-                  >
+                  <td colSpan="5" className="px-8 py-20 text-center text-[#88694f]">
                     Đang tải...
                   </td>
                 </tr>
               ) : displayUsers.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan="5"
-                    className="px-8 py-20 text-center text-[#88694f]"
-                  >
+                  <td colSpan="5" className="px-8 py-20 text-center text-[#88694f]">
                     Không tìm thấy quản trị viên nào
                   </td>
                 </tr>
               ) : (
-                displayUsers.map((user) => (
-                  <tr
-                    key={user._id}
-                    className="hover:bg-[#f7f4ef]/50 transition-colors group"
-                  >
+                displayUsers.map((user, index) => (
+                  <tr key={user._id} className="hover:bg-[#f7f4ef]/50 transition-colors group">
+                    <td className="px-8 py-6 text-center font-bold text-[#9d0b0f]">
+                      {(currentPage - 1) * limit + index + 1}
+                    </td>
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-[#9d0b0f] text-white flex items-center justify-center font-bold shadow-md">
-                          {user.fullName.charAt(0).toUpperCase()}
-                        </div>
+                        <div className="w-12 h-12 rounded-2xl bg-[#9d0b0f] text-white flex items-center justify-center font-bold shadow-md">{user.fullName.charAt(0).toUpperCase()}</div>
                         <div>
-                          <p className="font-bold text-[#3e2714]">
-                            {user.fullName}
-                          </p>
-                          <p className="text-[10px] text-[#88694f] uppercase tracking-widest font-bold">
-                            Admin ID: {user._id.substring(0, 8)}
-                          </p>
+                          <p className="font-bold text-[#3e2714]">{user.fullName}</p>
+                          <p className="text-[10px] text-[#88694f] uppercase tracking-widest font-bold">Admin ID: {user._id.substring(0, 8)}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-8 py-6">
                       <div className="space-y-1">
                         <p className="text-sm text-[#3e2714] flex items-center gap-2">
-                          <Mail size={14} className="text-[#9d0b0f]" />{" "}
-                          {user.email}
+                          <Mail size={14} className="text-[#9d0b0f]" /> {user.email}
                         </p>
                         {user.phone && (
                           <p className="text-xs text-[#88694f] flex items-center gap-2">
-                            <Phone size={14} className="text-[#f39200]" />{" "}
-                            {user.phone}
+                            <Phone size={14} className="text-[#f39200]" /> {user.phone}
                           </p>
                         )}
                       </div>
                     </td>
                     <td className="px-8 py-6 text-center">
+                      <p className="text-[11px] font-medium text-gray-400 whitespace-nowrap italic">
+                        {new Date(user.createdAt).toLocaleDateString("vi-VN")} {new Date(user.createdAt).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </td>
+                    <td className="px-8 py-6 text-center">
                       <span
-                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1 ${
-                          user.role === "ADMIN"
-                            ? "bg-red-100 text-red-600"
-                            : "bg-blue-100 text-blue-600"
-                        }`}
+                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1 ${user.role === 'ADMIN' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}
                       >
                         <Shield size={12} /> {user.role}
                       </span>
                     </td>
                     <td className="px-8 py-6 text-center">
-                      <span
-                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold ${
-                          user.status === "ACTIVE"
-                            ? "bg-green-100 text-green-600"
-                            : "bg-yellow-100 text-yellow-600"
-                        }`}
-                      >
-                        {user.status === "ACTIVE"
-                          ? "ĐANG HOẠT ĐỘNG"
-                          : "TẠM KHÓA"}
+                      <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold ${user.status === 'ACTIVE' ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}`}>
+                        {user.status === 'ACTIVE' ? 'ĐANG HOẠT ĐỘNG' : 'TẠM KHÓA'}
                       </span>
                     </td>
                     <td className="px-8 py-6 text-right">
                       <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() => handleOpenEditModal(user)}
-                          className="p-2 text-blue-500 transition-all hover:bg-blue-50 rounded-xl"
-                        >
+                        <button onClick={() => handleOpenEditModal(user)} className="p-2 text-blue-500 transition-all hover:bg-blue-50 rounded-xl">
                           <Edit2 size={18} />
                         </button>
-                        <button
-                          onClick={() => handleDeleteUser(user._id)}
-                          className="p-2 text-red-500 transition-all hover:bg-red-50 rounded-xl"
-                        >
+                        <button onClick={() => handleDeleteUser(user._id)} className="p-2 text-red-500 transition-all hover:bg-red-50 rounded-xl">
                           <Trash2 size={18} />
                         </button>
                         <button
                           onClick={() => handleToggleStatus(user)}
-                          className={`p-2 transition-all rounded-xl ${
-                            user.status === "ACTIVE"
-                              ? "text-orange-500 hover:bg-orange-50"
-                              : "text-green-500 hover:bg-green-50"
-                          }`}
-                          title={
-                            user.status === "ACTIVE"
-                              ? "Khóa tài khoản"
-                              : "Mở khóa tài khoản"
-                          }
+                          className={`p-2 transition-all rounded-xl ${user.status === 'ACTIVE' ? 'text-orange-500 hover:bg-orange-50' : 'text-green-500 hover:bg-green-50'}`}
+                          title={user.status === 'ACTIVE' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
                         >
-                          {user.status === "ACTIVE" ? (
-                            <Lock size={18} />
-                          ) : (
-                            <Unlock size={18} />
-                          )}
+                          {user.status === 'ACTIVE' ? <Lock size={18} /> : <Unlock size={18} />}
                         </button>
                       </div>
                     </td>
@@ -468,19 +399,13 @@ const AdminManagement = () => {
               )}
             </tbody>
           </table>
-        </div>
       </div>
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
         <div className="flex flex-col items-center justify-between gap-4 mt-8 md:flex-row">
           <p className="text-sm font-medium text-[#88694f]">
-            Hiển thị{" "}
-            <span className="font-bold text-[#3e2714]">
-              {displayUsers.length}
-            </span>{" "}
-            trên <span className="font-bold text-[#3e2714]">{totalUsers}</span>{" "}
-            quản trị viên
+            Hiển thị <span className="font-bold text-[#3e2714]">{displayUsers.length}</span> trên <span className="font-bold text-[#3e2714]">{totalUsers}</span> quản trị viên
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -493,44 +418,33 @@ const AdminManagement = () => {
 
             <div className="flex items-center gap-1">
               {[...Array(totalPages)].map((_, i) => {
-                const pageNum = i + 1;
-                if (
-                  pageNum === 1 ||
-                  pageNum === totalPages ||
-                  (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
-                ) {
+                const pageNum = i + 1
+                if (pageNum === 1 || pageNum === totalPages || (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)) {
                   return (
                     <button
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
                       className={`w-10 h-10 rounded-xl text-sm font-bold transition-all shadow-sm ${
-                        currentPage === pageNum
-                          ? "bg-[#9d0b0f] text-white"
-                          : "bg-white text-[#9d0b0f] border border-[#9d0b0f]/20 hover:bg-red-50"
+                        currentPage === pageNum ? 'bg-[#9d0b0f] text-white' : 'bg-white text-[#9d0b0f] border border-[#9d0b0f]/20 hover:bg-red-50'
                       }`}
                     >
                       {pageNum}
                     </button>
-                  );
-                } else if (
-                  (pageNum === 2 && currentPage > 3) ||
-                  (pageNum === totalPages - 1 && currentPage < totalPages - 2)
-                ) {
+                  )
+                } else if ((pageNum === 2 && currentPage > 3) || (pageNum === totalPages - 1 && currentPage < totalPages - 2)) {
                   return (
                     <span key={pageNum} className="px-1 text-[#88694f]">
                       ...
                     </span>
-                  );
+                  )
                 }
-                return null;
+                return null
               })}
             </div>
 
             <button
               disabled={currentPage === totalPages}
-              onClick={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
               className="px-4 py-2 text-sm font-bold text-[#9d0b0f] bg-white border border-[#9d0b0f]/20 rounded-xl hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
             >
               Sau
@@ -542,21 +456,13 @@ const AdminManagement = () => {
       {/* MODAL THÊM / SỬA */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center p-4 z-200">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-md"
-            onClick={() => setIsModalOpen(false)}
-          ></div>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setIsModalOpen(false)}></div>
           <div className="relative bg-[#f7f4ef] w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden animate-zoomIn border-4 border-[#9d0b0f]/10">
             <div className="bg-[#9d0b0f] p-8 text-white flex justify-between items-center">
               <div>
-                <h3 className="text-2xl font-black tracking-tighter uppercase">
-                  {editMode ? "Cập nhật Admin" : "Thêm Admin mới"}
-                </h3>
+                <h3 className="text-2xl font-black tracking-tighter uppercase">{editMode ? 'Cập nhật Admin' : 'Thêm Admin mới'}</h3>
               </div>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="p-2 tracking-tighter rounded-full bg-white/20 hover:bg-white/40 opacity-80"
-              >
+              <button onClick={() => setIsModalOpen(false)} className="p-2 tracking-tighter rounded-full bg-white/20 hover:bg-white/40 opacity-80">
                 <X size={24} />
               </button>
             </div>
@@ -564,57 +470,42 @@ const AdminManagement = () => {
             <form onSubmit={handleSubmit} className="p-8 space-y-5">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[10px] font-black text-[#9d0b0f] uppercase mb-2 tracking-widest">
-                    Họ và tên
-                  </label>
+                  <label className="block text-[10px] font-black text-[#9d0b0f] uppercase mb-2 tracking-widest">Họ và tên</label>
                   <input
                     required
                     className="w-full px-5 py-4 bg-white rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all"
                     value={formData.fullName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, fullName: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-[#9d0b0f] uppercase mb-2 tracking-widest">
-                    Email
-                  </label>
+                  <label className="block text-[10px] font-black text-[#9d0b0f] uppercase mb-2 tracking-widest">Email</label>
                   <input
                     required
-                    className="w-full px-5 py-4 bg-white rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all"
+                    disabled={editMode}
+                    className={`w-full px-5 py-4 bg-white rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all font-medium ${editMode ? "opacity-50 cursor-not-allowed bg-gray-100" : ""}`}
                     type="email"
                     value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] font-black text-[#9d0b0f] uppercase mb-2 tracking-widest">
-                      Mật khẩu
-                    </label>
+                    <label className="block text-[10px] font-black text-[#9d0b0f] uppercase mb-2 tracking-widest">Mật khẩu</label>
                     <input
                       required={!editMode}
                       className="w-full px-5 py-4 bg-white rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all"
                       type="password"
                       value={formData.password}
-                      onChange={(e) =>
-                        setFormData({ ...formData, password: e.target.value })
-                      }
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-[#9d0b0f] uppercase mb-2 tracking-widest">
-                      Vai trò
-                    </label>
+                    <label className="block text-[10px] font-black text-[#9d0b0f] uppercase mb-2 tracking-widest">Vai trò</label>
                     <select
                       className="w-full px-5 py-4 bg-white rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all font-bold"
                       value={formData.role}
-                      onChange={(e) =>
-                        setFormData({ ...formData, role: e.target.value })
-                      }
+                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                     >
                       <option value="ADMIN">ADMIN</option>
                     </select>
@@ -626,18 +517,14 @@ const AdminManagement = () => {
                 type="submit"
                 className="w-full bg-[#9d0b0f] text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-[#f39200] transition-all shadow-xl mt-4"
               >
-                {submitting
-                  ? "Đang xử lý..."
-                  : editMode
-                    ? "Cập nhật"
-                    : "Tạo ngay"}
+                {submitting ? 'Đang xử lý...' : editMode ? 'Cập nhật' : 'Tạo ngay'}
               </button>
             </form>
           </div>
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default AdminManagement;
+export default AdminManagement

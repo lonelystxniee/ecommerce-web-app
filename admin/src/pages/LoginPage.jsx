@@ -26,13 +26,16 @@ const LoginPage = () => {
             const res = await fetch(`${API_URL}/api/auth/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ email, password, isAdminLogin: true }),
             });
             const data = await res.json();
             if (data.success) {
                 console.log(data.user.role);
                 if (data.user.role === "ADMIN") {
                     localStorage.setItem("token", data.token);
+                    if (data.refreshToken) {
+                      localStorage.setItem("refreshToken", data.refreshToken);
+                    }
                     localStorage.setItem("user", JSON.stringify(data.user));
                     navigate("/");
                 } else {

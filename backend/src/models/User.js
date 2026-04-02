@@ -21,6 +21,7 @@ const UserSchema = new mongoose.Schema(
     role: { type: String, enum: ["CUSTOMER", "ADMIN"], default: "CUSTOMER" },
     resetToken: { type: String, default: null },
     resetTokenExpiry: { type: Date, default: null },
+    refreshToken: { type: String, default: null },
     googleId: { type: String, default: null },
     authProvider: { type: String, enum: ["LOCAL", "GOOGLE"], default: "LOCAL" },
     avatar: { type: String, default: null },

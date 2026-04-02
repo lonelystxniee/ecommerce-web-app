@@ -6,6 +6,7 @@ const { verifyToken } = require("../middlewares/authMiddleware");
 const adminMiddleware = require("../middlewares/admin.middleware");
 
 router.post("/register", authController.register);
+router.post("/send-otp", authController.sendOTP);
 router.post("/login", authController.login);
 router.put("/update-profile", verifyToken, authController.updateProfile);
 router.put("/change-password", verifyToken, authController.changePassword);
@@ -36,6 +37,8 @@ router.delete(
   authController.deleteUser,
 );
 router.post("/google", authController.googleLogin);
+router.post("/refresh-token", authController.refreshToken);
+router.post("/logout", authController.logout);
 
 // Admin Activities Log
 router.get(

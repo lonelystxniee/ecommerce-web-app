@@ -1,22 +1,23 @@
 // admin/src/App.jsx
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import AdminLayout from "./components/AdminLayout";
-import Dashboard from "./pages/Dashboard";
-import UserManagement from "./pages/UserManagement";
-import ProductManagement from "./pages/ProductManagement";
-import OrderManagement from "./pages/OrderManagement";
-import OrderTracking from "./pages/OrderTracking";
-import PromotionManagement from "./pages/PromotionManagement";
-import CategoryManagement from "./pages/CategoryManagement";
-import ReviewManagement from "./pages/ReviewManagement";
-import AdminManagement from "./pages/AdminManagement";
-import ActivityLogs from "./pages/ActivityLogs";
-import LoginPage from "./pages/LoginPage";
-import ProtectedRoute from "./components/ProtectedRoute";
-import NewsAndVideoManagement from "./pages/NewsAndVideoManagement";
-import AdvertisementManagement from "./pages/AdvertisementManagement";
-import RevenueManagement from "./pages/RevenueManagement";
+import React from 'react'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import AdminLayout from './components/AdminLayout'
+import Dashboard from './pages/Dashboard'
+import UserManagement from './pages/UserManagement'
+import ProductManagement from './pages/ProductManagement'
+import OrderManagement from './pages/OrderManagement'
+import OrderTracking from './pages/OrderTracking'
+import PromotionManagement from './pages/PromotionManagement'
+import CategoryManagement from './pages/CategoryManagement'
+import ReviewManagement from './pages/ReviewManagement'
+import AdminManagement from './pages/AdminManagement'
+import ActivityLogs from './pages/ActivityLogs'
+import LoginPage from './pages/LoginPage'
+import ProtectedRoute from './components/ProtectedRoute'
+import NewsAndVideoManagement from './pages/NewsAndVideoManagement'
+import AdvertisementManagement from './pages/AdvertisementManagement'
+import RevenueManagement from './pages/RevenueManagement'
+import WarehouseManagement from './pages/WarehouseManagement'
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
             <Route path="admins" element={<AdminManagement />} />
             <Route path="products" element={<ProductManagement />} />
             <Route path="orders" element={<OrderManagement />} />
+            <Route path="orders/track/:id" element={<OrderTracking />} />
             <Route path="promotions" element={<PromotionManagement />} />
             <Route path="categories" element={<CategoryManagement />} />
             <Route path="reviews" element={<ReviewManagement />} />
@@ -38,11 +40,12 @@ function App() {
             <Route path="/news-video" element={<NewsAndVideoManagement />} />
             <Route path="/ads" element={<AdvertisementManagement />} />
             <Route path="/revenue" element={<RevenueManagement />} />
+            <Route path="/warehouse" element={<WarehouseManagement />} />
           </Route>
         </Route>
       </Routes>
     </Router>
-  );
+  )
 }
 
-export default App;
+export default App

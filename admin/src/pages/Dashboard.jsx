@@ -70,6 +70,18 @@ const Dashboard = () => {
 
   const itemsPerPage = 5;
   const vouchersPerPage = 4;
+  
+  const STATUS_MAP = {
+    PENDING: "Chờ xác nhận",
+    CONFIRMED: "Đã xác nhận",
+    PACKING: "Đang đóng gói",
+    READY_TO_PICK: "Chờ vận chuyển",
+    PICKING: "Đang lấy hàng",
+    STORING: "Đã vào kho",
+    DELIVERING: "Đang giao hàng",
+    COMPLETED: "Hoàn tất",
+    CANCELLED: "Đã hủy",
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -526,8 +538,12 @@ const Dashboard = () => {
                     {o.totalPrice.toLocaleString()}đ
                   </td>
                   <td className="py-4 text-center">
-                    <span className="text-[8px] font-black uppercase px-2 py-1 rounded-md bg-orange-50 text-[#f39200]">
-                      {o.status}
+                    <span className={`text-[8px] font-black uppercase px-2 py-1 rounded-md ${
+                        o.status === 'COMPLETED' ? 'bg-green-50 text-green-600' :
+                        o.status === 'CANCELLED' ? 'bg-red-50 text-red-600' :
+                        'bg-orange-50 text-[#f39200]'
+                    }`}>
+                      {STATUS_MAP[o.status] || o.status}
                     </span>
                   </td>
                 </tr>

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Package, Truck, CheckCircle, Clock, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
+import { Package, Truck, CheckCircle, Clock, MapPin, ChevronLeft, CreditCard } from "lucide-react";
+// Note: I will use the actual icon names from lucide-react as seen in the previous view_file
+import * as Lucide from "lucide-react";
+
+const { Package: IconPackage, Truck: IconTruck, CheckCircle: IconCheck, Clock: IconClock, MapPin: IconMap, ChevronLeft: IconBack, CreditCard: IconCard } = Lucide;
 
 const OrderTracking = () => {
     const { id } = useParams();
     const [order, setOrder] = useState(null);
-    const [currentPage, setCurrentPage] = useState(1);
-    const pageSize = 5;
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
 
@@ -37,105 +39,168 @@ const OrderTracking = () => {
         return () => clearInterval(interval);
     }, [id]);
 
-    if (!order) return <div className="p-20 italic text-center">Đang tìm kiếm hành trình...</div>;
+    const getStepStatus = (status) => {
+        const s = (status || "").toUpperCase();
+        if (["COMPLETED"].includes(s)) return 4;
+        if (["DELIVERING", "PICKING", "READY_TO_PICK"].includes(s)) return 3;
+        if (["PACKING", "CONFIRMED"].includes(s)) return 2;
+        if (["PENDING"].includes(s)) return 1;
+        return 0;
+    };
+
+    const steps = [
+        { label: "Đã đặt", icon: <IconPackage size={20} /> },
+        { label: "Xử lý", icon: <IconClock size={20} /> },
+        { label: "Vận chuyển", icon: <IconTruck size={20} /> },
+        { label: "Hoàn tất", icon: <IconCheck size={20} /> },
+    ];
+
+    if (!order) return (
+        <div className="min-h-screen bg-[#f7f4ef]/30 flex items-center justify-center">
+            <div className="text-center">
+                <IconClock className="mx-auto text-[#9d0b0f] animate-spin mb-4" size={48} />
+                <p className="italic text-stone-400 font-bold">Đang tải hành trình đơn hàng...</p>
+            </div>
+        </div>
+    );
+
+    const currentStep = getStepStatus(order.status);
 
     return (
-        <div className="min-h-screen py-10 font-sans">
-            <div className="max-w-[1200px] mx-auto px-4">
-                <Link to="/orders" className="flex items-center gap-2 text-[#9d0b0f] font-bold mb-6 hover:underline">
-                    <ChevronLeft size={20} /> Quay lại quản lý đơn
+        <div className="min-h-screen bg-[#f7f4ef]/30 py-12 font-sans overflow-x-hidden">
+            <div className="max-w-[1000px] mx-auto px-6">
+                <Link to="/orders" className="inline-flex items-center gap-2 text-[#9d0b0f] font-bold mb-8 hover:translate-x-1 transition-transform group">
+                    <div className="p-2 rounded-full bg-white shadow-sm border border-stone-200 group-hover:bg-[#9d0b0f] group-hover:text-white transition-all">
+                        <IconBack size={16} />
+                    </div>
+                    <span>Trở lại danh sách</span>
                 </Link>
 
-                <div className="flex items-center justify-between p-8 mb-6 bg-white border border-gray-100 shadow-sm rounded-3xl">
-                    <div>
-                        <p className="text-xs font-bold tracking-widest text-gray-400 uppercase">Mã đơn hàng</p>
-                        <h2 className="text-2xl font-black text-[#9d0b0f]">#{order._id?.slice(-8).toUpperCase()}</h2>
-                        {order.ghnOrderCode && (
-                            <p className="mt-1 text-xs font-bold text-gray-500">Mã GHN: <span className="text-[#f39200]">{order.ghnOrderCode}</span></p>
-                        )}
-                    </div>
-                    <div className="text-right">
-                        <p className="text-xs font-bold text-gray-400 uppercase">Trạng thái hiện tại</p>
-                        <span className="px-4 py-1.5 bg-orange-100 text-[#f39200] rounded-full font-black text-xs uppercase">{order.status}</span>
+                <div className="bg-white p-8 sm:p-12 rounded-[40px] shadow-[0_20px_50px_rgba(157,11,15,0.05)] border border-stone-100 mb-8 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-linear-to-bl from-[#9d0b0f]/5 to-transparent rounded-full -mr-32 -mt-32 blur-3xl"></div>
+                    
+                    <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
+                        <div className="text-center md:text-left">
+                            <span className="inline-block px-3 py-1 rounded-full bg-[#f39200]/10 text-[#f39200] text-[10px] font-black uppercase tracking-widest mb-2">Quản trị vận đơn</span>
+                            <h2 className="text-4xl font-black text-[#9d0b0f] tracking-tighter">#{order._id?.slice(-8).toUpperCase()}</h2>
+                            {order.ghnOrderCode && (
+                                <p className="mt-2 text-sm font-bold text-gray-400 flex items-center justify-center md:justify-start gap-2">
+                                    GHN Tracking: <span className="text-[#f39200] font-black">{order.ghnOrderCode}</span>
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="flex-1 w-full max-w-2xl">
+                            <div className="relative flex justify-between items-center px-4">
+                                <div className="absolute left-8 right-8 top-5 h-1 bg-stone-100 -z-10">
+                                    <div 
+                                        className="h-full bg-[#9d0b0f] transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(157,11,15,0.4)]"
+                                        style={{ width: `${Math.max(0, (currentStep - 1) / (steps.length - 1)) * 100}%` }}
+                                    ></div>
+                                </div>
+
+                                {steps.map((step, idx) => {
+                                    const isActive = idx + 1 <= currentStep;
+                                    const isCurrent = idx + 1 === currentStep;
+                                    return (
+                                        <div key={idx} className="flex flex-col items-center gap-3">
+                                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-lg
+                                                ${isActive ? 'bg-[#9d0b0f] text-white scale-110' : 'bg-white text-stone-300 border border-stone-100'}
+                                                ${isCurrent ? 'ring-4 ring-red-100 animate-pulse' : ''}
+                                            `}>
+                                                {step.icon}
+                                            </div>
+                                            <span className={`text-[10px] font-black uppercase tracking-wider text-center ${isActive ? 'text-[#9d0b0f]' : 'text-stone-300'}`}>
+                                                {step.label}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div className="p-10 bg-white border border-gray-100 shadow-xl rounded-3xl">
-                    <div className="relative border-l-2 border-[#9d0b0f]/20 ml-6 space-y-12">
-                        {(() => {
-                            const history = order.trackingHistory || [];
-                            const totalPages = Math.max(1, Math.ceil(history.length / pageSize));
-                            const start = (currentPage - 1) * pageSize;
-                            const pageItems = history.slice(start, start + pageSize);
-                            return pageItems.map((step, i) => {
-                                const index = start + i;
-                                return (
-                                    <div key={index} className="relative pl-10">
-                                        <div className={`absolute -left-[11px] top-0 w-5 h-5 rounded-full border-4 border-white shadow-md
-          ${index === 0 ? "bg-[#9d0b0f] ring-4 ring-red-100 animate-pulse" : "bg-gray-300"}`}
-                                        />
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
+                    <div className="lg:col-span-7">
+                        <div className="bg-white p-1 shadow-[0_20px_50px_rgba(0,0,0,0.03)] rounded-[48px] border border-stone-100 overflow-hidden h-full">
+                            <div className="p-8 pb-4">
+                                <h3 className="text-xl font-black text-[#3e2714] flex items-center gap-3 uppercase tracking-tighter">
+                                    <IconClock className="text-[#9d0b0f]" /> Lịch sử cập nhật
+                                </h3>
+                            </div>
+                            
+                            <div className="p-8 space-y-0 relative">
+                                <div className="absolute left-[51px] top-12 bottom-12 w-0.5 bg-linear-to-b from-[#9d0b0f]/20 via-stone-100 to-transparent"></div>
+                                
+                                {order.trackingHistory?.map((step, index) => (
+                                    <div key={index} className="relative pl-16 py-6 group transition-all">
+                                        <div className={`absolute left-[39px] top-1/2 -translate-y-1/2 w-6 h-6 rounded-xl border-4 border-white shadow-xl transition-all duration-500 z-10 scale-0 group-hover:scale-110 animate-scaleIn
+                                            ${index === 0 ? "bg-[#9d0b0f] ring-4 ring-red-100" : "bg-stone-300"}`}
+                                        ></div>
 
-                                        <div className="flex items-start justify-between">
-                                            <div>
-                                                <p className={`text-base font-bold ${index === 0 ? "text-[#9d0b0f]" : "text-gray-500"}`}>{step.desc}</p>
-                                                <p className="flex items-center gap-1 mt-1 text-xs font-medium text-gray-400"><Clock size={12} /> {new Date(step.time).toLocaleString("vi-VN")}</p>
-                                            </div>
-
-                                            <div className={index === 0 ? "text-[#f39200]" : "text-gray-300"}>
-                                                {step.status === "DELIVERED" || step.desc.includes("thành công") ? (
-                                                    <CheckCircle size={24} />
-                                                ) : (
-                                                    <Truck size={24} />
-                                                )}
+                                        <div className={`p-6 rounded-[32px] transition-all duration-300 border
+                                            ${index === 0 
+                                                ? "bg-white border-[#9d0b0f]/20 shadow-[0_15px_40px_rgba(157,11,15,0.08)]" 
+                                                : "bg-stone-50/30 border-transparent hover:bg-white hover:border-stone-100 hover:shadow-sm"}
+                                        `}>
+                                            <div className="flex justify-between items-start gap-4">
+                                                <div className="flex-1">
+                                                    <p className={`text-base font-bold leading-tight mb-2 ${index === 0 ? "text-[#9d0b0f] text-lg" : "text-stone-700"}`}>
+                                                        {step.desc}
+                                                    </p>
+                                                    <div className="flex items-center gap-4 text-[11px] font-bold text-stone-400">
+                                                        <div className="flex items-center gap-1"><IconClock size={12} /> {new Date(step.time).toLocaleString("vi-VN")}</div>
+                                                    </div>
+                                                </div>
+                                                <div className={`p-3 rounded-2xl transition-all ${index === 0 ? "bg-[#9d0b0f] text-white rotate-[360deg] duration-1000" : "bg-stone-100 text-stone-300"}`}>
+                                                    {step.status === "DELIVERED" || step.desc.includes("thành công") ? <IconCheck size={20} /> : <IconTruck size={20} />}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                );
-                            });
-                        })()}
+                                ))}
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                {/* Pagination controls for tracking history */}
-                <div className="flex items-center justify-center gap-3 mt-6">
-                    <button
-                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                        className="p-2 rounded border bg-white"
-                    >
-                        <ChevronLeft size={18} />
-                    </button>
-                    <div className="flex items-center gap-2">
-                        {(() => {
-                            const history = order.trackingHistory || [];
-                            const totalPages = Math.max(1, Math.ceil(history.length / pageSize));
-                            return Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                                <button
-                                    key={p}
-                                    onClick={() => setCurrentPage(p)}
-                                    className={`px-3 py-1 rounded ${p === currentPage ? 'bg-[#9d0b0f] text-white' : 'bg-white'}`}
-                                >
-                                    {p}
-                                </button>
-                            ));
-                        })()}
+                    <div className="lg:col-span-5 space-y-8">
+                        <div className="bg-white p-10 rounded-[48px] shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-stone-100 relative overflow-hidden group">
+                           <div className="absolute top-0 left-0 w-full h-2 bg-[#9d0b0f]"></div>
+                           <h3 className="text-[#9d0b0f] font-black uppercase text-xs mb-8 flex items-center gap-2 tracking-widest"><IconMap size={18} /> Điểm đến giao hàng</h3>
+                           <div className="space-y-6">
+                              <div>
+                                 <p className="text-3xl font-black text-[#3e2714] leading-none mb-2">{order.customerInfo.fullName}</p>
+                                 <p className="text-lg font-bold text-stone-500">{order.customerInfo.phone}</p>
+                              </div>
+                              <div className="p-6 rounded-[32px] bg-stone-50 border border-stone-100 italic text-stone-600 leading-relaxed shadow-inner">
+                                 {order.customerInfo.address}
+                              </div>
+                           </div>
+                        </div>
+
+                        <div className="bg-[#3e2714] p-10 rounded-[48px] shadow-2xl relative overflow-hidden group">
+                           <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/5 rounded-full -mb-16 -mr-16 blur-2xl"></div>
+                           <h3 className="text-stone-400 font-bold uppercase text-[10px] tracking-[0.3em] mb-6">Chi tiết thanh toán</h3>
+                           <div className="space-y-4 mb-8">
+                              <div className="flex justify-between text-sm">
+                                 <span className="text-stone-400">Giá trị hàng hóa</span>
+                                 <span className="text-white font-bold">{order.items?.reduce((s, i) => s + i.price * i.quantity, 0).toLocaleString()}đ</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                 <span className="text-stone-400">Phí giao hàng</span>
+                                 <span className="text-white font-bold">{(order.shipping?.shippingFee || 0).toLocaleString()}đ</span>
+                              </div>
+                           </div>
+                           <div className="border-t border-white/10 pt-6 flex justify-between items-end">
+                              <div>
+                                 <p className="text-stone-500 text-[10px] font-black uppercase tracking-widest mb-1">Tổng thu hộ (COD)</p>
+                                 <p className="text-4xl font-black text-[#f39200] leading-none">{(order.totalPrice || 0).toLocaleString()}đ</p>
+                              </div>
+                              <div className="p-4 bg-white/5 rounded-3xl text-[#f39200] border border-white/10"><IconCard size={32} /></div>
+                           </div>
+                        </div>
                     </div>
-                    <button
-                        onClick={() => {
-                            const history = order.trackingHistory || [];
-                            const totalPages = Math.max(1, Math.ceil(history.length / pageSize));
-                            setCurrentPage((p) => Math.min(totalPages, p + 1));
-                        }}
-                        className="p-2 rounded border bg-white"
-                    >
-                        <ChevronRight size={18} />
-                    </button>
-                </div>
-
-                <div className="mt-8 bg-white p-8 rounded-3xl shadow-sm border border-dashed border-[#9d0b0f]/30">
-                    <h3 className="text-[#9d0b0f] font-black uppercase text-xs mb-4 flex items-center gap-2"><MapPin size={18} /> Địa chỉ nhận hàng</h3>
-                    <p className="font-bold text-[#3e2714] text-lg">{order.customerInfo.fullName}</p>
-                    <p className="mt-1 text-sm text-gray-500">{order.customerInfo.phone}</p>
-                    <p className="mt-2 text-sm italic text-gray-600">{order.customerInfo.address}</p>
                 </div>
             </div>
         </div>

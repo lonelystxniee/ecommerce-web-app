@@ -135,6 +135,24 @@ const UserManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validation
+    if (!formData.fullName || formData.fullName.trim() === "") {
+      alert("Họ và tên không được để trống!");
+      return;
+    }
+
+    if (formData.phone) {
+      if (!/^\d{10}$/.test(formData.phone)) {
+        alert("Số điện thoại phải là 10 số!");
+        return;
+      }
+      if (!/^0/.test(formData.phone)) {
+        alert("Số điện thoại phải bắt đầu bằng số 0!");
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       const url = editMode
@@ -226,7 +244,7 @@ const UserManagement = () => {
   const displayUsers = users;
 
   return (
-    <div className="p-6 space-y-6 animate-fadeIn">
+    <div className="space-y-6 animate-fadeIn">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-2 border-[#9d0b0f] pb-4">
         <div>
@@ -249,64 +267,56 @@ const UserManagement = () => {
       </div>
 
       {/* Stats Quick View */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="bg-blue-50 p-4 rounded-2xl text-blue-600">
-            <Users size={24} />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded-[24px] shadow-sm border border-gray-100 flex items-center gap-3">
+          <div className="bg-blue-50 p-3 rounded-xl text-blue-600 shrink-0">
+            <Users size={20} />
           </div>
-          <div>
-            <p className="text-[10px] font-black uppercase text-gray-400">
+          <div className="min-w-0">
+            <p className="text-[9px] font-black uppercase text-gray-400 truncate">
               Tổng khách hàng
             </p>
-            <h3 className="text-2xl font-black text-[#3e2714]">
-              {users.filter((u) => u.role === "CUSTOMER").length}
+            <h3 className="text-xl font-black text-[#3e2714]">
+              {customerCount}
             </h3>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="bg-green-50 p-4 rounded-2xl text-green-600">
-            <CheckCircle size={24} />
+        <div className="bg-white p-4 rounded-[24px] shadow-sm border border-gray-100 flex items-center gap-3">
+          <div className="bg-green-50 p-3 rounded-xl text-green-600 shrink-0">
+            <CheckCircle size={20} />
           </div>
-          <div>
-            <p className="text-[10px] font-black uppercase text-gray-400">
+          <div className="min-w-0">
+            <p className="text-[9px] font-black uppercase text-gray-400 truncate">
               Hoạt động
             </p>
-            <h3 className="text-2xl font-black text-[#3e2714]">
-              {
-                users.filter(
-                  (u) => u.role === "CUSTOMER" && u.status === "ACTIVE",
-                ).length
-              }
+            <h3 className="text-xl font-black text-[#3e2714]">
+              {activeCount}
             </h3>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="bg-yellow-50 p-4 rounded-2xl text-yellow-600">
-            <AlertCircle size={24} />
+        <div className="bg-white p-4 rounded-[24px] shadow-sm border border-gray-100 flex items-center gap-3">
+          <div className="bg-yellow-50 p-3 rounded-xl text-yellow-600 shrink-0">
+            <AlertCircle size={20} />
           </div>
-          <div>
-            <p className="text-[10px] font-black uppercase text-gray-400">
+          <div className="min-w-0">
+            <p className="text-[9px] font-black uppercase text-gray-400 truncate">
               Tạm khóa
             </p>
-            <h3 className="text-2xl font-black text-[#3e2714]">
-              {
-                users.filter(
-                  (u) => u.role === "CUSTOMER" && u.status === "LOCKED",
-                ).length
-              }
+            <h3 className="text-xl font-black text-[#3e2714]">
+              {lockedCount}
             </h3>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="bg-red-50 p-4 rounded-2xl text-red-600">
-            <Shield size={24} />
+        <div className="bg-white p-4 rounded-[24px] shadow-sm border border-gray-100 flex items-center gap-3">
+          <div className="bg-red-50 p-3 rounded-xl text-red-600 shrink-0">
+            <Shield size={20} />
           </div>
-          <div>
-            <p className="text-[10px] font-black uppercase text-gray-400">
+          <div className="min-w-0">
+            <p className="text-[9px] font-black uppercase text-gray-400 truncate">
               Cấp quản trị
             </p>
-            <h3 className="text-2xl font-black text-[#3e2714]">
-              {users.filter((u) => u.role !== "CUSTOMER").length}
+            <h3 className="text-xl font-black text-[#3e2714]">
+              {adminCount}
             </h3>
           </div>
         </div>
@@ -361,13 +371,14 @@ const UserManagement = () => {
       </div>
 
       {/* Bảng Dữ Liệu */}
-      <div className="overflow-hidden border border-gray-100 shadow-xl bg-white/90 rounded-4xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
+      <div className="overflow-x-auto border border-gray-100 shadow-xl bg-white/90 rounded-[32px]">
+          <table className="w-full text-left min-w-[1000px]">
             <thead className="bg-[#9d0b0f] text-white text-xs uppercase font-bold tracking-widest">
               <tr>
+                <th className="px-8 py-5 text-center w-20">STT</th>
                 <th className="px-8 py-5">Người dùng</th>
                 <th className="px-8 py-5">Liên hệ</th>
+                <th className="px-8 py-5 text-center">Ngày tạo</th>
                 <th className="px-8 py-5 text-center">Vai trò</th>
                 <th className="px-8 py-5 text-center">Trạng thái</th>
                 <th className="px-8 py-5 text-right">Thao tác</th>
@@ -398,11 +409,14 @@ const UserManagement = () => {
                   </td>
                 </tr>
               ) : (
-                displayUsers.map((user) => (
+                displayUsers.map((user, index) => (
                   <tr
                     key={user._id}
                     className="hover:bg-[#f7f4ef]/50 transition-colors group"
                   >
+                    <td className="px-8 py-6 text-center font-bold text-[#9d0b0f]">
+                      {(currentPage - 1) * limit + index + 1}
+                    </td>
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-[#f39200] to-[#faa519] text-white flex items-center justify-center font-bold shadow-md group-hover:scale-110 transition-transform">
@@ -432,6 +446,11 @@ const UserManagement = () => {
                           </p>
                         )}
                       </div>
+                    </td>
+                    <td className="px-8 py-6 text-center">
+                      <p className="text-[11px] font-medium text-gray-400 whitespace-nowrap italic">
+                        {new Date(user.createdAt).toLocaleDateString("vi-VN")} {new Date(user.createdAt).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' })}
+                      </p>
                     </td>
                     <td className="px-8 py-6 text-center">
                       <span
@@ -499,7 +518,6 @@ const UserManagement = () => {
               )}
             </tbody>
           </table>
-        </div>
       </div>
 
       {/* Pagination Controls */}
@@ -620,7 +638,8 @@ const UserManagement = () => {
                   </label>
                   <input
                     required
-                    className="w-full px-5 py-4 bg-white rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all shadow-sm font-medium"
+                    disabled={editMode}
+                    className={`w-full px-5 py-4 bg-white rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all shadow-sm font-medium ${editMode ? "opacity-50 cursor-not-allowed bg-gray-100" : ""}`}
                     type="email"
                     placeholder="example@gmail.com"
                     value={formData.email}
