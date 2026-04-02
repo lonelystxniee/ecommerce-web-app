@@ -27,7 +27,7 @@ const ReviewManagement = () => {
     const fetchReviews = async (page = 1) => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_URL}/api/reviews?page=${page}&limit=10&search=${searchTerm}`, {
+            const response = await fetch(`${API_URL}/api/reviews?page=${page}&limit=6&search=${searchTerm}`, {
                 headers: {
                     "Authorization": `Bearer ${localStorage.getItem("token")}`
                 }
@@ -259,20 +259,52 @@ const ReviewManagement = () => {
                 {pagination.totalPages > 1 && (
                     <div className="bg-gray-50/50 px-6 py-4 flex items-center justify-between border-t border-gray-200">
                         <p className="text-sm text-gray-500 font-medium">
-                            Hiển thị <span className="text-[#3e2714] font-bold">{(pagination.currentPage - 1) * 10 + 1}</span> - <span className="text-[#3e2714] font-bold">{Math.min(pagination.currentPage * 10, pagination.totalReviews)}</span> trong tổng số <span className="text-[#3e2714] font-bold">{pagination.totalReviews}</span> đánh giá
+                            Hiển thị <span className="text-[#3e2714] font-bold">{(pagination.currentPage - 1) * 6 + 1}</span> - <span className="text-[#3e2714] font-bold">{Math.min(pagination.currentPage * 6, pagination.totalReviews)}</span> trong tổng số <span className="text-[#3e2714] font-bold">{pagination.totalReviews}</span> đánh giá
                         </p>
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-2">
                             <button
                                 onClick={() => fetchReviews(pagination.currentPage - 1)}
-                                disabled={pagination.currentPage === 1}
-                                className="p-2 rounded border border-gray-200 bg-white text-gray-500 hover:text-primary hover:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                                disabled={pagination.currentPage === 1 || loading}
+                                className="p-2 rounded-xl border border-gray-200 bg-white hover:bg-primary hover:text-white transition-all disabled:opacity-40 shadow-sm"
                             >
                                 <ChevronLeft size={18} />
                             </button>
+
+                            {/* Numeric Pages */}
+                            <div className="hidden md:flex items-center gap-1 mx-2">
+                                {[...Array(pagination.totalPages)].map((_, i) => {
+                                    const pageNum = i + 1;
+                                    if (
+                                        pageNum === 1 ||
+                                        pageNum === pagination.totalPages ||
+                                        (pageNum >= pagination.currentPage - 1 && pageNum <= pagination.currentPage + 1)
+                                    ) {
+                                        return (
+                                            <button
+                                                key={pageNum}
+                                                onClick={() => fetchReviews(pageNum)}
+                                                className={`w-9 h-9 rounded-xl border-2 text-xs font-black transition-all ${pagination.currentPage === pageNum
+                                                        ? "bg-primary text-white border-primary shadow-md shadow-red-100"
+                                                        : "bg-white text-[#3e2714] border-stone-100 hover:border-primary hover:text-primary"
+                                                    }`}
+                                            >
+                                                {pageNum}
+                                            </button>
+                                        );
+                                    } else if (
+                                        (pageNum === pagination.currentPage - 2 && pageNum > 1) ||
+                                        (pageNum === pagination.currentPage + 2 && pageNum < pagination.totalPages)
+                                    ) {
+                                        return <span key={pageNum} className="text-gray-400 font-bold px-1">...</span>;
+                                    }
+                                    return null;
+                                })}
+                            </div>
+
                             <button
                                 onClick={() => fetchReviews(pagination.currentPage + 1)}
-                                disabled={pagination.currentPage === pagination.totalPages}
-                                className="p-2 rounded border border-gray-200 bg-white text-gray-500 hover:text-primary hover:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                                disabled={pagination.currentPage === pagination.totalPages || loading}
+                                className="p-2 rounded-xl border border-gray-200 bg-white hover:bg-primary hover:text-white transition-all disabled:opacity-40 shadow-sm"
                             >
                                 <ChevronRight size={18} />
                             </button>

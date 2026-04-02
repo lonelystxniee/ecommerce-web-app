@@ -13,6 +13,7 @@ import {
     Upload
 } from "lucide-react";
 import toast from "react-hot-toast";
+import WarehouseHistoryModal from "../components/WarehouseHistoryModal";
 
 const WarehouseManagement = () => {
     const [items, setItems] = useState([]);
@@ -32,6 +33,8 @@ const WarehouseManagement = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
+    const [showLowStock, setShowLowStock] = useState(false);
+    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({
         name: "",
@@ -47,12 +50,17 @@ const WarehouseManagement = () => {
 
     useEffect(() => {
         fetchCategories();
-        fetchAllProducts(1);
     }, []);
 
     const fetchAllProducts = async (page = 1) => {
         try {
-            const res = await fetch(`${API_URL}/api/products?page=${page}&limit=12`);
+            const token = localStorage.getItem("token");
+            const endpoint = showLowStock
+                ? `${API_URL}/api/products/low-stock?page=${page}&limit=12`
+                : `${API_URL}/api/products?page=${page}&limit=12`;
+            const res = await fetch(endpoint, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
             const data = await res.json();
             if (data.success) {
                 setAllProducts(data.products || []);
@@ -67,6 +75,10 @@ const WarehouseManagement = () => {
             console.error("Fetch all products error:", err);
         }
     };
+
+    useEffect(() => {
+        fetchAllProducts(1);
+    }, [showLowStock]);
 
     const handlePageChange = (newPage) => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
@@ -251,8 +263,7 @@ const WarehouseManagement = () => {
     };
 
     const fetchHistory = () => {
-        // History is no longer stored in a collection
-        toast.info("Lịch sử nhập kho không được lưu trữ cục bộ để giữ hiệu năng hệ thống");
+        setIsHistoryModalOpen(true);
     };
 
     const handleImportExcel = async (e) => {
@@ -351,6 +362,13 @@ const WarehouseManagement = () => {
                         <input type="file" className="hidden" accept=".xlsx,.xls,.csv" onChange={handleImportExcel} disabled={isImporting} />
                     </label>
                     <button
+                        onClick={() => setShowLowStock(!showLowStock)}
+                        className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold uppercase text-xs tracking-widest transition-all shadow-lg ${showLowStock ? "bg-[#800a0d] text-white" : "bg-white text-[#800a0d] border border-[#800a0d]/20"}`}
+                    >
+                        <AlertCircle size={18} />
+                        {showLowStock ? "Xem tất cả SP" : "Cảnh báo hết hàng"}
+                    </button>
+                    <button
                         onClick={() => { fetchHistory(); }}
                         className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold uppercase text-xs tracking-widest transition-all shadow-lg bg-white text-[#800a0d] border border-[#800a0d]/20`}
                     >
@@ -442,7 +460,9 @@ const WarehouseManagement = () => {
                     {/* Quick Selection Grid & Pagination */}
                     {searchQuery.length === 0 && allProducts.length > 0 && (
                         <div className="mt-8">
-                            <h4 className="text-[10px] font-black text-[#88694f] uppercase tracking-widest mb-4 ml-1">Chọn nhanh sản phẩm</h4>
+                            <h4 className="text-[10px] font-black text-[#88694f] uppercase tracking-widest mb-4 ml-1">
+                                {showLowStock ? "Sản phẩm sắp hết hàng (< 2)" : "Chọn nhanh sản phẩm"}
+                            </h4>
                             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                                 {allProducts.map((product) => (
                                     <button
@@ -667,6 +687,12 @@ const WarehouseManagement = () => {
                     )}
                 </div>
             </div>
+
+            {/* MODAL LỊCH SỬ NHẬP KHO */}
+            <WarehouseHistoryModal
+                isOpen={isHistoryModalOpen}
+                onClose={() => setIsHistoryModalOpen(false)}
+            />
 
             {/* MODAL THÊM SẢN PHẨM MỚI */}
             {isModalOpen && (
