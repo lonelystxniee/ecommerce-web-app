@@ -485,35 +485,40 @@ const WarehouseManagement = () => {
 
                             {/* Pagination Controls */}
                             {pagination.totalPages > 1 && (
-                                <div className="mt-8 flex justify-center items-center gap-2">
-                                    <button
-                                        onClick={() => handlePageChange(pagination.currentPage - 1)}
-                                        disabled={pagination.currentPage === 1}
-                                        className="px-4 py-2 bg-white border border-gray-100 rounded-xl text-xs font-black uppercase text-[#88694f] disabled:opacity-30 hover:bg-[#800a0d] hover:text-white transition-all shadow-sm"
-                                    >
-                                        Trước
-                                    </button>
-                                    <div className="flex gap-1">
-                                        {[...Array(pagination.totalPages)].map((_, i) => (
-                                            <button
-                                                key={i + 1}
-                                                onClick={() => handlePageChange(i + 1)}
-                                                className={`w-8 h-8 rounded-xl text-xs font-black transition-all ${pagination.currentPage === i + 1
-                                                    ? "bg-[#800a0d] text-white shadow-lg"
-                                                    : "bg-white border border-gray-100 text-[#3e2714] hover:bg-gray-50"
-                                                    }`}
-                                            >
-                                                {i + 1}
-                                            </button>
-                                        ))}
+                                <div className="mt-12 flex flex-col items-center gap-6 pt-8 border-t border-dashed border-stone-200">
+                                    <div className="flex items-center gap-2 order-1">
+                                        <button
+                                            onClick={() => handlePageChange(pagination.currentPage - 1)}
+                                            disabled={pagination.currentPage === 1}
+                                            className="px-4 py-2 bg-white border border-gray-100 rounded-xl text-xs font-black uppercase text-[#88694f] disabled:opacity-30 hover:bg-[#800a0d] hover:text-white transition-all shadow-sm"
+                                        >
+                                            Trước
+                                        </button>
+                                        <div className="flex gap-1">
+                                            {[...Array(pagination.totalPages)].map((_, i) => (
+                                                <button
+                                                    key={i + 1}
+                                                    onClick={() => handlePageChange(i + 1)}
+                                                    className={`w-10 h-10 rounded-xl text-xs font-black transition-all ${pagination.currentPage === i + 1
+                                                        ? "bg-[#800a0d] text-white shadow-lg shadow-red-100"
+                                                        : "bg-white border border-gray-100 text-[#3e2714] hover:border-[#800a0d] hover:text-[#800a0d]"
+                                                        }`}
+                                                >
+                                                    {i + 1}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <button
+                                            onClick={() => handlePageChange(pagination.currentPage + 1)}
+                                            disabled={pagination.currentPage === pagination.totalPages}
+                                            className="px-4 py-2 bg-white border border-gray-100 rounded-xl text-xs font-black uppercase text-[#88694f] disabled:opacity-30 hover:bg-[#800a0d] hover:text-white transition-all shadow-sm"
+                                        >
+                                            Sau
+                                        </button>
                                     </div>
-                                    <button
-                                        onClick={() => handlePageChange(pagination.currentPage + 1)}
-                                        disabled={pagination.currentPage === pagination.totalPages}
-                                        className="px-4 py-2 bg-white border border-gray-100 rounded-xl text-xs font-black uppercase text-[#88694f] disabled:opacity-30 hover:bg-[#800a0d] hover:text-white transition-all shadow-sm"
-                                    >
-                                        Sau
-                                    </button>
+                                    <p className="text-[11px] text-[#88694f] font-bold uppercase tracking-widest opacity-60">
+                                        Trang {pagination.currentPage} / {pagination.totalPages} — Tổng {pagination.totalProducts} sản phẩm
+                                    </p>
                                 </div>
                             )}
                         </div>

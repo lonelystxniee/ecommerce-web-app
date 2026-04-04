@@ -21,6 +21,8 @@ const NewsAndVideoManagement = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [editingItem, setEditingItem] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 6;
 
   const [newsList, setNewsList] = useState([]);
 
@@ -39,6 +41,10 @@ const NewsAndVideoManagement = () => {
   useEffect(() => {
     fetchArticles();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
 
   const fetchArticles = async () => {
     setLoading(true);
@@ -150,6 +156,10 @@ const NewsAndVideoManagement = () => {
   const filteredNews = newsList.filter(n => (!n.type || n.type === 'news') && n.title.toLowerCase().includes(searchTerm.toLowerCase()));
   const filteredVideos = newsList.filter(v => v.type === 'video' && v.title.toLowerCase().includes(searchTerm.toLowerCase()));
 
+  const currentList = activeTab === 'news' ? filteredNews : filteredVideos;
+  const totalPages = Math.ceil(currentList.length / pageSize);
+  const paginatedList = currentList.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
     <div className="space-y-6 animate-fadeIn pb-10 text-[#3e2714]">
       {/* HEADER */}
@@ -208,8 +218,8 @@ const NewsAndVideoManagement = () => {
         <div className="space-y-4">
           {loading ? (
             <p>Đang tải dữ liệu...</p>
-          ) : filteredNews.length > 0 ? (
-            filteredNews.map((item) => (
+          ) : paginatedList.length > 0 ? (
+            paginatedList.map((item) => (
               <div
                 key={item._id}
                 className="bg-white p-4 rounded-[32px] border border-stone-100 shadow-sm flex flex-col md:flex-row gap-6 hover:shadow-md transition-all group"
@@ -265,7 +275,7 @@ const NewsAndVideoManagement = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredVideos.map((video) => (
+          {paginatedList.map((video) => (
             <div
               key={video._id}
               className="bg-white rounded-[32px] border border-stone-100 overflow-hidden shadow-sm hover:shadow-xl transition-all group"
@@ -312,6 +322,42 @@ const NewsAndVideoManagement = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex flex-col items-center gap-4 mt-12 pt-8 border-t border-dashed border-gray-200">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="p-3 rounded-2xl border border-gray-200 bg-white text-[#9d0b0f] hover:bg-[#9d0b0f] hover:text-white transition-all disabled:opacity-30"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`w-12 h-12 rounded-2xl font-black text-xs transition-all ${
+                  currentPage === i + 1 ? "bg-[#9d0b0f] text-white shadow-lg" : "bg-white text-[#9d0b0f] border border-gray-100 hover:border-[#9d0b0f]"
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="p-3 rounded-2xl border border-gray-200 bg-white text-[#9d0b0f] hover:bg-[#9d0b0f] hover:text-white transition-all disabled:opacity-30"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+          <p className="text-[11px] text-[#88694f] font-bold uppercase tracking-widest opacity-60">
+            Trang {currentPage} / {totalPages} — Tổng {currentList.length} {activeTab === 'news' ? 'bài viết' : 'video'}
+          </p>
         </div>
       )}
 

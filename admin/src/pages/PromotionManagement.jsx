@@ -336,24 +336,39 @@ const PromotionManagement = () => {
 
       {/* PHÂN TRANG */}
       {totalPages > 0 && (
-        <div className="flex items-center justify-center gap-4 pt-6">
-          <button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((prev) => prev - 1)}
-            className="p-3 rounded-2xl bg-white border border-stone-200 text-[#9d0b0f] disabled:opacity-30 hover:bg-red-50 transition-all"
-          >
-            <ChevronLeft size={20} />
-          </button>
-          <span className="text-sm font-black text-[#88694f]">
-            Trang {currentPage} / {totalPages}
-          </span>
-          <button
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage((prev) => prev + 1)}
-            className="p-3 rounded-2xl bg-white border border-stone-200 text-[#9d0b0f] disabled:opacity-30 hover:bg-red-50 transition-all"
-          >
-            <ChevronRight size={20} />
-          </button>
+        <div className="flex flex-col items-center gap-4 pt-12 border-t border-dashed border-stone-200">
+          <div className="flex items-center gap-2 order-1">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((prev) => prev - 1)}
+              className="p-3 rounded-2xl bg-white border border-stone-200 text-[#9d0b0f] disabled:opacity-30 hover:bg-red-50 transition-all shadow-sm"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <div className="flex gap-2 mx-2">
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={`w-12 h-12 rounded-2xl font-black text-xs transition-all ${
+                    currentPage === i + 1 ? "bg-[#9d0b0f] text-white shadow-lg shadow-red-100" : "bg-white text-[#9d0b0f] border border-stone-200 hover:border-[#9d0b0f]"
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((prev) => prev + 1)}
+              className="p-3 rounded-2xl bg-white border border-stone-200 text-[#9d0b0f] disabled:opacity-30 hover:bg-red-50 transition-all shadow-sm"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+          <p className="text-[11px] text-[#88694f] font-bold uppercase tracking-widest opacity-60">
+            Trang {currentPage} / {totalPages} — Tổng {filteredPromos.length} khuyến mãi
+          </p>
         </div>
       )}
 

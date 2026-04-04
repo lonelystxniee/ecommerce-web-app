@@ -403,20 +403,17 @@ const AdminManagement = () => {
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="flex flex-col items-center justify-between gap-4 mt-8 md:flex-row">
-          <p className="text-sm font-medium text-[#88694f]">
-            Hiển thị <span className="font-bold text-[#3e2714]">{displayUsers.length}</span> trên <span className="font-bold text-[#3e2714]">{totalUsers}</span> quản trị viên
-          </p>
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col items-center gap-6 mt-12 pt-8 border-t border-dashed border-stone-200">
+          <div className="flex items-center gap-2 order-1">
             <button
               disabled={currentPage === 1}
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              className="px-4 py-2 text-sm font-bold text-[#9d0b0f] bg-white border border-[#9d0b0f]/20 rounded-xl hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+              className="px-4 py-2 text-sm font-black text-[#9d0b0f] bg-white border border-[#9d0b0f]/20 rounded-xl hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm uppercase tracking-widest"
             >
               Trước
             </button>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 mx-2">
               {[...Array(totalPages)].map((_, i) => {
                 const pageNum = i + 1
                 if (pageNum === 1 || pageNum === totalPages || (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)) {
@@ -424,8 +421,8 @@ const AdminManagement = () => {
                     <button
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
-                      className={`w-10 h-10 rounded-xl text-sm font-bold transition-all shadow-sm ${
-                        currentPage === pageNum ? 'bg-[#9d0b0f] text-white' : 'bg-white text-[#9d0b0f] border border-[#9d0b0f]/20 hover:bg-red-50'
+                      className={`w-10 h-10 rounded-xl text-xs font-black transition-all shadow-sm ${
+                        currentPage === pageNum ? 'bg-[#9d0b0f] text-white shadow-lg shadow-red-100' : 'bg-white text-[#9d0b0f] border border-[#9d0b0f]/20 hover:bg-red-50'
                       }`}
                     >
                       {pageNum}
@@ -433,7 +430,7 @@ const AdminManagement = () => {
                   )
                 } else if ((pageNum === 2 && currentPage > 3) || (pageNum === totalPages - 1 && currentPage < totalPages - 2)) {
                   return (
-                    <span key={pageNum} className="px-1 text-[#88694f]">
+                    <span key={pageNum} className="px-1 text-[#88694f] font-bold">
                       ...
                     </span>
                   )
@@ -445,11 +442,14 @@ const AdminManagement = () => {
             <button
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              className="px-4 py-2 text-sm font-bold text-[#9d0b0f] bg-white border border-[#9d0b0f]/20 rounded-xl hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+              className="px-4 py-2 text-sm font-black text-[#9d0b0f] bg-white border border-[#9d0b0f]/20 rounded-xl hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm uppercase tracking-widest"
             >
               Sau
             </button>
           </div>
+          <p className="text-[11px] text-[#88694f] font-bold uppercase tracking-widest opacity-60">
+            Hiển thị {displayUsers.length} / {totalUsers} quản trị viên — Trang {currentPage} / {totalPages}
+          </p>
         </div>
       )}
 

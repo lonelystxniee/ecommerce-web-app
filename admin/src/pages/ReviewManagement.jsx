@@ -257,11 +257,8 @@ const ReviewManagement = () => {
 
                 {/* Pagination */}
                 {pagination.totalPages > 1 && (
-                    <div className="bg-gray-50/50 px-6 py-4 flex items-center justify-between border-t border-gray-200">
-                        <p className="text-sm text-gray-500 font-medium">
-                            Hiển thị <span className="text-[#3e2714] font-bold">{(pagination.currentPage - 1) * 6 + 1}</span> - <span className="text-[#3e2714] font-bold">{Math.min(pagination.currentPage * 6, pagination.totalReviews)}</span> trong tổng số <span className="text-[#3e2714] font-bold">{pagination.totalReviews}</span> đánh giá
-                        </p>
-                        <div className="flex items-center gap-2">
+                    <div className="bg-gray-50/50 px-6 py-8 flex flex-col items-center gap-6 border-t border-gray-200">
+                        <div className="flex items-center gap-2 order-1">
                             <button
                                 onClick={() => fetchReviews(pagination.currentPage - 1)}
                                 disabled={pagination.currentPage === 1 || loading}
@@ -309,6 +306,9 @@ const ReviewManagement = () => {
                                 <ChevronRight size={18} />
                             </button>
                         </div>
+                        <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest opacity-60">
+                            Hiển thị {(pagination.currentPage - 1) * 6 + 1} - {Math.min(pagination.currentPage * 6, pagination.totalReviews)} / {pagination.totalReviews} đánh giá — Trang {pagination.currentPage} / {pagination.totalPages}
+                        </p>
                     </div>
                 )}
             </div>

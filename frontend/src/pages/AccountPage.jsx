@@ -24,6 +24,7 @@ import {
   ShoppingBasket,
   MapPin,
   MessageSquare,
+  Ticket,
 } from 'lucide-react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useReactToPrint } from 'react-to-print'
@@ -119,6 +120,7 @@ const AccountPage = () => {
               <SidebarItem icon={<History size={18} />} text="Lịch sử hoạt động" active={activeTab === 'activities'} onClick={() => navigate('/account?tab=activities')} />
               <SidebarItem icon={<MapPin size={18} />} text="Địa chỉ giao hàng" active={activeTab === 'addresses'} onClick={() => navigate('/account?tab=addresses')} />
               <SidebarItem icon={<MessageSquare size={18} />} text="Đánh giá của tôi" active={activeTab === 'reviews'} onClick={() => navigate('/account?tab=reviews')} />
+              <SidebarItem icon={<Ticket size={18} />} text="Voucher của tôi" active={activeTab === 'vouchers'} onClick={() => navigate('/account?tab=vouchers')} />
               <div className="h-px mx-4 my-2 bg-gray-100"></div>
               <button onClick={handleLogout} className="flex items-center w-full gap-3 px-5 py-3.5 text-[#800a0d] font-bold hover:bg-red-50 transition-all rounded-xl text-sm uppercase">
                 <LogOut size={18} />
@@ -136,6 +138,7 @@ const AccountPage = () => {
           {activeTab === 'activities' && <ActivityHistory />}
           {activeTab === 'addresses' && <AddressManagement user={user} />}
           {activeTab === 'reviews' && <MyReviews />}
+          {activeTab === 'vouchers' && <MyVouchers />}
         </main>
       </div>
     </div>
@@ -1163,6 +1166,238 @@ const FavoriteProducts = () => {
           >
             <ChevronRight size={18} />
           </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// VOUCHER CỦA TÔI
+const MyVouchers = () => {
+  const [vouchers, setVouchers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [selectedVoucher, setSelectedVoucher] = useState(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const itemsPerPage = 6
+
+  useEffect(() => {
+    const fetchVouchers = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/promotions/my-vouchers`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const data = await response.json()
+        if (data.success) {
+          setVouchers(data.vouchers || [])
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải voucher:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchVouchers()
+  }, [])
+
+  const totalPages = Math.ceil(vouchers.length / itemsPerPage)
+  const currentItems = vouchers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
+  const handleCopyCode = (code) => {
+    navigator.clipboard.writeText(code)
+    toast.success('Đã sao chép mã voucher!')
+  }
+
+  if (loading) {
+    return (
+      <div className="p-20 text-center animate-pulse">
+        <Ticket className="mx-auto mb-4 text-gray-200" size={48} />
+        <p className="font-bold text-gray-400">Đang tải voucher của bạn...</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-8 animate-fadeIn">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-black text-[#800a0d] uppercase tracking-tighter">Voucher của tôi</h2>
+          <p className="text-[12px] text-[#88694f] font-bold italic">Danh sách các mã giảm giá bạn đã sưu tầm</p>
+        </div>
+        <div className="bg-[#800a0d]/5 px-4 py-2 rounded-2xl border border-[#800a0d]/10">
+          <span className="text-[10px] font-black text-[#800a0d] uppercase tracking-widest">Tổng cộng: {vouchers.length}</span>
+        </div>
+      </div>
+
+      {vouchers.length === 0 ? (
+        <div className="bg-white p-20 text-center rounded-[40px] border-2 border-dashed border-gray-100">
+          <Ticket size={64} className="mx-auto mb-6 text-gray-100" />
+          <p className="max-w-xs mx-auto text-sm font-bold leading-relaxed text-gray-400 italic">
+            Bạn chưa có voucher nào. Hãy tham gia vòng quay may mắn hoặc các chương trình mini game để nhận thưởng nhé!
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            {currentItems.map((v) => (
+              <div
+                key={v._id}
+                onClick={() => {
+                  setSelectedVoucher(v)
+                  setIsModalOpen(true)
+                }}
+                className="group relative bg-white rounded-[24px] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex cursor-pointer"
+              >
+                {/* Phần trái (Trang trí kiểu Ticket) */}
+                <div className="w-24 bg-[#800a0d] flex flex-col items-center justify-center p-2 relative">
+                  <div className="absolute top-0 bottom-0 left-[-8px] flex flex-col justify-between py-2">
+                    {[...Array(6)].map((_, i) => (
+                      <div key={i} className="w-4 h-4 rounded-full bg-[#fdfaf5]"></div>
+                    ))}
+                  </div>
+                  <Ticket size={32} className="text-white/30 mb-2" />
+                  <span className="text-white font-black text-[10px] uppercase tracking-widest vertical-text">Voucher</span>
+                </div>
+
+                {/* Nội dung bên phải */}
+                <div className="flex-1 p-5 relative overflow-hidden bg-gradient-to-br from-white to-[#fdfaf5]/30">
+                  <div className="flex flex-col h-full">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h4 className="text-base font-black text-[#800a0d] line-clamp-1">
+                          {v.discountType === 'PERCENT' ? `Giảm ${v.discountValue}%` : `Giảm ${v.discountValue.toLocaleString()}đ`}
+                        </h4>
+                        <p className="text-[11px] font-bold text-gray-500 italic mt-0.5">HSD: {new Date(v.endDate).toLocaleDateString('vi-VN')}</p>
+                      </div>
+                      <div className="p-2 transition-all bg-red-50 text-[#800a0d] rounded-xl group-hover:bg-[#800a0d] group-hover:text-white">
+                        <ChevronRight size={16} />
+                      </div>
+                    </div>
+                    
+                    <div className="mt-auto pt-4 flex items-center justify-between border-t border-dashed border-gray-200">
+                      <code className="text-xs font-black text-[#3e2714] bg-white px-3 py-1.5 rounded-lg border border-gray-100 group-hover:border-[#800a0d] transition-all">
+                        {v.code}
+                      </code>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleCopyCode(v.code)
+                        }}
+                        className="text-[10px] font-black text-[#88694f] hover:text-[#800a0d] uppercase tracking-widest"
+                      >
+                        Sao chép
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-8">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-full border border-gray-100 bg-white text-[#88694f] hover:bg-[#800a0d] hover:text-white transition-all disabled:opacity-30 disabled:pointer-events-none"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={`w-10 h-10 rounded-full font-black text-xs transition-all ${
+                    currentPage === i + 1 ? 'bg-[#800a0d] text-white shadow-lg' : 'bg-white text-[#88694f] border border-gray-100'
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-full border border-gray-100 bg-white text-[#88694f] hover:bg-[#800a0d] hover:text-white transition-all disabled:opacity-30 disabled:pointer-events-none"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Modal chi tiết Voucher */}
+      {isModalOpen && selectedVoucher && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
+          <div className="relative bg-[#fdfaf5] w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden animate-zoomIn border-2 border-[#800a0d]">
+            <div className="bg-[#800a0d] p-8 text-center text-white relative">
+              <button onClick={() => setIsModalOpen(false)} className="absolute top-6 right-6 p-2 rounded-full bg-white/20 hover:bg-white/40">
+                <X size={20} />
+              </button>
+              <Ticket size={48} className="mx-auto mb-4 opacity-30" />
+              <h3 className="text-3xl font-black tracking-tighter uppercase mb-1">
+                {selectedVoucher.discountType === 'PERCENT' ? `GIẢM ${selectedVoucher.discountValue}%` : `GIẢM ${selectedVoucher.discountValue.toLocaleString()}Đ`}
+              </h3>
+              <p className="text-xs font-bold opacity-80 uppercase tracking-widest">Mã voucher: {selectedVoucher.code}</p>
+            </div>
+
+            <div className="p-10 space-y-8">
+              <div className="space-y-4">
+                <div className="flex items-start gap-4">
+                  <div className="mt-1 p-2 bg-white rounded-xl shadow-sm text-[#f39200]">
+                    <AlertCircle size={20} />
+                  </div>
+                  <div>
+                    <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Điều kiện áp dụng</h5>
+                    <p className="text-sm font-bold text-[#3e2714] leading-relaxed italic border-l-2 border-[#f39200] pl-3">
+                      {selectedVoucher.description || 'Áp dụng cho mọi đơn hàng tại hệ thống ClickGo.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-white p-4 rounded-[24px] border border-gray-100 shadow-sm">
+                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Đơn tối thiểu</p>
+                    <p className="text-base font-black text-[#800a0d]">{selectedVoucher.minOrderValue?.toLocaleString() || 0}đ</p>
+                  </div>
+                  <div className="bg-white p-4 rounded-[24px] border border-gray-100 shadow-sm">
+                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Giảm tối đa</p>
+                    <p className="text-base font-black text-[#800a0d]">
+                      {selectedVoucher.discountType === 'PERCENT' ? `${selectedVoucher.maxDiscount?.toLocaleString() || '---'}đ` : 'Không giới hạn'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 pt-4 border-t border-dashed border-gray-200">
+                  <div className="p-2 bg-stone-100 text-[#88694f] rounded-xl flex items-center justify-center">
+                    <Clock size={16} />
+                  </div>
+                  <div className="text-[11px] font-bold text-[#88694f]">
+                    Hiệu lực: <span className="text-[#3e2714]">{new Date(selectedVoucher.startDate).toLocaleDateString('vi-VN')}</span> -{' '}
+                    <span className="text-[#3e2714]">{new Date(selectedVoucher.endDate).toLocaleDateString('vi-VN')}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 flex gap-4">
+                <button
+                  onClick={() => handleCopyCode(selectedVoucher.code)}
+                  className="flex-1 py-4 bg-[#800a0d] text-white rounded-[24px] font-black text-xs uppercase tracking-widest shadow-xl shadow-red-900/10 hover:rounded-sm transition-all active:scale-95 flex items-center justify-center gap-2"
+                >
+                  <Edit size={16} /> Sao chép mã
+                </button>
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-8 py-4 bg-[#3e2714] text-white rounded-[24px] font-black text-xs uppercase tracking-widest hover:rounded-sm transition-all"
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

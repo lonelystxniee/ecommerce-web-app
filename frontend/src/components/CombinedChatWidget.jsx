@@ -26,6 +26,27 @@ export default function CombinedChatWidget() {
     const conversationIdSupport = user ? `user:${user._id}` : null;
     const conversationIdAI = user ? `ai:user:${user._id}` : null;
 
+    // Helper to format message with basic markdown-lite
+    const formatMessage = (text) => {
+        if (!text) return "";
+        // Bold: **text** -> <b>text</b>
+        let formatted = text.replace(/\*\*(.*?)\*\*/g, '<b class="font-black text-inherit">$1</b>');
+        
+        // Links: [Text](URL) -> <a href="URL">Text</a>
+        // Handling relative links for SPA navigation
+        formatted = formatted.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" class="inline-block mt-2 px-4 py-2 bg-white/20 hover:bg-white/30 border border-white/30 rounded-xl font-bold transition-all hover:scale-105 active:scale-95">$1</a>');
+
+        // Simple lists: * item -> <li class="ml-4">item</li>
+        formatted = formatted.split('\n').map(line => {
+            if (line.trim().startsWith('* ')) {
+                return `<li class="ml-4 list-disc">${line.trim().substring(2)}</li>`;
+            }
+            return line;
+        }).join('\n');
+        // Newlines: \n -> <br/>
+        return formatted.split('\n').join('<br/>');
+    };
+
     // --- Support Logic ---
     const fetchSupportConversations = async () => {
         if (!conversationIdSupport) return;
@@ -80,17 +101,14 @@ export default function CombinedChatWidget() {
         fetchAIMessages();
 
         const onNewMessage = (msg) => {
-            // Support message
             if (msg.conversationId === conversationIdSupport) {
                 setMessagesSupport((prev) => {
                     if (prev.some((m) => String(m._id) === String(msg._id))) return prev;
                     let filtered = prev;
                     if (msg.clientId) filtered = filtered.filter((m) => String(m.clientId) !== String(msg.clientId));
-                    
                     const isFromOther = String(msg.senderId) !== String(user?._id);
                     const isAdminOrAI = msg.senderRole === 'admin' || msg.isAI === true;
                     const isUnread = msg.read === false || msg.read === undefined;
-                    
                     if ((!open || activeTab !== 'support') && isFromOther && !isAdminOrAI && isUnread) {
                         setUnreadCount((n) => n + 1);
                         lastUnreadIncRef.current = Date.now();
@@ -98,8 +116,6 @@ export default function CombinedChatWidget() {
                     return [...filtered, msg];
                 });
             }
-            
-            // AI message
             if (msg.conversationId === conversationIdAI) {
                 setMessagesAI((prev) => {
                     if (prev.some((m) => String(m._id) === String(msg._id))) return prev;
@@ -140,7 +156,12 @@ export default function CombinedChatWidget() {
     }, [conversationIdSupport, conversationIdAI, open, activeTab]);
 
     useEffect(() => {
-        if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        if (scrollRef.current) {
+            scrollRef.current.scrollTo({
+                top: scrollRef.current.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
     }, [messagesSupport, messagesAI, open, activeTab]);
 
     useEffect(() => {
@@ -170,7 +191,7 @@ export default function CombinedChatWidget() {
         s.emit("send_message", payload);
         setTextAI("");
         setLoadingAI(true);
-        setTimeout(() => setLoadingAI(false), 25000);
+        setTimeout(() => setLoadingAI(false), 45000);
     };
 
     if (!user) return null;
@@ -178,17 +199,17 @@ export default function CombinedChatWidget() {
     const quickQuestions = ["Mã giảm giá mới nhất?", "Chính sách đổi trả", "Thời gian giao hàng bao lâu?"];
 
     return (
-        <div className="fixed right-6 bottom-6 z-50 flex flex-col items-end print:hidden">
+        <div className="fixed right-6 bottom-6 z-[9999] flex flex-col items-end print:hidden">
             {!open && (
                 <button 
                     onClick={() => { setOpen(true); }} 
                     aria-label="Mở chat" 
-                    className="group relative w-16 h-16 rounded-3xl bg-white text-[#800a0d] shadow-2xl shadow-red-900/20 flex items-center justify-center hover:scale-105 transition-all duration-300 border border-red-100"
+                    className="group relative w-16 h-16 rounded-[24px] bg-gradient-to-br from-[#9d0b0f] to-[#ca1d22] text-white shadow-2xl shadow-red-900/40 flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-300 pointer-events-auto overflow-visible"
                 >
-                    <div className="absolute inset-0 bg-gradient-to-br from-red-50 to-white rounded-3xl -z-10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <span className="text-3xl leading-none transform group-hover:rotate-12 transition-transform">💬</span>
+                    <div className="absolute inset-0 bg-white/20 rounded-[24px] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <span className="text-3xl leading-none transition-transform duration-500 group-hover:rotate-12">💬</span>
                     {unreadCount > 0 && (
-                        <span className="absolute -top-2 -right-2 bg-[#800a0d] text-white text-[10px] font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-lg border-2 border-white animate-bounce">
+                        <span className="absolute -top-2 -right-2 bg-yellow-400 text-[#9d0b0f] text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center shadow-lg border-2 border-white animate-bounce">
                             {unreadCount > 9 ? '9+' : unreadCount}
                         </span>
                     )}
@@ -196,29 +217,38 @@ export default function CombinedChatWidget() {
             )}
 
             {open && (
-                <div className="mt-3 w-[400px] max-w-[calc(100vw-3rem)] text-sm animate-fade-in-up transform transition-all duration-300 origin-bottom-right">
-                    <div className="bg-white/95 backdrop-blur-2xl border border-red-50 rounded-[2rem] shadow-2xl shadow-red-900/10 overflow-hidden flex flex-col h-[600px] max-h-[85vh]">
+                <div className="mt-3 w-[400px] max-w-[calc(100vw-3rem)] text-sm animate-zoomIn transform transition-all duration-300 origin-bottom-right drop-shadow-2xl">
+                    <div className="bg-white/95 backdrop-blur-2xl border border-white/50 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] overflow-hidden flex flex-col h-[650px] max-h-[85vh]">
                         
                         {/* Header Section */}
-                        <div className="pt-6 px-6 pb-4 bg-white border-b border-gray-100">
-                            <div className="flex items-center justify-between mb-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-700 to-rose-600 flex items-center justify-center text-xl shadow-lg shadow-red-900/20 text-white">
+                        <div className="pt-8 px-8 pb-6 bg-white relative">
+                            {/* Decorative Background */}
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-red-50/50 rounded-bl-full -z-10 blur-2xl"></div>
+                            
+                            <div className="flex items-center justify-between mb-8">
+                                <div className="flex items-center gap-4">
+                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-xl transition-all duration-500 ${
+                                        activeTab === 'support' 
+                                        ? "bg-gradient-to-br from-[#9d0b0f] to-[#ca1d22] text-white shadow-red-200 rotate-3" 
+                                        : "bg-gradient-to-br from-teal-500 to-emerald-400 text-white shadow-teal-100 -rotate-3"
+                                    }`}>
                                         {activeTab === 'support' ? '👩‍💻' : '🤖'}
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-gray-900 text-lg leading-tight">
-                                            {activeTab === 'support' ? 'Hỗ trợ trực tuyến' : 'Trợ lý AI Thông minh'}
+                                        <h3 className="font-seagull text-xl text-gray-900 leading-tight">
+                                            {activeTab === 'support' ? 'Hỗ trợ Momotrust' : 'Trợ lý AI Thông minh'}
                                         </h3>
-                                        <p className="text-xs text-green-500 font-medium flex items-center gap-1.5 mt-0.5">
-                                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                                            Đang trực tuyến
+                                        <p className="text-xs font-bold flex items-center gap-1.5 mt-1">
+                                            <span className={`w-2 h-2 rounded-full animate-pulse ${activeTab === 'support' ? 'bg-red-500' : 'bg-teal-500'}`}></span>
+                                            <span className={activeTab === 'support' ? "text-red-500" : "text-teal-600 uppercase tracking-tighter"}>
+                                                {activeTab === 'support' ? 'Đang trực tuyến' : 'Sẵn sàng trả lời'}
+                                            </span>
                                         </p>
                                     </div>
                                 </div>
                                 <button 
                                     onClick={() => setOpen(false)} 
-                                    className="w-10 h-10 rounded-xl hover:bg-gray-100 text-gray-400 flex items-center justify-center transition-colors"
+                                    className="w-10 h-10 rounded-2xl hover:bg-red-50 text-gray-400 hover:text-red-600 flex items-center justify-center transition-all duration-300 hover:rotate-90"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -226,55 +256,58 @@ export default function CombinedChatWidget() {
                                 </button>
                             </div>
 
-                            {/* Custom Tabs */}
-                            <div className="flex p-1 bg-gray-50 rounded-2xl">
+                            {/* Tab Switcher */}
+                            <div className="flex p-1.5 bg-gray-100/80 rounded-[24px] border border-gray-100 relative">
                                 <button 
                                     onClick={() => setActiveTab('support')}
-                                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-300 ${
+                                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-[20px] text-[13px] font-black transition-all duration-500 relative z-10 ${
                                         activeTab === 'support' 
-                                        ? "bg-white text-[#800a0d] shadow-sm scale-[1.02]" 
-                                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-100/50"
+                                        ? "bg-white text-[#9d0b0f] shadow-lg scale-[1.02]" 
+                                        : "text-gray-500 hover:text-gray-700 hover:scale-[0.98]"
                                     }`}
                                 >
-                                    <span>Trực tuyến</span>
+                                    <span>HỖ TRỢ</span>
                                     {unreadCount > 0 && (
-                                        <span className="bg-[#800a0d] text-white text-[9px] px-1.5 py-0.5 rounded-full">{unreadCount}</span>
+                                        <span className="bg-red-600 text-white text-[9px] px-2 py-0.5 rounded-full shadow-md">{unreadCount}</span>
                                     )}
                                 </button>
                                 <button 
                                     onClick={() => setActiveTab('ai')}
-                                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-300 ${
+                                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-[20px] text-[13px] font-black transition-all duration-500 relative z-10 ${
                                         activeTab === 'ai' 
-                                        ? "bg-white text-teal-600 shadow-sm scale-[1.02]" 
-                                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-100/50"
+                                        ? "bg-white text-teal-600 shadow-lg scale-[1.02]" 
+                                        : "text-gray-500 hover:text-gray-700 hover:scale-[0.98]"
                                     }`}
                                 >
-                                    <span>Trợ lý AI</span>
-                                    <span className="bg-teal-100 text-teal-700 text-[9px] px-1.5 py-0.5 rounded-full font-bold">Beta</span>
+                                    <span>TRỢ LÝ AI</span>
+                                    <span className="bg-teal-100/50 text-teal-600 text-[8px] px-1.5 py-0.5 rounded-md font-black tracking-tighter">BETA</span>
                                 </button>
                             </div>
                         </div>
 
                         {/* Messages Area */}
-                        <div ref={scrollRef} className="flex-1 p-6 overflow-y-auto space-y-4 bg-white/50 scroll-smooth">
+                        <div ref={scrollRef} className="flex-1 p-8 overflow-y-auto space-y-6 bg-gradient-to-b from-white to-[#fcfaf7] custom-scrollbar scroll-smooth">
                             {activeTab === 'support' ? (
                                 <>
                                     {messagesSupport.length === 0 && (
-                                        <div className="h-full flex flex-col items-center justify-center text-center py-10">
-                                            <div className="w-20 h-20 rounded-full bg-rose-50 flex items-center justify-center text-3xl mb-4 animate-bounce-slow">👋</div>
-                                            <h4 className="font-bold text-gray-900 mb-1">Chào {user.name || 'bạn'}!</h4>
-                                            <p className="text-gray-500 text-xs px-10">Đội ngũ hỗ trợ đã sẵn sàng giúp đỡ bạn. Hãy đặt câu hỏi bất cứ lúc nào!</p>
+                                        <div className="h-full flex flex-col items-center justify-center text-center py-10 opacity-70">
+                                            <div className="w-24 h-24 rounded-full bg-red-50 flex items-center justify-center text-4xl mb-6 shadow-inner">👋</div>
+                                            <h4 className="font-seagull text-lg text-gray-800 mb-2">Chào {user.fullName || 'bạn'}!</h4>
+                                            <p className="text-gray-500 text-xs px-12 leading-relaxed">Chúng tôi luôn ở đây để lắng nghe và giải đáp mọi thắc mắc của bạn.</p>
                                         </div>
                                     )}
                                     {messagesSupport.map((m) => (
-                                        <div key={m._id} className={`flex ${m.senderRole === "admin" ? "justify-start" : "justify-end"} group animate-fade-in`}>
-                                            <div className={`relative px-4 py-3 rounded-2xl max-w-[85%] transition-all ${
+                                        <div key={m._id} className={`flex ${m.senderRole === "admin" ? "justify-start" : "justify-end"} animate-zoomIn`}>
+                                            <div className={`relative px-5 py-4 rounded-[1.8rem] max-w-[85%] transition-all duration-300 ${
                                                 m.senderRole === "admin" 
-                                                ? "bg-gray-100 text-gray-800 rounded-tl-sm shadow-sm" 
-                                                : "bg-[#800a0d] text-white rounded-tr-sm shadow-md"
+                                                ? "bg-white text-gray-800 rounded-tl-sm shadow-sm border border-gray-100" 
+                                                : "bg-gradient-to-br from-[#9d0b0f] to-[#ca1d22] text-white rounded-tr-sm shadow-xl shadow-red-900/10"
                                             }`}>
-                                                <div className="text-[13px] leading-relaxed break-words">{m.content}</div>
-                                                <div className={`text-[9px] mt-1.5 font-medium ${m.senderRole === "admin" ? "text-gray-400" : "text-red-100/70 text-right"}`}>
+                                                <div 
+                                                    className="text-[14px] leading-relaxed break-words whitespace-pre-wrap"
+                                                    dangerouslySetInnerHTML={{ __html: formatMessage(m.content) }}
+                                                />
+                                                <div className={`text-[9px] mt-2 font-bold opacity-60 uppercase tracking-widest ${m.senderRole === "admin" ? "text-gray-400" : "text-red-100 text-right"}`}>
                                                     {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </div>
                                             </div>
@@ -284,21 +317,24 @@ export default function CombinedChatWidget() {
                             ) : (
                                 <>
                                     {messagesAI.length === 0 && !loadingAI && (
-                                        <div className="h-full flex flex-col items-center justify-center text-center py-10">
-                                            <div className="w-20 h-20 rounded-full bg-teal-50 flex items-center justify-center text-3xl mb-4 animate-pulse">✨</div>
-                                            <h4 className="font-bold text-gray-900 mb-1">Trợ lý AI Thông minh</h4>
-                                            <p className="text-gray-500 text-xs px-10">Tôi có thể giúp bạn tìm kiếm sản phẩm, tư vấn size hoặc giải đáp các thắc mắc chung.</p>
+                                        <div className="h-full flex flex-col items-center justify-center text-center py-10 opacity-70">
+                                            <div className="w-24 h-24 rounded-full bg-teal-50 flex items-center justify-center text-4xl mb-6 shadow-inner">✨</div>
+                                            <h4 className="font-seagull text-lg text-gray-800 mb-2">Trợ lý AI Momotrust</h4>
+                                            <p className="text-gray-500 text-xs px-12 leading-relaxed">Nhập mã sản phẩm hoặc câu hỏi về chính sách để được tư vấn ngay lập tức!</p>
                                         </div>
                                     )}
                                     {messagesAI.map((m) => (
-                                        <div key={m._id} className={`flex ${(m.senderRole === "ai" || m.isAI) ? "justify-start" : "justify-end"} animate-fade-in`}>
-                                            <div className={`px-4 py-3 rounded-2xl max-w-[85%] ${
+                                        <div key={m._id} className={`flex ${(m.senderRole === "ai" || m.isAI) ? "justify-start" : "justify-end"} animate-zoomIn`}>
+                                            <div className={`px-5 py-4 rounded-[1.8rem] max-w-[85%] transition-all duration-300 ${
                                                 (m.senderRole === "ai" || m.isAI) 
-                                                ? "bg-teal-50 text-gray-800 border border-teal-100 rounded-tl-sm" 
-                                                : "bg-teal-600 text-white rounded-tr-sm shadow-md"
+                                                ? "bg-white/80 backdrop-blur-md text-gray-800 border border-teal-100 rounded-tl-sm shadow-sm" 
+                                                : "bg-gradient-to-br from-teal-600 to-emerald-500 text-white rounded-tr-sm shadow-xl shadow-teal-900/10"
                                             }`}>
-                                                <div className="text-[13px] leading-relaxed break-words">{m.content}</div>
-                                                <div className={`text-[9px] mt-1.5 font-medium ${(m.senderRole === "ai" || m.isAI) ? "text-teal-400" : "text-teal-100/70 text-right"}`}>
+                                                <div 
+                                                    className="text-[14px] leading-relaxed break-words whitespace-pre-wrap"
+                                                    dangerouslySetInnerHTML={{ __html: formatMessage(m.content) }}
+                                                />
+                                                <div className={`text-[9px] mt-2 font-bold opacity-60 uppercase tracking-widest ${(m.senderRole === "ai" || m.isAI) ? "text-teal-400" : "text-teal-50 text-right"}`}>
                                                     {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </div>
                                             </div>
@@ -306,10 +342,10 @@ export default function CombinedChatWidget() {
                                     ))}
                                     {loadingAI && (
                                         <div className="flex justify-start">
-                                            <div className="px-5 py-3 rounded-2xl bg-teal-50 border border-teal-100 rounded-tl-sm flex items-center gap-1.5">
-                                                <span className="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                                                <span className="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                                                <span className="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce"></span>
+                                            <div className="px-6 py-4 rounded-[1.8rem] bg-white/80 border border-teal-100 rounded-tl-sm flex items-center gap-2 shadow-sm">
+                                                <span className="w-2 h-2 bg-teal-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                                <span className="w-2 h-2 bg-teal-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                                <span className="w-2 h-2 bg-teal-400 rounded-full animate-bounce"></span>
                                             </div>
                                         </div>
                                     )}
@@ -318,14 +354,17 @@ export default function CombinedChatWidget() {
                         </div>
 
                         {/* Input Area */}
-                        <div className="p-6 bg-white border-t border-gray-100">
+                        <div className="p-8 bg-white/95 backdrop-blur-xl border-t border-gray-100 relative">
+                            {/* Decorative element for input focus */}
+                            <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-red-200 to-transparent opacity-0 transition-opacity focus-within:opacity-100"></div>
+
                             {activeTab === 'support' && messagesSupport.length < 5 && (
-                                <div className="flex gap-2 mb-4 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide">
+                                <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide -mx-2 px-2">
                                     {quickQuestions.map((q) => (
                                         <button 
                                             key={q} 
                                             onClick={() => handleSendSupport(q)} 
-                                            className="whitespace-nowrap px-4 py-1.5 rounded-full bg-rose-50 text-[#800a0d] text-[11px] font-bold border border-rose-100 hover:bg-rose-100 transition-colors"
+                                            className="whitespace-nowrap px-5 py-2.5 rounded-full bg-red-50/50 text-[#9d0b0f] text-[11px] font-black border border-red-100 hover:bg-[#9d0b0f] hover:text-white transition-all duration-300 shadow-sm active:scale-95"
                                         >
                                             {q}
                                         </button>
@@ -333,10 +372,10 @@ export default function CombinedChatWidget() {
                                 </div>
                             )}
 
-                            <div className={`flex items-center gap-2 p-1.5 rounded-2xl border transition-all duration-300 ${
+                            <div className={`flex items-center gap-3 p-2 rounded-[28px] border-2 transition-all duration-500 group shadow-sm bg-gray-50/50 ${
                                 activeTab === 'support' 
-                                ? "bg-gray-50 border-gray-200 focus-within:border-red-300 focus-within:ring-4 focus-within:ring-red-50" 
-                                : "bg-teal-50/30 border-teal-100 focus-within:border-teal-300 focus-within:ring-4 focus-within:ring-teal-50"
+                                ? "border-gray-50 focus-within:border-red-100/50 focus-within:bg-white focus-within:shadow-[0_10px_30px_rgba(157,11,15,0.08)]" 
+                                : "border-gray-50 focus-within:border-teal-100/50 focus-within:bg-white focus-within:shadow-[0_10px_30px_rgba(20,184,166,0.08)]"
                             }`}>
                                 <input 
                                     value={activeTab === 'support' ? textSupport : textAI} 
@@ -346,34 +385,38 @@ export default function CombinedChatWidget() {
                                             activeTab === 'support' ? handleSendSupport() : handleSendAI();
                                         }
                                     }} 
-                                    className="flex-1 px-4 py-2.5 bg-transparent text-[13px] outline-none placeholder-gray-400 text-gray-700" 
-                                    placeholder={activeTab === 'support' ? "Gửi lời nhắn..." : "Hỏi trợ lý AI..."} 
+                                    className="flex-1 px-5 py-3.5 bg-transparent text-[14px] outline-none placeholder-gray-400 font-medium text-gray-700" 
+                                    placeholder={activeTab === 'support' ? "Gửi lời nhắn chuyên gia..." : "Hỏi trợ lý AI về sản phẩm..."} 
                                     disabled={activeTab === 'ai' && loadingAI}
                                 />
                                 <button 
                                     onClick={() => activeTab === 'support' ? handleSendSupport() : handleSendAI()} 
                                     disabled={(activeTab === 'support' ? !textSupport.trim() : (!textAI.trim() || loadingAI))}
-                                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                                    className={`w-14 h-14 rounded-[22px] flex items-center justify-center transition-all duration-500 active:scale-90 ${
                                         (activeTab === 'support' ? textSupport.trim() : (textAI.trim() && !loadingAI))
-                                        ? (activeTab === 'support' ? "bg-[#800a0d] text-white shadow-lg shadow-red-900/20" : "bg-teal-600 text-white shadow-lg shadow-teal-900/20")
-                                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                        ? (activeTab === 'support' ? "bg-gradient-to-br from-[#9d0b0f] to-[#ca1d22] text-white shadow-xl shadow-red-900/30" : "bg-gradient-to-br from-teal-500 to-emerald-400 text-white shadow-xl shadow-teal-900/30")
+                                        : "bg-gray-200 text-gray-400 cursor-not-allowed grayscale"
                                     }`}
                                 >
                                     {(activeTab === 'ai' && loadingAI) ? (
-                                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                        <svg className="animate-spin h-6 w-6" viewBox="0 0 24 24">
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
                                     ) : (
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 transform rotate-45 group-hover:scale-110 active:rotate-12 transition-transform duration-300">
                                             <path d="M3.478 2.404a.75.75 0 00-.926.941l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.404z" />
                                         </svg>
                                     )}
                                 </button>
                             </div>
-                            <p className="text-[10px] text-center text-gray-400 mt-4 font-medium uppercase tracking-widest">
-                                {activeTab === 'ai' ? 'Powered by Advanced AI' : 'Hỗ trợ bởi đội ngũ Momotrust'}
-                            </p>
+                            <div className="flex items-center justify-center gap-2 mt-6">
+                                <span className={`w-1 h-1 rounded-full ${activeTab === 'support' ? 'bg-red-400' : 'bg-teal-400'}`}></span>
+                                <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] opacity-40">
+                                    {activeTab === 'ai' ? 'MOMOTRUST INTELLIGENCE' : 'SẴN SÀNG HỖ TRỢ 24/7'}
+                                </p>
+                                <span className={`w-1 h-1 rounded-full ${activeTab === 'support' ? 'bg-red-400' : 'bg-teal-400'}`}></span>
+                            </div>
                         </div>
                     </div>
                 </div>

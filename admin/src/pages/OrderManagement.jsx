@@ -28,6 +28,7 @@ const OrderManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
+  const [workflowLoading, setWorkflowLoading] = useState(null);
   const navigate = useNavigate();
   
   const STATUS_MAP = {
@@ -68,6 +69,16 @@ const OrderManagement = () => {
 
   // HÀM XỬ LÝ QUY TRÌNH (WORKFLOW)
   const handleWorkflow = async (orderId, action) => {
+    const actionMessages = {
+      confirm: "Bạn có chắc chắn muốn XÁC NHẬN đơn hàng này?",
+      pack: "Chuyển đơn hàng sang trạng thái ĐANG ĐÓNG GÓI?",
+      handover: "Xác nhận BÀN GIAO đơn hàng cho đơn vị vận chuyển GHN?",
+      cancel: "Bạn có chắc chắn muốn HỦY đơn hàng này?"
+    };
+
+    if (!window.confirm(actionMessages[action] || "Xác nhận thực hiện hành động này?")) return;
+
+    setWorkflowLoading(orderId);
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
@@ -82,7 +93,7 @@ const OrderManagement = () => {
       );
       const data = await response.json();
       if (data.success) {
-        alert(data.message || "Cập nhật thành công!");
+        // toast or small notify would be better than alert
         fetchOrders();
         setIsModalOpen(false);
       } else {
@@ -90,6 +101,8 @@ const OrderManagement = () => {
       }
     } catch (error) {
       alert("Lỗi kết nối: " + error.message);
+    } finally {
+      setWorkflowLoading(null);
     }
   };
 
@@ -228,40 +241,49 @@ const OrderManagement = () => {
                 </td>
                 <td className="px-8 py-6 text-center">
                   <div className="flex justify-center gap-2">
-                    {order.status === "PENDING" && (
-                      <button
-                        onClick={() => handleWorkflow(order._id, "confirm")}
-                        className="bg-blue-600 text-white px-3 py-1 rounded-lg text-[10px] font-bold"
-                      >
-                        XÁC NHẬN
-                      </button>
+                    {workflowLoading === order._id ? (
+                      <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 animate-pulse">
+                        <RefreshCcw size={12} className="animate-spin" /> ĐANG XỬ LÝ...
+                      </div>
+                    ) : (
+                      <>
+                        {order.status === "PENDING" && (
+                          <button
+                            onClick={() => handleWorkflow(order._id, "confirm")}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-xl text-[10px] font-bold shadow-sm shadow-blue-200 transition-all active:scale-95"
+                          >
+                            XÁC NHẬN
+                          </button>
+                        )}
+                        {order.status === "CONFIRMED" && (
+                          <button
+                            onClick={() => handleWorkflow(order._id, "pack")}
+                            className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-1.5 rounded-xl text-[10px] font-bold shadow-sm shadow-orange-200 transition-all active:scale-95"
+                          >
+                            ĐÓNG GÓI
+                          </button>
+                        )}
+                        {order.status === "PACKING" && (
+                          <button
+                            onClick={() => handleWorkflow(order._id, "handover")}
+                            className="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-xl text-[10px] font-bold shadow-sm shadow-green-200 transition-all active:scale-95"
+                          >
+                            BÀN GIAO GHN
+                          </button>
+                        )}
+                        {[
+                          "READY_TO_PICK",
+                          "PICKING",
+                          "STORING",
+                          "DELIVERING",
+                          "COMPLETED",
+                        ].includes(order.status) && (
+                            <span className="text-green-600 font-black text-[10px] flex items-center gap-1 bg-green-50 px-3 py-1 rounded-full">
+                              <CheckCircle size={12} /> ĐÃ BÀN GIAO
+                            </span>
+                          )}
+                      </>
                     )}
-                    {order.status === "CONFIRMED" && (
-                      <button
-                        onClick={() => handleWorkflow(order._id, "pack")}
-                        className="bg-orange-500 text-white px-3 py-1 rounded-lg text-[10px] font-bold"
-                      >
-                        ĐÓNG GÓI
-                      </button>
-                    )}
-                    {order.status === "PACKING" && (
-                      <button
-                        onClick={() => handleWorkflow(order._id, "handover")}
-                        className="bg-green-600 text-white px-3 py-1 rounded-lg text-[10px] font-bold"
-                      >
-                        BÀN GIAO GHN
-                      </button>
-                    )}
-                    {[
-                      "READY_TO_PICK",
-                      "PICKING",
-                      "DELIVERING",
-                      "COMPLETED",
-                    ].includes(order.status) && (
-                        <span className="text-green-600 font-black text-[10px] flex items-center gap-1">
-                          <CheckCircle size={12} /> ĐÃ BÀN GIAO
-                        </span>
-                      )}
                   </div>
                 </td>
                 <td className="px-8 py-6 text-center">
@@ -289,11 +311,7 @@ const OrderManagement = () => {
       </div>
 
       {/* Pagination controls */}
-      <div className="flex items-center justify-between mt-4 px-4">
-        <div className="text-sm text-[#88694f]">
-          Trang {currentPage} / {totalPages} — Tổng {totalItems} đơn
-        </div>
-
+      <div className="flex flex-col items-center gap-4 mt-6 pt-6 border-t border-dashed border-gray-200">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}

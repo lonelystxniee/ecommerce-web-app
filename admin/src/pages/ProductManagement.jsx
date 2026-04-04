@@ -495,12 +495,8 @@ const ProductManagement = () => {
       {/* PAGINATION */}
       {
         pagination.totalPages > 1 && (
-          <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200">
-            <p className="text-sm text-[#88694f]">
-              Trang < span className="font-bold text-[#9d0b0f]" > {pagination.currentPage}</span > / {pagination.totalPages}
-              {" — "} Tổng < span className="font-bold" > {pagination.totalProducts}</span > sản phẩm
-            </p >
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col items-center gap-4 mt-8 pt-8 border-t border-dashed border-gray-200">
+            <div className="flex items-center gap-2 order-1">
               <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
@@ -541,6 +537,9 @@ const ProductManagement = () => {
                 <ChevronRight size={18} />
               </button>
             </div>
+            <p className="text-[11px] text-[#88694f] font-bold uppercase tracking-widest opacity-60">
+              Trang {pagination.currentPage} / {pagination.totalPages} — Tổng {pagination.totalProducts} sản phẩm
+            </p >
           </div >
         )
       }

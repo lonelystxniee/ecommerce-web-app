@@ -19,6 +19,8 @@ const AdvertisementManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 6;
 
   const [formData, setFormData] = useState({
     title: "",
@@ -95,6 +97,12 @@ const AdvertisementManagement = () => {
   };
 
   const filteredAds = ads.filter((ad) => ad.type === activeTab);
+  const totalPages = Math.ceil(filteredAds.length / pageSize);
+  const currentAds = filteredAds.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
 
   return (
     <div className="space-y-6 animate-fadeIn pb-10 text-[#3e2714]">
@@ -137,7 +145,7 @@ const AdvertisementManagement = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-        {filteredAds.map((ad) => (
+        {currentAds.map((ad) => (
           <div
             key={ad._id}
             className="bg-white rounded-[40px] shadow-sm border border-stone-100 overflow-hidden group hover:shadow-xl transition-all flex flex-col"
@@ -186,6 +194,42 @@ const AdvertisementManagement = () => {
           </div>
         ))}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex flex-col items-center gap-4 mt-12 pt-8 border-t border-dashed border-gray-200">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="p-3 rounded-2xl border border-gray-200 bg-white text-[#9d0b0f] hover:bg-[#9d0b0f] hover:text-white transition-all disabled:opacity-30"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`w-12 h-12 rounded-2xl font-black text-xs transition-all ${
+                  currentPage === i + 1 ? "bg-[#9d0b0f] text-white shadow-lg" : "bg-white text-[#9d0b0f] border border-gray-100 hover:border-[#9d0b0f]"
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="p-3 rounded-2xl border border-gray-200 bg-white text-[#9d0b0f] hover:bg-[#9d0b0f] hover:text-white transition-all disabled:opacity-30"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+          <p className="text-[11px] text-[#88694f] font-bold uppercase tracking-widest opacity-60">
+            Trang {currentPage} / {totalPages} — Tổng {filteredAds.length} quảng cáo
+          </p>
+        </div>
+      )}
 
       {isModalOpen && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
