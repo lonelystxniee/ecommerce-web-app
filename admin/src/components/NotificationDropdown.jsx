@@ -46,7 +46,7 @@ const NotificationDropdown = () => {
     const socket = getSocket();
     const handleNewOrderObj = (data) => {
       toast.success(data.message || `Có đơn hàng mới!`, { duration: 6000 });
-      setNotifications((prev) => [data, ...prev].slice(0, 50));
+      setNotifications((prev) => [data, ...prev].slice(0, 100));
       setUnreadCount((prev) => prev + 1);
     };
 
@@ -56,6 +56,16 @@ const NotificationDropdown = () => {
       socket.off('new_order', handleNewOrderObj);
     };
   }, []);
+
+  const normalizeLink = (link) => {
+    if (!link) return "";
+    // Xử lý link cũ từ database: /orders?highlight=ID -> /order-tracking/ID
+    if (link.includes("highlight=")) {
+      const id = link.split("highlight=")[1];
+      return `/order-tracking/${id}`;
+    }
+    return link.replace(/^\/admin/, "");
+  };
 
   const markAsRead = async (id) => {
     try {
@@ -130,7 +140,7 @@ const NotificationDropdown = () => {
                     </span>
                     {n.link && (
                       <Link 
-                        to={n.link.replace(/^\/admin/, '')} 
+                        to={normalizeLink(n.link)} 
                         className="text-[11px] text-primary font-semibold hover:underline bg-red-50 px-2 py-0.5 rounded-full" 
                         onClick={() => setIsOpen(false)}
                       >

@@ -24,13 +24,17 @@ const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [itemSearch, setItemSearch] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
   const [workflowLoading, setWorkflowLoading] = useState(null);
   const navigate = useNavigate();
-  
+
   const STATUS_MAP = {
     PENDING: "Chờ xác nhận",
     CONFIRMED: "Đã xác nhận",
@@ -106,19 +110,41 @@ const OrderManagement = () => {
     }
   };
 
-  const filteredOrders = orders.filter(
-    (o) => {
-      const name = (o.customerInfo && o.customerInfo.fullName) || "";
-      return (
-        name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        o._id.includes(searchTerm)
-      );
-    },
-  );
+  const filteredOrders = orders.filter((o) => {
+    // 1. Tìm theo tên/mã đơn
+    const nameStr = (o.customerInfo && o.customerInfo.fullName) || "";
+    const matchBase =
+      nameStr.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      o._id.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // 2. Tìm theo mặt hàng (sản phẩm trong đơn)
+    const matchItem = !itemSearch || (o.items || []).some(item => 
+      item.name.toLowerCase().includes(itemSearch.toLowerCase())
+    );
+
+    // 3. Lọc theo trạng thái
+    const matchStatus = statusFilter === "ALL" || o.status === statusFilter;
+
+    // 4. Lọc theo giá
+    const orderPrice = o.totalPrice || 0;
+    const matchMinPrice = !minPrice || orderPrice >= Number(minPrice);
+    const matchMaxPrice = !maxPrice || orderPrice <= Number(maxPrice);
+
+    return matchBase && matchItem && matchStatus && matchMinPrice && matchMaxPrice;
+  });
 
   // Pagination calculations
   const totalItems = filteredOrders.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  
+  const resetFilters = () => {
+    setSearchTerm("");
+    setItemSearch("");
+    setMinPrice("");
+    setMaxPrice("");
+    setStatusFilter("ALL");
+    setCurrentPage(1);
+  };
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [totalPages]);
@@ -198,16 +224,79 @@ const OrderManagement = () => {
         </button>
       </div>
 
-      <div className="bg-white/80 p-4 rounded-2xl border border-[#9d0b0f]/10">
-        <div className="relative">
-          <Search className="absolute left-4 top-3 text-[#9d0b0f]" size={18} />
-          <input
-            type="text"
-            placeholder="Tìm theo tên hoặc mã đơn..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 py-2.5 bg-transparent outline-none text-sm"
-          />
+      <div className="bg-white/90 p-6 rounded-[32px] shadow-sm border border-[#9d0b0f]/10 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Tìm kiếm cơ bản */}
+          <div className="relative">
+            <Search className="absolute left-4 top-3 text-[#9d0b0f]" size={16} />
+            <input
+              type="text"
+              placeholder="Tên khách / Mã đơn..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-[#f7f4ef]/50 border border-transparent focus:border-[#9d0b0f]/30 rounded-xl outline-none text-sm transition-all"
+            />
+          </div>
+
+          {/* Tìm theo sản phẩm */}
+          <div className="relative">
+            <Package className="absolute left-4 top-3 text-[#9d0b0f]" size={16} />
+            <input
+              type="text"
+              placeholder="Tên sản phẩm trong đơn..."
+              value={itemSearch}
+              onChange={(e) => setItemSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-[#f7f4ef]/50 border border-transparent focus:border-[#9d0b0f]/30 rounded-xl outline-none text-sm transition-all"
+            />
+          </div>
+
+          {/* Lọc theo giá */}
+          <div className="flex gap-2">
+            <input
+              type="number"
+              placeholder="Giá từ..."
+              value={minPrice}
+              onChange={(e) => setMinPrice(e.target.value)}
+              className="w-1/2 px-4 py-2 bg-[#f7f4ef]/50 border border-transparent focus:border-[#9d0b0f]/30 rounded-xl outline-none text-sm transition-all"
+            />
+            <input
+              type="number"
+              placeholder="đến..."
+              value={maxPrice}
+              onChange={(e) => setMaxPrice(e.target.value)}
+              className="w-1/2 px-4 py-2 bg-[#f7f4ef]/50 border border-transparent focus:border-[#9d0b0f]/30 rounded-xl outline-none text-sm transition-all"
+            />
+          </div>
+
+          {/* Lọc theo trạng thái */}
+          <div className="relative">
+            <Filter className="absolute left-4 top-3 text-[#9d0b0f]" size={16} />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-[#f7f4ef]/50 border border-transparent focus:border-[#9d0b0f]/30 rounded-xl outline-none text-sm transition-all appearance-none cursor-pointer"
+            >
+              <option value="ALL">Tất cả trạng thái</option>
+              {Object.entries(STATUS_MAP).map(([key, val]) => (
+                <option key={key} value={key}>{val}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Nút thao tác bổ sung */}
+        <div className="flex justify-end gap-3 pt-2 border-t border-dashed border-gray-100">
+          {(searchTerm || itemSearch || minPrice || maxPrice || statusFilter !== "ALL") && (
+            <button
+              onClick={resetFilters}
+              className="flex items-center gap-2 px-4 py-1.5 text-xs font-bold text-gray-500 hover:text-[#9d0b0f] transition-colors"
+            >
+              <Trash2 size={14} /> Xóa bộ lọc
+            </button>
+          )}
+          <div className="text-[10px] font-bold text-gray-400 flex items-center bg-gray-50 px-3 rounded-lg">
+            Hiển thị: {filteredOrders.length} / {orders.length} đơn hàng
+          </div>
         </div>
       </div>
 
@@ -578,7 +667,7 @@ const OrderManagement = () => {
                     <button
                       onClick={() => {
                         setIsModalOpen(false);
-                        navigate(`/orders/track/${selectedOrder._id}`);
+                        navigate(`/order-tracking/${selectedOrder._id}`);
                       }}
                       className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-indigo-700 transition-all flex items-center gap-2"
                     >

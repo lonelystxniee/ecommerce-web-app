@@ -215,7 +215,7 @@ exports.createOrder = async (req, res) => {
         type: "admin",
         message: `Đơn hàng mới: ${newOrder.totalPrice.toLocaleString()}đ`,
         orderId: newOrder._id,
-        link: `/orders?highlight=${newOrder._id}`
+        link: `/order-tracking/${newOrder._id}`
       });
       await notif.save();
       
@@ -289,8 +289,20 @@ exports.adminConfirm = async (req, res) => {
     });
     await notif.save();
 
+    // Thông báo cho Admin
+    const adminNotif = new Notification({
+      type: "admin",
+      message: `🎯 Đã xác nhận đơn hàng #${order._id.toString().slice(-8).toUpperCase()}`,
+      orderId: order._id,
+      link: `/order-tracking/${order._id}`
+    });
+    await adminNotif.save();
+
     const io = req.app.get("io");
-    if (io) io.emit("order_status_updated", notif);
+    if (io) {
+      io.emit("order_status_updated", notif);
+      io.emit("new_order", adminNotif);
+    }
 
     res.json({ success: true, message: "Đã xác nhận đơn hàng thành công", order });
   } catch (error) {
@@ -329,8 +341,20 @@ exports.adminPacking = async (req, res) => {
     });
     await notif.save();
 
+    // Thông báo cho Admin
+    const adminNotif = new Notification({
+      type: "admin",
+      message: `📦 ĐANG ĐÓNG GÓI đơn hàng #${order._id.toString().slice(-8).toUpperCase()}`,
+      orderId: order._id,
+      link: `/order-tracking/${order._id}`
+    });
+    await adminNotif.save();
+
     const io = req.app.get("io");
-    if (io) io.emit("order_status_updated", notif);
+    if (io) {
+      io.emit("order_status_updated", notif);
+      io.emit("new_order", adminNotif);
+    }
 
     res.json({ success: true, message: "Đã đóng gói thành công", order });
   } catch (error) {
@@ -383,8 +407,20 @@ exports.adminHandover = async (req, res) => {
     });
     await notif.save();
 
+    // Thông báo cho Admin
+    const adminNotif = new Notification({
+      type: "admin",
+      message: `🚚 ĐÃ BÀN GIAO đơn hàng #${updatedOrder._id.toString().slice(-8).toUpperCase()} cho GHN`,
+      orderId: updatedOrder._id,
+      link: `/order-tracking/${updatedOrder._id}`
+    });
+    await adminNotif.save();
+
     const io = req.app.get("io");
-    if (io) io.emit("order_status_updated", notif);
+    if (io) {
+      io.emit("order_status_updated", notif);
+      io.emit("new_order", adminNotif);
+    }
 
     return res.json({
       success: true,
@@ -553,8 +589,20 @@ exports.shipperUpdateStatus = async (req, res) => {
     });
     await notif.save();
     
+    // Bổ sung thông báo cho Admin khi shipper cập nhật trạng thái
+    const adminNotif = new Notification({
+      type: "admin",
+      message: `Đơn #${order._id.toString().slice(-8).toUpperCase()}: ${desc || "Cập nhật trạng thái vận chuyển"}`,
+      orderId: order._id,
+      link: `/order-tracking/${order._id}`
+    });
+    await adminNotif.save();
+    
     const io = req.app.get("io");
-    if (io) io.emit("order_status_updated", notif);
+    if (io) {
+      io.emit("order_status_updated", notif); // Cho khách
+      io.emit("new_order", adminNotif);       // Cho admin (dropdown admin đang nghe event này)
+    }
 
     return res.json({ success: true, message: ghnError ? `Cập nhật thành công (GHN lỗi: ${ghnError})` : "Cập nhật thành công!" });
   } catch (error) {
@@ -619,10 +667,22 @@ exports.updateOrderStatus = async (req, res) => {
         link: `/order-tracking/${updated._id}`
       });
       await notif.save();
+      
+      // Bổ sung cho Admin
+      const adminNotif = new Notification({
+        type: "admin",
+        message: `Đơn #${updated._id.toString().slice(-8).toUpperCase()}: ${statusLabels[status.toUpperCase()] || status}`,
+        orderId: updated._id,
+        link: `/order-tracking/${updated._id}`
+      });
+      await adminNotif.save();
+      
+      const io = req.app.get("io");
+      if (io) {
+        io.emit("order_status_updated", notif); // Cho khách
+        io.emit("new_order", adminNotif);       // Cho admin
+      }
     }
-    
-    const io = req.app.get("io");
-    if (io && notif) io.emit("order_status_updated", notif);
 
     res.json({ success: true, message: "Cập nhật trạng thái thành công" });
   } catch (error) {
