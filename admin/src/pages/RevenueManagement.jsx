@@ -530,26 +530,42 @@ const RevenueManagement = () => {
 
           {/* THANH ĐIỀU HƯỚNG PHÂN TRANG */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-6 border-t border-stone-50 mt-4 bg-white/50 backdrop-blur-sm">
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((prev) => prev - 1)}
-                className="p-2.5 rounded-xl border border-stone-100 text-stone-400 hover:bg-[#9d0b0f] hover:text-white disabled:opacity-20 transition-all shadow-sm"
-              >
-                <ChevronLeft size={18} />
-              </button>
+            <div className="flex flex-col items-center gap-4 pt-12 border-t border-dashed border-stone-100 mt-6 bg-white/50 backdrop-blur-sm">
+              <div className="flex items-center gap-2 order-1">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((prev) => prev - 1)}
+                  className="p-3 rounded-2xl border border-stone-100 text-stone-400 hover:bg-[#9d0b0f] hover:text-white disabled:opacity-20 transition-all shadow-sm bg-white"
+                >
+                  <ChevronLeft size={18} />
+                </button>
 
-              <span className="text-[10px] font-black uppercase tracking-widest text-[#88694f]">
-                Trang {currentPage} / {totalPages}
-              </span>
+                <div className="flex gap-2 mx-2">
+                  {[...Array(totalPages)].map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentPage(i + 1)}
+                      className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${
+                        currentPage === i + 1 ? "bg-[#9d0b0f] text-white shadow-lg shadow-red-100" : "bg-white text-stone-400 border border-stone-100 hover:border-[#9d0b0f]"
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                </div>
 
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((prev) => prev + 1)}
-                className="p-2.5 rounded-xl border border-stone-100 text-stone-400 hover:bg-[#9d0b0f] hover:text-white disabled:opacity-20 transition-all shadow-sm"
-              >
-                <ChevronRight size={18} />
-              </button>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((prev) => prev + 1)}
+                  className="p-3 rounded-2xl border border-stone-100 text-stone-400 hover:bg-[#9d0b0f] hover:text-white disabled:opacity-20 transition-all shadow-sm bg-white"
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+
+              <p className="text-[11px] font-black uppercase tracking-widest text-[#88694f] opacity-60">
+                Trang {currentPage} / {totalPages} — Tổng {filteredTransactions.length} giao dịch
+              </p>
             </div>
           )}
         </div>

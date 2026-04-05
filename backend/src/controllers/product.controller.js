@@ -631,10 +631,46 @@ exports.importWarehouseExcel = async (req, res) => {
     }
 
     res.status(200).json({ success: true, message, results });
-
   } catch (error) {
     console.error("Import warehouse Excel error:", error);
     res.status(500).json({ success: false, message: "Lỗi hệ thống khi đọc file Excel", error: error.message });
+  }
+};
+
+// Get products with stock < 2
+exports.getLowStockProducts = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const skip = (page - 1) * limit;
+
+    const [products, totalProducts] = await Promise.all([
+      Product.find({ quantity: { $lt: 2 } })
+        .populate("categoryID")
+        .sort({ quantity: 1 })
+        .skip(skip)
+        .limit(limit),
+      Product.countDocuments({ quantity: { $lt: 2 } })
+    ]);
+
+    const mappedProducts = products.map(p => ({
+      ...p.toObject(),
+      name: p.productName
+    }));
+
+    res.json({
+      success: true,
+      products: mappedProducts,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalProducts / limit),
+        totalProducts,
+        limit
+      }
+    });
+  } catch (error) {
+    console.error("Get low stock products error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 
 const Cart = () => {
-  const { cartItems, updateQuantity, removeFromCart, totalPrice } = useCart()
+  const { cartItems, updateQuantity, setQuantity, toggleSelect, removeFromCart, totalPrice, totalItems } = useCart()
 
   // --- STATES CHO TÌM KIẾM, LỌC & PHÂN TRANG ---
   const [searchTerm, setSearchTerm] = useState('')
@@ -99,6 +99,7 @@ const Cart = () => {
                 const cartImage = item.image || (item.images && item.images[0]) || ''
                 return (
                   <div key={item.id} className="flex items-center gap-4 p-4 transition-all bg-white border border-gray-100 shadow-sm md:gap-6 md:p-6 rounded-3xl hover:shadow-md animate-fadeIn">
+                    <input type="checkbox" checked={item.selected !== false} onChange={() => toggleSelect(item.id)} className="w-5 h-5 accent-[#9d0b0f] cursor-pointer" />
                     <img src={cartImage} alt={item.name} className="w-20 h-20 md:w-24 md:h-24 object-contain rounded-2xl border bg-[#f7f4ef] p-2" />
 
                     <div className="flex-1">
@@ -112,7 +113,13 @@ const Cart = () => {
                         <button onClick={() => updateQuantity(item.id, -1)} className="p-2 px-3 text-[#88694f] hover:bg-stone-200 transition-colors">
                           <Minus size={14} />
                         </button>
-                        <span className="w-8 font-black text-center text-[#3e2714]">{item.quantity}</span>
+                        <input
+                          type="number"
+                          min="1"
+                          value={item.quantity}
+                          onChange={(e) => setQuantity(item.id, parseInt(e.target.value) || 1)}
+                          className="w-10 font-black text-center text-[#3e2714] bg-transparent border-none focus:ring-0 appearance-none [-moz-appearance:_textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                        />
                         <button onClick={() => updateQuantity(item.id, 1)} className="p-2 px-3 text-[#88694f] hover:bg-stone-200 transition-colors">
                           <Plus size={14} />
                         </button>
@@ -184,12 +191,18 @@ const Cart = () => {
               <span className="text-3xl font-black text-[#9d0b0f] tracking-tighter">{totalPrice.toLocaleString()}đ</span>
             </div>
 
-            <Link
-              to="/checkout"
-              className="block py-4 mb-4 text-lg font-black text-center text-white transition-all shadow-lg bg-[#9d0b0f] rounded-2xl hover:bg-black active:scale-95 uppercase tracking-widest"
-            >
-              Tiến hành thanh toán
-            </Link>
+            {totalItems > 0 ? (
+              <Link
+                to="/checkout"
+                className="block py-4 mb-4 text-lg font-black text-center text-white transition-all shadow-lg bg-[#9d0b0f] rounded-2xl hover:bg-black active:scale-95 uppercase tracking-widest"
+              >
+                Tiến hành thanh toán
+              </Link>
+            ) : (
+              <button disabled className="w-full py-4 mb-4 text-lg font-black tracking-widest text-center text-white uppercase transition-all bg-gray-400 cursor-not-allowed rounded-2xl">
+                Vui lòng chọn sản phẩm
+              </button>
+            )}
 
             <Link to="/" className="block text-center text-[#88694f] font-bold text-sm hover:text-[#9d0b0f] transition-colors">
               ← Tiếp tục mua sắm

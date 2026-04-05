@@ -235,7 +235,7 @@ const AdminManagement = () => {
       </div>
 
       {/* Stats Quick View */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         <div className="flex items-center gap-3 p-4 bg-white border border-gray-100 shadow-sm rounded-[24px]">
           <div className="bg-red-50 p-3 rounded-xl text-[#9d0b0f] shrink-0">
             <Shield size={20} />
@@ -308,115 +308,110 @@ const AdminManagement = () => {
 
       {/* Bảng Dữ Liệu */}
       <div className="overflow-x-auto border border-gray-100 shadow-xl bg-white/90 rounded-[32px]">
-          <table className="w-full text-left min-w-[1000px]">
-            <thead className="bg-[#9d0b0f] text-white text-xs uppercase font-bold tracking-widest">
+        <table className="w-full text-left min-w-[1000px]">
+          <thead className="bg-[#9d0b0f] text-white text-xs uppercase font-bold tracking-widest">
+            <tr>
+              <th className="w-20 px-8 py-5 text-center">STT</th>
+              <th className="px-8 py-5">Thành viên</th>
+              <th className="px-8 py-5">Liên hệ</th>
+              <th className="px-8 py-5 text-center">Ngày tạo</th>
+              <th className="px-8 py-5 text-center">Vai trò</th>
+              <th className="px-8 py-5 text-center">Trạng thái</th>
+              <th className="px-8 py-5 text-right">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {loading ? (
               <tr>
-                <th className="px-8 py-5 text-center w-20">STT</th>
-                <th className="px-8 py-5">Thành viên</th>
-                <th className="px-8 py-5">Liên hệ</th>
-                <th className="px-8 py-5 text-center">Ngày tạo</th>
-                <th className="px-8 py-5 text-center">Vai trò</th>
-                <th className="px-8 py-5 text-center">Trạng thái</th>
-                <th className="px-8 py-5 text-right">Thao tác</th>
+                <td colSpan="5" className="px-8 py-20 text-center text-[#88694f]">
+                  Đang tải...
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {loading ? (
-                <tr>
-                  <td colSpan="5" className="px-8 py-20 text-center text-[#88694f]">
-                    Đang tải...
-                  </td>
-                </tr>
-              ) : displayUsers.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className="px-8 py-20 text-center text-[#88694f]">
-                    Không tìm thấy quản trị viên nào
-                  </td>
-                </tr>
-              ) : (
-                displayUsers.map((user, index) => (
-                  <tr key={user._id} className="hover:bg-[#f7f4ef]/50 transition-colors group">
-                    <td className="px-8 py-6 text-center font-bold text-[#9d0b0f]">
-                      {(currentPage - 1) * limit + index + 1}
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-[#9d0b0f] text-white flex items-center justify-center font-bold shadow-md">{user.fullName.charAt(0).toUpperCase()}</div>
-                        <div>
-                          <p className="font-bold text-[#3e2714]">{user.fullName}</p>
-                          <p className="text-[10px] text-[#88694f] uppercase tracking-widest font-bold">Admin ID: {user._id.substring(0, 8)}</p>
-                        </div>
+            ) : displayUsers.length === 0 ? (
+              <tr>
+                <td colSpan="5" className="px-8 py-20 text-center text-[#88694f]">
+                  Không tìm thấy quản trị viên nào
+                </td>
+              </tr>
+            ) : (
+              displayUsers.map((user, index) => (
+                <tr key={user._id} className="hover:bg-[#f7f4ef]/50 transition-colors group">
+                  <td className="px-8 py-6 text-center font-bold text-[#9d0b0f]">{(currentPage - 1) * limit + index + 1}</td>
+                  <td className="px-8 py-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-[#9d0b0f] text-white flex items-center justify-center font-bold shadow-md">{user.fullName.charAt(0).toUpperCase()}</div>
+                      <div>
+                        <p className="font-bold text-[#3e2714]">{user.fullName}</p>
+                        <p className="text-[10px] text-[#88694f] uppercase tracking-widest font-bold">Admin ID: {user._id.substring(0, 8)}</p>
                       </div>
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="space-y-1">
-                        <p className="text-sm text-[#3e2714] flex items-center gap-2">
-                          <Mail size={14} className="text-[#9d0b0f]" /> {user.email}
-                        </p>
-                        {user.phone && (
-                          <p className="text-xs text-[#88694f] flex items-center gap-2">
-                            <Phone size={14} className="text-[#f39200]" /> {user.phone}
-                          </p>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-8 py-6 text-center">
-                      <p className="text-[11px] font-medium text-gray-400 whitespace-nowrap italic">
-                        {new Date(user.createdAt).toLocaleDateString("vi-VN")} {new Date(user.createdAt).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </td>
+                  <td className="px-8 py-6">
+                    <div className="space-y-1">
+                      <p className="text-sm text-[#3e2714] flex items-center gap-2">
+                        <Mail size={14} className="text-[#9d0b0f]" /> {user.email}
                       </p>
-                    </td>
-                    <td className="px-8 py-6 text-center">
-                      <span
-                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1 ${user.role === 'ADMIN' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}
+                      {user.phone && (
+                        <p className="text-xs text-[#88694f] flex items-center gap-2">
+                          <Phone size={14} className="text-[#f39200]" /> {user.phone}
+                        </p>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-8 py-6 text-center">
+                    <p className="text-[11px] font-medium text-gray-400 whitespace-nowrap italic">
+                      {new Date(user.createdAt).toLocaleDateString('vi-VN')} {new Date(user.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </td>
+                  <td className="px-8 py-6 text-center">
+                    <span
+                      className={`px-4 py-1.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1 ${user.role === 'ADMIN' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}
+                    >
+                      <Shield size={12} /> {user.role}
+                    </span>
+                  </td>
+                  <td className="px-8 py-6 text-center">
+                    <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold ${user.status === 'ACTIVE' ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}`}>
+                      {user.status === 'ACTIVE' ? 'ĐANG HOẠT ĐỘNG' : 'TẠM KHÓA'}
+                    </span>
+                  </td>
+                  <td className="px-8 py-6 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button onClick={() => handleOpenEditModal(user)} className="p-2 text-blue-500 transition-all hover:bg-blue-50 rounded-xl">
+                        <Edit2 size={18} />
+                      </button>
+                      <button onClick={() => handleDeleteUser(user._id)} className="p-2 text-red-500 transition-all hover:bg-red-50 rounded-xl">
+                        <Trash2 size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleToggleStatus(user)}
+                        className={`p-2 transition-all rounded-xl ${user.status === 'ACTIVE' ? 'text-orange-500 hover:bg-orange-50' : 'text-green-500 hover:bg-green-50'}`}
+                        title={user.status === 'ACTIVE' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
                       >
-                        <Shield size={12} /> {user.role}
-                      </span>
-                    </td>
-                    <td className="px-8 py-6 text-center">
-                      <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold ${user.status === 'ACTIVE' ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}`}>
-                        {user.status === 'ACTIVE' ? 'ĐANG HOẠT ĐỘNG' : 'TẠM KHÓA'}
-                      </span>
-                    </td>
-                    <td className="px-8 py-6 text-right">
-                      <div className="flex justify-end gap-2">
-                        <button onClick={() => handleOpenEditModal(user)} className="p-2 text-blue-500 transition-all hover:bg-blue-50 rounded-xl">
-                          <Edit2 size={18} />
-                        </button>
-                        <button onClick={() => handleDeleteUser(user._id)} className="p-2 text-red-500 transition-all hover:bg-red-50 rounded-xl">
-                          <Trash2 size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleToggleStatus(user)}
-                          className={`p-2 transition-all rounded-xl ${user.status === 'ACTIVE' ? 'text-orange-500 hover:bg-orange-50' : 'text-green-500 hover:bg-green-50'}`}
-                          title={user.status === 'ACTIVE' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
-                        >
-                          {user.status === 'ACTIVE' ? <Lock size={18} /> : <Unlock size={18} />}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                        {user.status === 'ACTIVE' ? <Lock size={18} /> : <Unlock size={18} />}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="flex flex-col items-center justify-between gap-4 mt-8 md:flex-row">
-          <p className="text-sm font-medium text-[#88694f]">
-            Hiển thị <span className="font-bold text-[#3e2714]">{displayUsers.length}</span> trên <span className="font-bold text-[#3e2714]">{totalUsers}</span> quản trị viên
-          </p>
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col items-center gap-6 pt-8 mt-12 border-t border-dashed border-stone-200">
+          <div className="flex items-center order-1 gap-2">
             <button
               disabled={currentPage === 1}
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              className="px-4 py-2 text-sm font-bold text-[#9d0b0f] bg-white border border-[#9d0b0f]/20 rounded-xl hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+              className="px-4 py-2 text-sm font-black text-[#9d0b0f] bg-white border border-[#9d0b0f]/20 rounded-xl hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm uppercase tracking-widest"
             >
               Trước
             </button>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 mx-2">
               {[...Array(totalPages)].map((_, i) => {
                 const pageNum = i + 1
                 if (pageNum === 1 || pageNum === totalPages || (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)) {
@@ -424,8 +419,8 @@ const AdminManagement = () => {
                     <button
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
-                      className={`w-10 h-10 rounded-xl text-sm font-bold transition-all shadow-sm ${
-                        currentPage === pageNum ? 'bg-[#9d0b0f] text-white' : 'bg-white text-[#9d0b0f] border border-[#9d0b0f]/20 hover:bg-red-50'
+                      className={`w-10 h-10 rounded-xl text-xs font-black transition-all shadow-sm ${
+                        currentPage === pageNum ? 'bg-[#9d0b0f] text-white shadow-lg shadow-red-100' : 'bg-white text-[#9d0b0f] border border-[#9d0b0f]/20 hover:bg-red-50'
                       }`}
                     >
                       {pageNum}
@@ -433,7 +428,7 @@ const AdminManagement = () => {
                   )
                 } else if ((pageNum === 2 && currentPage > 3) || (pageNum === totalPages - 1 && currentPage < totalPages - 2)) {
                   return (
-                    <span key={pageNum} className="px-1 text-[#88694f]">
+                    <span key={pageNum} className="px-1 text-[#88694f] font-bold">
                       ...
                     </span>
                   )
@@ -445,11 +440,14 @@ const AdminManagement = () => {
             <button
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              className="px-4 py-2 text-sm font-bold text-[#9d0b0f] bg-white border border-[#9d0b0f]/20 rounded-xl hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+              className="px-4 py-2 text-sm font-black text-[#9d0b0f] bg-white border border-[#9d0b0f]/20 rounded-xl hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm uppercase tracking-widest"
             >
               Sau
             </button>
           </div>
+          <p className="text-[11px] text-[#88694f] font-bold uppercase tracking-widest opacity-60">
+            Hiển thị {displayUsers.length} / {totalUsers} quản trị viên — Trang {currentPage} / {totalPages}
+          </p>
         </div>
       )}
 
@@ -483,7 +481,7 @@ const AdminManagement = () => {
                   <input
                     required
                     disabled={editMode}
-                    className={`w-full px-5 py-4 bg-white rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all font-medium ${editMode ? "opacity-50 cursor-not-allowed bg-gray-100" : ""}`}
+                    className={`w-full px-5 py-4 bg-white rounded-2xl border-2 border-transparent outline-none focus:border-[#f39200] transition-all font-medium ${editMode ? 'opacity-50 cursor-not-allowed bg-gray-100' : ''}`}
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}

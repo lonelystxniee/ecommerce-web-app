@@ -320,16 +320,12 @@ const CategoryManagement = () => {
 
             {/* PAGINATION */}
             {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200">
-                    <p className="text-sm text-[#88694f]">
-                        Trang <span className="font-bold text-[#9d0b0f]">{currentPage}</span> / {totalPages}
-                        {" — "}Tổng <span className="font-bold">{categories.length}</span> danh mục
-                    </p>
-                    <div className="flex items-center gap-2">
+                <div className="flex flex-col items-center gap-6 mt-8 pt-6 border-t border-dashed border-stone-200">
+                    <div className="flex items-center gap-2 order-1">
                         <button
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                             disabled={currentPage === 1}
-                            className="p-2 rounded-xl border border-gray-200 hover:bg-[#9d0b0f] hover:text-white hover:border-[#9d0b0f] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="p-2 rounded-xl border border-gray-200 hover:bg-[#9d0b0f] hover:text-white hover:border-[#9d0b0f] transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-white"
                         >
                             <ChevronLeft size={18} />
                         </button>
@@ -337,9 +333,9 @@ const CategoryManagement = () => {
                             <button
                                 key={p}
                                 onClick={() => setCurrentPage(p)}
-                                className={`w-9 h-9 rounded-xl text-sm font-bold transition-all ${currentPage === p
-                                    ? "bg-[#9d0b0f] text-white shadow-lg"
-                                    : "border border-gray-200 hover:border-[#9d0b0f] hover:text-[#9d0b0f]"
+                                className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${currentPage === p
+                                    ? "bg-[#9d0b0f] text-white shadow-lg shadow-red-100"
+                                    : "bg-white border border-gray-100 hover:border-[#9d0b0f] hover:text-[#9d0b0f]"
                                     }`}
                             >
                                 {p}
@@ -348,11 +344,14 @@ const CategoryManagement = () => {
                         <button
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages}
-                            className="p-2 rounded-xl border border-gray-200 hover:bg-[#9d0b0f] hover:text-white hover:border-[#9d0b0f] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="p-2 rounded-xl border border-gray-200 hover:bg-[#9d0b0f] hover:text-white hover:border-[#9d0b0f] transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-white"
                         >
                             <ChevronRight size={18} />
                         </button>
                     </div>
+                    <p className="text-[11px] text-[#88694f] font-bold uppercase tracking-widest opacity-60">
+                        Trang {currentPage} / {totalPages} — Tổng {categories.length} danh mục
+                    </p>
                 </div>
             )}
 

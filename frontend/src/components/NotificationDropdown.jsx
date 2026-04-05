@@ -51,7 +51,7 @@ const NotificationDropdown = ({ user }) => {
         const uStr = localStorage.getItem('user')
         const u = uStr ? JSON.parse(uStr) : null
         if (u && u.role === 'ADMIN') {
-          setNotifications((prev) => [data, ...prev].slice(0, 50))
+          setNotifications((prev) => [data, ...prev].slice(0, 100))
           setUnreadCount((prev) => prev + 1)
         }
       } catch (err) {
@@ -64,7 +64,7 @@ const NotificationDropdown = ({ user }) => {
         const uStr = localStorage.getItem('user')
         const u = uStr ? JSON.parse(uStr) : null
         if (u && String(u._id) === String(data.userId)) {
-          setNotifications((prev) => [data, ...prev].slice(0, 50))
+          setNotifications((prev) => [data, ...prev].slice(0, 100))
           setUnreadCount((prev) => prev + 1)
         }
       } catch (err) {
@@ -80,6 +80,12 @@ const NotificationDropdown = ({ user }) => {
       socket.off('order_status_updated', handleOrderStatusObj)
     }
   }, [])
+
+  const normalizeLink = (link) => {
+    if (!link) return ''
+    const id = link.split('highlight=')[1]
+    return `/order-tracking/${id}`
+  }
 
   const markAsRead = async (id) => {
     try {
@@ -155,7 +161,7 @@ const NotificationDropdown = ({ user }) => {
                       {new Date(n.createdAt).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}
                     </span>
                     {n.link && (
-                      <Link to={n.link} className="text-[11px] text-primary font-semibold hover:underline bg-red-50 px-2 py-0.5 rounded-full" onClick={() => setIsOpen(false)}>
+                      <Link to={normalizeLink(n.link)} className="text-[11px] text-primary font-semibold hover:underline bg-red-50 px-2 py-0.5 rounded-full" onClick={() => setIsOpen(false)}>
                         Xem chi tiết
                       </Link>
                     )}

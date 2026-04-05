@@ -6,6 +6,7 @@ const adminMiddleware = require("../middlewares/admin.middleware");
 const upload = require("../middlewares/upload.middleware");
 
 router.get("/search", productController.searchProduct);
+router.get("/low-stock", authMiddleware, adminMiddleware, productController.getLowStockProducts);
 router.get("/", productController.getAllProducts);
 router.delete("/:id", authMiddleware, productController.deleteProduct);
 router.put("/:id", authMiddleware, upload.array("images", 10), productController.updateProduct);

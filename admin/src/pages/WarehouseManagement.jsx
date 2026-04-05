@@ -13,6 +13,7 @@ import {
     Upload
 } from "lucide-react";
 import toast from "react-hot-toast";
+import WarehouseHistoryModal from "../components/WarehouseHistoryModal";
 
 const WarehouseManagement = () => {
     const [items, setItems] = useState([]);
@@ -32,6 +33,8 @@ const WarehouseManagement = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
+    const [showLowStock, setShowLowStock] = useState(false);
+    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({
         name: "",
@@ -47,12 +50,17 @@ const WarehouseManagement = () => {
 
     useEffect(() => {
         fetchCategories();
-        fetchAllProducts(1);
     }, []);
 
     const fetchAllProducts = async (page = 1) => {
         try {
-            const res = await fetch(`${API_URL}/api/products?page=${page}&limit=12`);
+            const token = localStorage.getItem("token");
+            const endpoint = showLowStock
+                ? `${API_URL}/api/products/low-stock?page=${page}&limit=12`
+                : `${API_URL}/api/products?page=${page}&limit=12`;
+            const res = await fetch(endpoint, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
             const data = await res.json();
             if (data.success) {
                 setAllProducts(data.products || []);
@@ -67,6 +75,10 @@ const WarehouseManagement = () => {
             console.error("Fetch all products error:", err);
         }
     };
+
+    useEffect(() => {
+        fetchAllProducts(1);
+    }, [showLowStock]);
 
     const handlePageChange = (newPage) => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
@@ -251,8 +263,7 @@ const WarehouseManagement = () => {
     };
 
     const fetchHistory = () => {
-        // History is no longer stored in a collection
-        toast.info("Lịch sử nhập kho không được lưu trữ cục bộ để giữ hiệu năng hệ thống");
+        setIsHistoryModalOpen(true);
     };
 
     const handleImportExcel = async (e) => {
@@ -351,6 +362,13 @@ const WarehouseManagement = () => {
                         <input type="file" className="hidden" accept=".xlsx,.xls,.csv" onChange={handleImportExcel} disabled={isImporting} />
                     </label>
                     <button
+                        onClick={() => setShowLowStock(!showLowStock)}
+                        className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold uppercase text-xs tracking-widest transition-all shadow-lg ${showLowStock ? "bg-[#800a0d] text-white" : "bg-white text-[#800a0d] border border-[#800a0d]/20"}`}
+                    >
+                        <AlertCircle size={18} />
+                        {showLowStock ? "Xem tất cả SP" : "Cảnh báo hết hàng"}
+                    </button>
+                    <button
                         onClick={() => { fetchHistory(); }}
                         className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold uppercase text-xs tracking-widest transition-all shadow-lg bg-white text-[#800a0d] border border-[#800a0d]/20`}
                     >
@@ -442,7 +460,9 @@ const WarehouseManagement = () => {
                     {/* Quick Selection Grid & Pagination */}
                     {searchQuery.length === 0 && allProducts.length > 0 && (
                         <div className="mt-8">
-                            <h4 className="text-[10px] font-black text-[#88694f] uppercase tracking-widest mb-4 ml-1">Chọn nhanh sản phẩm</h4>
+                            <h4 className="text-[10px] font-black text-[#88694f] uppercase tracking-widest mb-4 ml-1">
+                                {showLowStock ? "Sản phẩm sắp hết hàng (< 2)" : "Chọn nhanh sản phẩm"}
+                            </h4>
                             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                                 {allProducts.map((product) => (
                                     <button
@@ -465,35 +485,40 @@ const WarehouseManagement = () => {
 
                             {/* Pagination Controls */}
                             {pagination.totalPages > 1 && (
-                                <div className="mt-8 flex justify-center items-center gap-2">
-                                    <button
-                                        onClick={() => handlePageChange(pagination.currentPage - 1)}
-                                        disabled={pagination.currentPage === 1}
-                                        className="px-4 py-2 bg-white border border-gray-100 rounded-xl text-xs font-black uppercase text-[#88694f] disabled:opacity-30 hover:bg-[#800a0d] hover:text-white transition-all shadow-sm"
-                                    >
-                                        Trước
-                                    </button>
-                                    <div className="flex gap-1">
-                                        {[...Array(pagination.totalPages)].map((_, i) => (
-                                            <button
-                                                key={i + 1}
-                                                onClick={() => handlePageChange(i + 1)}
-                                                className={`w-8 h-8 rounded-xl text-xs font-black transition-all ${pagination.currentPage === i + 1
-                                                    ? "bg-[#800a0d] text-white shadow-lg"
-                                                    : "bg-white border border-gray-100 text-[#3e2714] hover:bg-gray-50"
-                                                    }`}
-                                            >
-                                                {i + 1}
-                                            </button>
-                                        ))}
+                                <div className="mt-12 flex flex-col items-center gap-6 pt-8 border-t border-dashed border-stone-200">
+                                    <div className="flex items-center gap-2 order-1">
+                                        <button
+                                            onClick={() => handlePageChange(pagination.currentPage - 1)}
+                                            disabled={pagination.currentPage === 1}
+                                            className="px-4 py-2 bg-white border border-gray-100 rounded-xl text-xs font-black uppercase text-[#88694f] disabled:opacity-30 hover:bg-[#800a0d] hover:text-white transition-all shadow-sm"
+                                        >
+                                            Trước
+                                        </button>
+                                        <div className="flex gap-1">
+                                            {[...Array(pagination.totalPages)].map((_, i) => (
+                                                <button
+                                                    key={i + 1}
+                                                    onClick={() => handlePageChange(i + 1)}
+                                                    className={`w-10 h-10 rounded-xl text-xs font-black transition-all ${pagination.currentPage === i + 1
+                                                        ? "bg-[#800a0d] text-white shadow-lg shadow-red-100"
+                                                        : "bg-white border border-gray-100 text-[#3e2714] hover:border-[#800a0d] hover:text-[#800a0d]"
+                                                        }`}
+                                                >
+                                                    {i + 1}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <button
+                                            onClick={() => handlePageChange(pagination.currentPage + 1)}
+                                            disabled={pagination.currentPage === pagination.totalPages}
+                                            className="px-4 py-2 bg-white border border-gray-100 rounded-xl text-xs font-black uppercase text-[#88694f] disabled:opacity-30 hover:bg-[#800a0d] hover:text-white transition-all shadow-sm"
+                                        >
+                                            Sau
+                                        </button>
                                     </div>
-                                    <button
-                                        onClick={() => handlePageChange(pagination.currentPage + 1)}
-                                        disabled={pagination.currentPage === pagination.totalPages}
-                                        className="px-4 py-2 bg-white border border-gray-100 rounded-xl text-xs font-black uppercase text-[#88694f] disabled:opacity-30 hover:bg-[#800a0d] hover:text-white transition-all shadow-sm"
-                                    >
-                                        Sau
-                                    </button>
+                                    <p className="text-[11px] text-[#88694f] font-bold uppercase tracking-widest opacity-60">
+                                        Trang {pagination.currentPage} / {pagination.totalPages} — Tổng {pagination.totalProducts} sản phẩm
+                                    </p>
                                 </div>
                             )}
                         </div>
@@ -667,6 +692,12 @@ const WarehouseManagement = () => {
                     )}
                 </div>
             </div>
+
+            {/* MODAL LỊCH SỬ NHẬP KHO */}
+            <WarehouseHistoryModal
+                isOpen={isHistoryModalOpen}
+                onClose={() => setIsHistoryModalOpen(false)}
+            />
 
             {/* MODAL THÊM SẢN PHẨM MỚI */}
             {isModalOpen && (

@@ -13,11 +13,11 @@ export const CartProvider = ({ children }) => {
       if (isExist) {
         return prev.map((item) =>
           item.id === product.id
-            ? { ...item, quantity: item.quantity + qtyToAdd }
+            ? { ...item, quantity: item.quantity + qtyToAdd, selected: true }
             : item,
         );
       }
-      return [...prev, { ...product, quantity: qtyToAdd }];
+      return [...prev, { ...product, quantity: qtyToAdd, selected: true }];
     });
   };
 
@@ -32,18 +32,40 @@ export const CartProvider = ({ children }) => {
     );
   };
 
+  // 2b. Hàm cập nhật số lượng trực tiếp
+  const setQuantity = (id, newQty) => {
+    setCartItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, quantity: Math.max(1, newQty) }
+          : item,
+      ),
+    );
+  };
+
+  // 2c. Hàm toggle chọn sản phẩm
+  const toggleSelect = (id) => {
+    setCartItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, selected: !item.selected }
+          : item,
+      ),
+    );
+  };
+
   // 3. Hàm xóa sản phẩm
   const removeFromCart = (id) => {
     setCartItems((prev) => prev.filter((item) => item.id !== id));
   };
 
-  // 4. Tính toán tổng tiền và tổng số lượng
+  // 4. Tính toán tổng tiền và tổng số lượng (chỉ tính những món được chọn)
   const totalPrice = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
+    (total, item) => total + (item.selected ? item.price * item.quantity : 0),
     0,
   );
   const totalItems = cartItems.reduce(
-    (total, item) => total + item.quantity,
+    (total, item) => total + (item.selected ? item.quantity : 0),
     0,
   );
   const clearCart = () => {
@@ -56,6 +78,8 @@ export const CartProvider = ({ children }) => {
         cartItems,
         addToCart,
         updateQuantity,
+        setQuantity,
+        toggleSelect,
         removeFromCart,
         totalPrice,
         totalItems,

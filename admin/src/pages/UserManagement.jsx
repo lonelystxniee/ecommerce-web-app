@@ -522,16 +522,8 @@ const UserManagement = () => {
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="flex flex-col items-center justify-between gap-4 mt-8 md:flex-row">
-          <p className="text-sm font-medium text-[#88694f]">
-            Hiển thị{" "}
-            <span className="font-bold text-[#3e2714]">
-              {displayUsers.length}
-            </span>{" "}
-            trên <span className="font-bold text-[#3e2714]">{totalUsers}</span>{" "}
-            người dùng
-          </p>
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col items-center gap-6 mt-8 pt-6 border-t border-dashed border-gray-200">
+          <div className="flex items-center gap-2 order-1">
             <button
               disabled={currentPage === 1}
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
@@ -584,6 +576,9 @@ const UserManagement = () => {
               Sau
             </button>
           </div>
+          <p className="text-[11px] text-[#88694f] font-bold uppercase tracking-widest opacity-60">
+            Hiển thị {displayUsers.length} / {totalUsers} người dùng — Trang {currentPage} / {totalPages}
+          </p>
         </div>
       )}
       {/* MODAL THÊM / SỬA NGƯỜI DÙNG */}

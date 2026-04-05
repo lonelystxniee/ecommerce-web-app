@@ -31,6 +31,7 @@ const SectionHeading = ({ title }) => (
 
 const Checkout = () => {
   const { cartItems, totalPrice, clearCart } = useCart();
+  const selectedItems = cartItems.filter((item) => item.selected !== false);
   const navigate = useNavigate();
 
   const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
@@ -143,7 +144,7 @@ const Checkout = () => {
   };
 
   const calculateShipping = async () => {
-    const weight = cartItems.reduce((sum, it) => sum + (it.weight || 300) * (it.quantity || 1), 0);
+    const weight = selectedItems.reduce((sum, it) => sum + (it.weight || 300) * (it.quantity || 1), 0);
     if (!locationSelection.districtId || !locationSelection.wardCode) return;
     try {
       const res = await fetch(`${API_URL}/api/shipping/calculate`, {
@@ -174,7 +175,7 @@ const Checkout = () => {
       setShippingFee(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [locationSelection.wardCode, cartItems]);
+  }, [locationSelection.wardCode, selectedItems]);
 
   const handleSelectAddress = (addr) => {
     setSelectedAddress(addr);
@@ -294,7 +295,7 @@ const Checkout = () => {
           : formData.address,
         note: formData.note,
       },
-      items: cartItems,
+      items: selectedItems,
       totalPrice: totalPrice + (shippingFee || 0),
       discountAmount: discount,
       promoCode: appliedCode,
@@ -318,7 +319,7 @@ const Checkout = () => {
             )?.WardName || null,
         to_district_id: Number(locationSelection.districtId) || undefined,
         to_ward_code: locationSelection.wardCode || undefined,
-        weight: cartItems.reduce((sum, it) => sum + (it.weight || 300) * (it.quantity || 1), 0),
+        weight: selectedItems.reduce((sum, it) => sum + (it.weight || 300) * (it.quantity || 1), 0),
       },
     };
 
@@ -640,7 +641,7 @@ const Checkout = () => {
                 </div>
 
                 <div className="max-h-60 overflow-y-auto pr-2 custom-scrollbar mb-6 space-y-4">
-                  {cartItems.map((item) => (
+                  {selectedItems.map((item) => (
                     <div
                       key={item.id}
                       className="flex items-start justify-between pb-3 text-sm border-b border-gray-50"

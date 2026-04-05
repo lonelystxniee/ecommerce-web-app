@@ -221,12 +221,8 @@ const ActivityLogs = () => {
 
                 {/* Pagination */}
                 {!loading && pagination.totalPages > 1 && (
-                    <div className="p-6 bg-[#f7f4ef] border-t border-stone-100 flex items-center justify-between">
-                        <p className="text-sm text-[#88694f]">
-                            Trang <span className="font-bold text-[#9d0b0f]">{pagination.page}</span> / {pagination.totalPages}
-                            {" — "}Tổng <span className="font-bold">{pagination.total}</span> bản ghi
-                        </p>
-                        <div className="flex items-center gap-2">
+                    <div className="p-8 bg-[#f7f4ef] border-t border-stone-100 flex flex-col items-center gap-6">
+                        <div className="flex items-center gap-2 order-1">
                             <button
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                 disabled={currentPage === 1 || loading}
@@ -249,7 +245,7 @@ const ActivityLogs = () => {
                                             <button
                                                 key={pageNum}
                                                 onClick={() => setCurrentPage(pageNum)}
-                                                className={`w-9 h-9 rounded-xl border-2 text-xs font-black transition-all ${currentPage === pageNum
+                                                className={`w-10 h-10 rounded-xl border-2 text-xs font-black transition-all ${currentPage === pageNum
                                                         ? "bg-[#9d0b0f] text-white border-[#9d0b0f] shadow-md shadow-red-100"
                                                         : "bg-white text-[#3e2714] border-stone-100 hover:border-[#9d0b0f] hover:text-[#9d0b0f]"
                                                     }`}
@@ -275,6 +271,9 @@ const ActivityLogs = () => {
                                 <ChevronRight size={18} />
                             </button>
                         </div>
+                        <p className="text-[11px] text-[#88694f] font-bold uppercase tracking-widest opacity-60">
+                            Trang {pagination.page} / {pagination.totalPages} — Tổng {pagination.total} bản ghi
+                        </p>
                     </div>
                 )}
             </div>
