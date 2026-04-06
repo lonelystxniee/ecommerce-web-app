@@ -299,7 +299,6 @@ const Home = () => {
               <button
                 onClick={(e) => {
                   e.stopPropagation()
-                  addToCart(products[1])
                   navigate(`/product/${products[1]?.id}`)
                 }}
                 className="relative flex items-center justify-center px-3 md:py-1 font-medium uppercase transition-all duration-150 ease-in-out border border-white rounded-[30px] text-[8px] md:text-[13px] whitespace-nowrap cursor-pointer md:w-36 hover:rounded-lg z-1"

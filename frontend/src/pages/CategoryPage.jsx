@@ -315,14 +315,14 @@ const CategoryPage = () => {
 
                         <button
                           onClick={() => {
-                            addToCart({
+                           const success = addToCart({
                               ...p,
                               id: `${p._id}-default`,
                               price: displayPrice,
                               image: displayImage,
                               name: p.productName || p.name,
                             })
-                            toast.success(`Đã thêm ${p.productName || p.name} vào giỏ!`)
+                            if (success) toast.success(`Đã thêm ${p.productName || p.name} vào giỏ!`)
                           }}
                           className="w-full border border-primary text-primary text-[11px] font-bold uppercase py-2 rounded-full hover:bg-primary hover:text-white transition-all active:scale-95 shadow-sm"
                         >

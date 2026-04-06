@@ -7,6 +7,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import API_URL from "../config/apiConfig";
 
 const Wallet = () => {
   const [balance, setBalance] = useState(0);
@@ -18,7 +19,7 @@ const Wallet = () => {
     const token = localStorage.getItem("token");
     if (!token) return;
     try {
-      const res = await fetch("http://localhost:5175/api/wallet/balance", {
+      const res = await fetch(`${API_URL}/api/wallet/balance`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -41,7 +42,7 @@ const Wallet = () => {
     if (!amount || amount < 10000) return toast.error("Nạp tối thiểu 10.000đ");
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5175/api/wallet/topup", {
+      const res = await fetch(`${API_URL}/api/wallet/topup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -1115,7 +1115,7 @@ const FavoriteProducts = () => {
   const currentItems = wishlistItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   const handleAddToCart = (product) => {
-    addToCart({
+    const success = addToCart({
       ...product,
       id: product._id,
       name: product.productName,
@@ -1123,7 +1123,7 @@ const FavoriteProducts = () => {
       quantity: 1,
       image: product.images && product.images.length > 0 ? product.images[0] : product.image,
     })
-    toast.success('Đã thêm vào giỏ hàng!')
+    if (success) toast.success('Đã thêm vào giỏ hàng!')
   }
 
   if (wishlistItems.length === 0) {

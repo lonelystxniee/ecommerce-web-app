@@ -2,20 +2,16 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Eye, Filter, RefreshCcw, Package, Trash2, X, User, MapPin, Truck, CheckCircle, Phone, Mail, CreditCard, ChevronLeft, ChevronRight, Calendar, ChevronDown } from 'lucide-react'
 
-// ─── CUSTOM WORKFLOW DROPDOWN ───────────────────────────────────────────────
 const STATUS_STYLE = {
   PENDING: { bg: 'bg-gray-100', text: 'text-gray-600', dot: 'bg-gray-400' },
   CONFIRMED: { bg: 'bg-blue-100', text: 'text-blue-600', dot: 'bg-blue-500' },
   PACKING: { bg: 'bg-orange-100', text: 'text-orange-600', dot: 'bg-orange-500' },
 }
 
-// action → trạng thái kết quả sau khi thực hiện
 const ACTIONS = [
   { key: 'confirm', label: 'Xác nhận đơn', emoji: '✅', result: 'CONFIRMED', color: 'text-blue-600', hover: 'hover:bg-blue-50' },
   { key: 'pack', label: 'Đóng gói', emoji: '📦', result: 'PACKING', color: 'text-orange-600', hover: 'hover:bg-orange-50' },
-  { key: 'handover', label: 'Bàn giao GHN', emoji: '🚚', result: 'READY_TO_PICK', color: 'text-green-600', hover: 'hover:bg-green-50' },
   { key: 'revert', label: 'Hủy xác nhận', emoji: '↩️', result: 'PENDING', color: 'text-yellow-600', hover: 'hover:bg-yellow-50', separator: true },
-  { key: 'cancel', label: 'Hủy đơn', emoji: '❌', result: 'CANCELLED', color: 'text-red-500', hover: 'hover:bg-red-50', separator: true },
 ]
 
 const WorkflowDropdown = ({ order, statusMap, onAction }) => {

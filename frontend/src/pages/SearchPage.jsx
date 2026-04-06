@@ -259,12 +259,14 @@ const SearchPage = () => {
                         </div>
                         <button
                           onClick={() => {
-                            addToCart({
-                              ...product,
+                            const success = addToCart({
                               id: product._id,
                               name: product.productName,
+                              price: Number(product.price),
+                              image: product.image?.url || product.images?.[0] || 'https://via.placeholder.com/150',
+                              quantity: 1,
                             });
-                            toast.success("Đã thêm vào giỏ hàng");
+                            if (success) toast.success("Đã thêm vào giỏ hàng");
                           }}
                           className="bg-secondary p-2.5 rounded-xl text-primary hover:bg-primary hover:text-white transition-all duration-300 shadow-sm"
                         >

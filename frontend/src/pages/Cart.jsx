@@ -1,10 +1,19 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { Minus, Plus, X, ShoppingBasket, Search, ChevronLeft, ChevronRight, Filter, ArrowUpDown } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import { useCart } from '../context/CartContext'
 
 const Cart = () => {
   const { cartItems, updateQuantity, setQuantity, toggleSelect, removeFromCart, totalPrice, totalItems } = useCart()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!localStorage.getItem('token')) {
+      toast.error('Vui lòng đăng nhập để xem giỏ hàng')
+      navigate('/account')
+    }
+  }, [navigate])
 
   // --- STATES CHO TÌM KIẾM, LỌC & PHÂN TRANG ---
   const [searchTerm, setSearchTerm] = useState('')

@@ -24,6 +24,13 @@ const Checkout = () => {
   const selectedItems = cartItems.filter((item) => item.selected !== false)
   const navigate = useNavigate()
 
+  useEffect(() => {
+    if (!localStorage.getItem('token')) {
+      toast.error('Vui lòng đăng nhập để thanh toán')
+      navigate('/account')
+    }
+  }, [navigate])
+
   const savedUser = JSON.parse(localStorage.getItem('user') || '{}')
 
   const [formData, setFormData] = useState({
