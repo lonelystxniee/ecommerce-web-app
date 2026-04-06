@@ -45,7 +45,7 @@ const LuckyWheel = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const questions = [
     {
-      q: "Sản phẩm nào là 'đặc sản' nổi tiếng nhất của Hồng Lam?",
+      q: "Sản phẩm nào là 'đặc sản' nổi tiếng nhất của Clickgo",
       a: ["Ô mai", "Bánh đậu xanh", "Kẹo cu đơ"],
       c: 0,
     },

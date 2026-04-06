@@ -32,7 +32,7 @@ function App() {
             <Route path="admins" element={<AdminManagement />} />
             <Route path="products" element={<ProductManagement />} />
             <Route path="orders" element={<OrderManagement />} />
-            <Route path="order-tracking/:id" element={<OrderTracking />} />
+            <Route path="orders/track/:id" element={<OrderTracking />} />
             <Route path="promotions" element={<PromotionManagement />} />
             <Route path="categories" element={<CategoryManagement />} />
             <Route path="reviews" element={<ReviewManagement />} />

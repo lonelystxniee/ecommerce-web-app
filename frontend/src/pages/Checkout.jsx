@@ -207,14 +207,43 @@ const Checkout = () => {
   const [appliedCode, setAppliedCode] = useState("");
   const [isApplying, setIsApplying] = useState(false);
   const [availablePromos, setAvailablePromos] = useState([]);
+  const [promoPage, setPromoPage] = useState(1);
+  const promosPerPage = 2; // Số mã ẩn sau 2 mã tốt nhất mỗi trang
+  const [walletBalance, setWalletBalance] = useState(0);
+
+  useEffect(() => {
+    const fetchWallet = async () => {
+      if (!token) return;
+      try {
+        const res = await fetch(`${API_URL}/api/wallet/balance`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (data.success) {
+          setWalletBalance(data.balance);
+        }
+      } catch (e) {
+        console.error("Lỗi lấy số dư ví:", e);
+      }
+    };
+    fetchWallet();
+  }, [token]);
 
   useEffect(() => {
     const fetchPromos = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/promotions/active-banner`);
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${API_URL}/api/promotions/available`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         const data = await res.json();
         if (data.success) {
-          setAvailablePromos(data.promos);
+          // Sắp xếp mã "tốt nhất" lên đầu (giảm giá cao hơn)
+          const sorted = (data.promos || []).sort((a, b) => {
+            // Giả định nếu bằng ORDER_VALUE thì cái nào giảm nhiều hơn là tốt hơn
+            return b.discountValue - a.discountValue;
+          });
+          setAvailablePromos(sorted);
         }
       } catch (error) {
         console.error("Lỗi lấy danh sách khuyến mãi:", error);
@@ -343,6 +372,20 @@ const Checkout = () => {
             window.location.href = vnpayData.vnpUrl;
             return;
           }
+        } else if (formData.paymentMethod === "WALLET") {
+          toast.success("Thanh toán bằng ví thành công!");
+          if (clearCart) clearCart();
+          
+          // Cập nhật lại số dư user trong localStorage để Header đồng bộ
+          const updatedUser = { 
+            ...savedUser, 
+            walletBalance: walletBalance - finalPrice 
+          };
+          localStorage.setItem("user", JSON.stringify(updatedUser));
+          
+          navigate("/account?tab=orders");
+          setTimeout(() => window.location.reload(), 1000);
+          return;
         } else {
           toast.success("Đặt hàng thành công! Đơn hàng của bạn đang được xử lý.");
           if (clearCart) clearCart();
@@ -628,6 +671,35 @@ const Checkout = () => {
                     <span className="font-bold text-gray-800">Thanh toán qua VNPAY-QR</span>
                   </div>
                 </label>
+
+                <label
+                  className={`flex items-center gap-4 p-4 transition-all border-2 cursor-pointer rounded-xl hover:border-secondary ${formData.paymentMethod === "WALLET" ? "border-primary bg-red-50/50" : "border-gray-100"}`}
+                >
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="WALLET"
+                    checked={formData.paymentMethod === "WALLET"}
+                    onChange={handleChange}
+                    className="w-5 h-5 accent-primary"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <CreditCard size={20} className="text-primary" />
+                        <span className="font-bold text-gray-800">Thanh toán bằng Ví ClickGo</span>
+                      </div>
+                      <span className={`text-sm font-black ${walletBalance >= finalPrice ? "text-green-600" : "text-red-500"}`}>
+                        Số dư: {walletBalance.toLocaleString()}đ
+                      </span>
+                    </div>
+                    <p className="text-[10px] italic text-gray-500 mt-1">
+                      {walletBalance < finalPrice 
+                        ? "⚠️ Số dư không đủ để thanh toán đơn hàng này." 
+                        : "Hệ thống sẽ trừ tiền trực tiếp từ ví của bạn."}
+                    </p>
+                  </div>
+                </label>
               </div>
             </div>
           </div>
@@ -688,44 +760,127 @@ const Checkout = () => {
                   )}
 
                   {availablePromos.length > 0 && (
-                    <div className="pt-4 mt-4 border-t border-gray-200 border-dashed">
-                      <p className="text-[9px] font-black text-[#88694f] uppercase mb-3 text-center">
-                        Mã giảm giá dành cho bạn
+                    <div className="pt-4 mt-6 border-t border-gray-200 border-dashed">
+                      <p className="text-[10px] font-black text-[#88694f] uppercase mb-4 text-center tracking-widest">
+                        Khuyến mãi tốt nhất dành cho bạn
                       </p>
-                      <div className="space-y-2">
-                        {availablePromos.map((promo) => (
+                      
+                      {/* Top 2 Mã Tốt Nhất */}
+                      <div className="grid grid-cols-1 gap-3 mb-6">
+                        {availablePromos.slice(0, 2).map((promo) => (
                           <div
                             key={promo._id}
                             onClick={() => handleApplyPromo(promo.code)}
-                            className={`p-3 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between ${
+                            className={`relative group p-4 rounded-2xl border-2 transition-all cursor-pointer overflow-hidden ${
                               appliedCode === promo.code
-                                ? "border-primary bg-red-50"
-                                : "border-white bg-white hover:border-secondary"
+                                ? "border-primary bg-red-50 shadow-md ring-1 ring-primary/20"
+                                : "border-gray-100 bg-white hover:border-secondary hover:shadow-lg"
                             }`}
                           >
-                            <div className="flex items-center gap-3">
-                              <Tag size={16} className="text-primary" />
-                              <div>
-                                <p className="text-[11px] font-black text-primary uppercase">
+                            {/* Best Badge */}
+                            <div className="absolute top-0 right-0 py-1 pl-3 pr-2 bg-primary rounded-bl-xl shadow-sm z-30 transform group-hover:scale-105 transition-transform">
+                              <span className="text-[8px] font-black text-white uppercase tracking-tighter flex items-center gap-1">
+                                <Tag size={8} /> Tốt nhất
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                              <div className={`p-3 rounded-xl ${appliedCode === promo.code ? 'bg-primary text-white' : 'bg-red-50 text-primary'}`}>
+                                <Tag size={20} className={appliedCode === promo.code ? 'animate-pulse' : ''} />
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-xs font-black text-primary uppercase tracking-wider mb-0.5">
                                   {promo.code}
                                 </p>
-                                <p className="text-[9px] font-bold text-gray-500 line-clamp-1">
+                                <p className="text-[10px] font-bold text-gray-500 line-clamp-1 leading-tight">
                                   {promo.description}
                                 </p>
                               </div>
-                            </div>
-                            <div
-                              className={`text-[9px] font-black px-3 py-1 rounded-full ${
-                                appliedCode === promo.code
-                                  ? "bg-primary text-white"
-                                  : "bg-gray-100 text-[#88694f]"
-                              }`}
-                            >
-                              {appliedCode === promo.code ? "ĐÃ ÁP DỤNG" : "ÁP DỤNG"}
+                              <div
+                                className={`text-[9px] font-black px-4 py-1.5 rounded-full shadow-sm transition-all ${
+                                  appliedCode === promo.code
+                                    ? "bg-primary text-white scale-105 ring-2 ring-primary/20"
+                                    : "bg-gray-100 text-[#88694f] group-hover:bg-secondary group-hover:text-white"
+                                }`}
+                              >
+                                {appliedCode === promo.code ? "ĐÃ CHỌN" : "DÙNG NGAY"}
+                              </div>
                             </div>
                           </div>
                         ))}
                       </div>
+
+                      {/* Các mã khác có phân trang */}
+                      {availablePromos.length > 2 && (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between mb-3 px-1">
+                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
+                              Các mã khác ({availablePromos.length - 2})
+                            </p>
+                            <div className="flex gap-1.5">
+                              <button 
+                                onClick={(e) => { e.preventDefault(); setPromoPage(p => Math.max(1, p - 1)) }}
+                                disabled={promoPage === 1}
+                                className="w-6 h-6 flex items-center justify-center rounded-full bg-white border border-gray-100 disabled:opacity-30 shadow-sm hover:border-primary transition-colors"
+                              >
+                                <ChevronRight size={14} className="rotate-180" />
+                              </button>
+                              <button 
+                                onClick={(e) => { e.preventDefault(); setPromoPage(p => Math.min(Math.ceil((availablePromos.length - 2) / promosPerPage), p + 1)) }}
+                                disabled={promoPage >= Math.ceil((availablePromos.length - 2) / promosPerPage)}
+                                className="w-6 h-6 flex items-center justify-center rounded-full bg-white border border-gray-100 disabled:opacity-30 shadow-sm hover:border-primary transition-colors"
+                              >
+                                <ChevronRight size={14} />
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2.5">
+                            {availablePromos.slice(2 + (promoPage - 1) * promosPerPage, 2 + promoPage * promosPerPage).map((promo) => (
+                              <div
+                                key={promo._id}
+                                onClick={() => handleApplyPromo(promo.code)}
+                                className={`p-3 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between group/other ${
+                                  appliedCode === promo.code
+                                    ? "border-primary bg-red-50/50"
+                                    : "border-transparent bg-white hover:border-gray-200 shadow-[0_2px_8px_-1px_rgba(0,0,0,0.05)]"
+                                }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-8 h-8 flex items-center justify-center rounded-lg ${appliedCode === promo.code ? 'bg-primary/10 text-primary' : 'bg-gray-50 text-gray-400'}`}>
+                                    <Tag size={14} />
+                                  </div>
+                                  <div>
+                                    <p className="text-[10px] font-black text-gray-900 uppercase">
+                                      {promo.code}
+                                    </p>
+                                    <p className="text-[9px] font-medium text-gray-400 line-clamp-1">
+                                      {promo.description}
+                                    </p>
+                                  </div>
+                                </div>
+                                <span className={`text-[8px] font-black px-2.5 py-1 rounded-full transition-all ${
+                                  appliedCode === promo.code
+                                    ? "bg-primary text-white"
+                                    : "bg-gray-100 text-gray-500 opacity-60 group-hover/other:opacity-100"
+                                }`}>
+                                  {appliedCode === promo.code ? "SỬ DỤNG" : "ÁP DỤNG"}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {/* Page Indicators */}
+                          <div className="flex justify-center gap-1 mt-3">
+                            {Array.from({ length: Math.ceil((availablePromos.length - 2) / promosPerPage) }).map((_, i) => (
+                              <div 
+                                key={i} 
+                                className={`w-1 h-1 rounded-full transition-all ${promoPage === i + 1 ? 'w-3 bg-primary' : 'bg-gray-200'}`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

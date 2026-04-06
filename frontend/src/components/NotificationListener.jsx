@@ -17,42 +17,52 @@ export default function NotificationListener() {
 
     const handleNewOrder = (data) => {
       try {
-        const userStr = localStorage.getItem('user');
+        const userStr = localStorage.getItem("user");
         const user = userStr ? JSON.parse(userStr) : null;
-        if (user && user.role === 'ADMIN') {
-          const targetLink = normalizeLink(data.link || `/order-tracking/${data.orderId}`);
+        if (user && user.role === "ADMIN") {
+          const targetLink = normalizeLink(
+            data.link || `/order-tracking/${data.orderId}`,
+          );
           toast.success(
-            <div className="cursor-pointer" onClick={() => window.location.href = targetLink}>
+            <div
+              className="cursor-pointer"
+              onClick={() => (window.location.href = targetLink)}
+            >
               {data.message || `Đơn hàng mới: ${data.orderId}`}
             </div>,
-            { duration: 6000 }
+            { duration: 6000 },
           );
         }
       } catch (err) {
-        console.error('Lỗi khi xử lý thông báo đơn hàng mới:', err);
+        console.error("Lỗi khi xử lý thông báo đơn hàng mới:", err);
       }
     };
 
     const handleOrderStatusUpdated = (data) => {
       try {
-        const userStr = localStorage.getItem('user');
+        const userStr = localStorage.getItem("user");
         const user = userStr ? JSON.parse(userStr) : null;
         if (user && String(user._id) === String(data.userId)) {
-          const targetLink = normalizeLink(data.link || `/order-tracking/${data.orderId}`);
+          const targetLink = normalizeLink(
+            data.link || `/order-tracking/${data.orderId}`,
+          );
           toast.success(
-            <div className="cursor-pointer" onClick={() => window.location.href = targetLink}>
+            <div
+              className="cursor-pointer"
+              onClick={() => (window.location.href = targetLink)}
+            >
               {data.message || `Trạng thái đơn hàng của bạn đã được cập nhật`}
             </div>,
-            { duration: 5000 }
+            { duration: 5000 },
           );
         }
       } catch (err) {
-        console.error('Lỗi khi xử lý thông báo cập nhật đơn hàng:', err);
+        console.error("Lỗi khi xử lý thông báo cập nhật đơn hàng:", err);
       }
     };
 
-    socket.on('new_order', handleNewOrder);
-    socket.on('order_status_updated', handleOrderStatusUpdated);
+    socket.on("new_order", handleNewOrder);
+    socket.on("order_status_updated", handleOrderStatusUpdated);
 
     return () => {
       socket.off('new_order', handleNewOrder);

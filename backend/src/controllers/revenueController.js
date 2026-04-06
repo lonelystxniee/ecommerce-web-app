@@ -27,6 +27,13 @@ exports.getRevenueReport = async (req, res) => {
       ["COMPLETED", "DELIVERED", "SUCCESS"].includes(o.status?.toUpperCase()),
     );
 
+    // TÍNH RIÊNG TIỀN HOÀN (Để trừ đi doanh thu tổng)
+    const returnedOrders = allOrders.filter((o) => o.status === "RETURNED");
+    const totalRefund = returnedOrders.reduce(
+      (sum, o) => sum + (o.totalPrice || 0),
+      0,
+    );
+
     // 4. Tính toán tổng số (Stats)
     const totalOrderRev = successfulOrders.reduce(
       (sum, item) => sum + (Number(item.totalPrice) || 0),
@@ -36,6 +43,9 @@ exports.getRevenueReport = async (req, res) => {
       (sum, item) => sum + (Number(item.amount) || 0),
       0,
     );
+
+    // Doanh thu thực tế:
+    const finalRevenue = totalOrderRev - totalRefund;
 
     // --- BƯỚC FIX: TẠO DỮ LIỆU CHO ĐỒ THỊ (chartData) ---
     const chartData = [];
@@ -94,14 +104,16 @@ exports.getRevenueReport = async (req, res) => {
       success: true,
       stats: {
         totalOrderRev,
+        totalRefund,
         totalAdRev,
-        combinedTotal: totalOrderRev + totalAdRev,
+        // DOANH THU THỰC TẾ = (Tiền hàng - Tiền hoàn) + Tiền quảng cáo
+        combinedTotal: totalOrderRev - totalRefund + totalAdRev,
         orderCount: successfulOrders.length,
       },
       transactions: [...orderTrans, ...adTrans]
         .sort((a, b) => new Date(b.rawDate) - new Date(a.rawDate))
         .slice(0, 10),
-      chartData: chartData, // BÂY GIỜ MẢNG NÀY ĐÃ CÓ DỮ LIỆU THẬT
+      chartData: chartData,
     });
   } catch (error) {
     console.error("LỖI CONTROLLER:", error);

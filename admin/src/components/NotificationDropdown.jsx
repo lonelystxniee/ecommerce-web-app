@@ -16,9 +16,9 @@ const NotificationDropdown = () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) return;
-        
+
         const res = await fetch(`${API_URL}/api/notifications`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
         if (data.success) {
@@ -51,9 +51,9 @@ const NotificationDropdown = () => {
     };
 
     // Listen only to admin notifications
-    socket.on('new_order', handleNewOrderObj);
+    socket.on("new_order", handleNewOrderObj);
     return () => {
-      socket.off('new_order', handleNewOrderObj);
+      socket.off("new_order", handleNewOrderObj);
     };
   }, []);
 
@@ -71,38 +71,40 @@ const NotificationDropdown = () => {
     try {
       const token = localStorage.getItem("token");
       await fetch(`${API_URL}/api/notifications/${id}/read`, {
-          method: "PUT",
-          headers: { Authorization: `Bearer ${token}` }
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
       });
-      setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      setNotifications((prev) =>
+        prev.map((n) => (n._id === id ? { ...n, isRead: true } : n)),
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch {}
   };
-  
+
   const markAllRead = async () => {
     try {
       if (unreadCount === 0) return;
       const token = localStorage.getItem("token");
       await fetch(`${API_URL}/api/notifications/read-all`, {
-          method: "PUT",
-          headers: { Authorization: `Bearer ${token}` }
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
       });
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       setUnreadCount(0);
     } catch {}
   };
 
   return (
     <div className="relative group" ref={dropdownRef}>
-      <div 
-        onClick={() => setIsOpen(!isOpen)} 
+      <div
+        onClick={() => setIsOpen(!isOpen)}
         className="cursor-pointer text-[#800a0d] bg-white relative flex rounded-full border border-gray-200 p-2 hover:bg-gray-50 transition-all shadow-sm"
         title="Thông báo"
       >
         <Bell size={20} className="hover:text-red-700" />
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-white">
-            {unreadCount > 9 ? '9+' : unreadCount}
+            {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
       </div>
@@ -114,7 +116,10 @@ const NotificationDropdown = () => {
               <Bell size={16} className="text-[#800a0d]" /> Thông báo admin
             </span>
             {unreadCount > 0 && (
-              <button onClick={markAllRead} className="text-xs text-[#800a0d] font-medium hover:underline transition-all">
+              <button
+                onClick={markAllRead}
+                className="text-xs text-[#800a0d] font-medium hover:underline transition-all"
+              >
                 Đánh dấu đã đọc
               </button>
             )}
@@ -127,21 +132,35 @@ const NotificationDropdown = () => {
               </div>
             ) : (
               notifications.map((n) => (
-                <div 
-                  key={n._id} 
-                  className={`px-4 py-3 border-b border-gray-50 flex flex-col gap-1.5 transition-colors cursor-pointer relative overflow-hidden group/notif ${n.isRead ? 'bg-white hover:bg-gray-50' : 'bg-red-50/40 hover:bg-red-50/80'}`}
-                  onClick={() => { if (!n.isRead) markAsRead(n._id); }}
+                <div
+                  key={n._id}
+                  className={`px-4 py-3 border-b border-gray-50 flex flex-col gap-1.5 transition-colors cursor-pointer relative overflow-hidden group/notif ${n.isRead ? "bg-white hover:bg-gray-50" : "bg-red-50/40 hover:bg-red-50/80"}`}
+                  onClick={() => {
+                    if (!n.isRead) markAsRead(n._id);
+                  }}
                 >
-                  {!n.isRead && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#800a0d] rounded-r"></div>}
-                  <p className={`text-sm ${n.isRead ? 'text-gray-600' : 'text-gray-900 font-semibold'} leading-snug`}>{n.message}</p>
+                  {!n.isRead && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#800a0d] rounded-r"></div>
+                  )}
+                  <p
+                    className={`text-sm ${n.isRead ? "text-gray-600" : "text-gray-900 font-semibold"} leading-snug`}
+                  >
+                    {n.message}
+                  </p>
                   <div className="flex justify-between items-center mt-0.5">
                     <span className="text-[11px] text-gray-400 font-medium">
-                      {new Date(n.createdAt).toLocaleString('vi-VN', { hour: '2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric'})}
+                      {new Date(n.createdAt).toLocaleString("vi-VN", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })}
                     </span>
                     {n.link && (
-                      <Link 
-                        to={normalizeLink(n.link)} 
-                        className="text-[11px] text-primary font-semibold hover:underline bg-red-50 px-2 py-0.5 rounded-full" 
+                      <Link
+                        to={normalizeLink(n.link)}
+                        className="text-[11px] text-primary font-semibold hover:underline bg-red-50 px-2 py-0.5 rounded-full"
                         onClick={() => setIsOpen(false)}
                       >
                         Xem đơn

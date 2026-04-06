@@ -13,5 +13,6 @@ router.post("/use-spin", verifyToken, promoController.useSpin);
 router.post("/add-spin", verifyToken, promoController.addSpin);
 router.post("/save-win", verifyToken, promoController.saveWonVoucher);
 router.get("/my-vouchers", verifyToken, promoController.getMyVouchers);
+router.get("/available", verifyToken, promoController.getAvailablePromotions);
 
 module.exports = router;

@@ -22,7 +22,6 @@ import {
   Trash2,
   Search,
   ArrowUpDown,
-  // Thêm icon cho phân trang
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -546,7 +545,9 @@ const RevenueManagement = () => {
                       key={i}
                       onClick={() => setCurrentPage(i + 1)}
                       className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${
-                        currentPage === i + 1 ? "bg-[#9d0b0f] text-white shadow-lg shadow-red-100" : "bg-white text-stone-400 border border-stone-100 hover:border-[#9d0b0f]"
+                        currentPage === i + 1
+                          ? "bg-[#9d0b0f] text-white shadow-lg shadow-red-100"
+                          : "bg-white text-stone-400 border border-stone-100 hover:border-[#9d0b0f]"
                       }`}
                     >
                       {i + 1}
@@ -564,7 +565,8 @@ const RevenueManagement = () => {
               </div>
 
               <p className="text-[11px] font-black uppercase tracking-widest text-[#88694f] opacity-60">
-                Trang {currentPage} / {totalPages} — Tổng {filteredTransactions.length} giao dịch
+                Trang {currentPage} / {totalPages} — Tổng{" "}
+                {filteredTransactions.length} giao dịch
               </p>
             </div>
           )}

@@ -20,8 +20,9 @@ const http = require("http");
 const { Server } = require("socket.io");
 const ChatMessage = require("./src/models/ChatMessage");
 const jwt = require("jsonwebtoken");
-const aiService = require('./src/services/aiService');
-const ragService = require('./src/services/ragService');
+const aiService = require("./src/services/aiService");
+const ragService = require("./src/services/ragService");
+const walletRoutes = require("./src/routes/walletRoutes");
 
 const allowedOrigins = [
   process.env.FRONTEND_URL,
@@ -42,11 +43,11 @@ app.use(
       }
     },
     credentials: true,
-  })
+  }),
 );
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/orders", orderRoutes);
@@ -58,13 +59,14 @@ app.use("/api/locations", locationRoutes);
 app.use("/api/shipping", shippingRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/wishlist", require("./src/routes/wishlistRoutes"));
-app.use('/api/admin/orders', adminOrderRoutes);
-app.use('/api/chat', require('./src/routes/chatRoutes'));
+app.use("/api/admin/orders", adminOrderRoutes);
+app.use("/api/chat", require("./src/routes/chatRoutes"));
 // AI routes removed
 app.use("/api/ads", adRoutes);
 app.use("/api/admin/revenue", revenueRoutes);
 app.use("/api/articles", require("./src/routes/articleRoutes"));
 app.use("/api/notifications", require("./src/routes/notificationRoutes"));
+app.use("/api/wallet", walletRoutes);
 const PORT = process.env.PORT || 5175;
 
 const server = http.createServer(app);
@@ -124,8 +126,16 @@ io.on("connection", (socket) => {
       // Do NOT broadcast global conversation_changed for AI assistant conversations
       // (conversationId prefix "ai:") — these should remain customer<->AI only.
       try {
-        if (!(typeof payload.conversationId === 'string' && payload.conversationId.startsWith('ai:'))) {
-          socket.broadcast.emit("conversation_changed", { conversationId: payload.conversationId, senderId: msg.senderId });
+        if (
+          !(
+            typeof payload.conversationId === "string" &&
+            payload.conversationId.startsWith("ai:")
+          )
+        ) {
+          socket.broadcast.emit("conversation_changed", {
+            conversationId: payload.conversationId,
+            senderId: msg.senderId,
+          });
         }
       } catch (e) {
         // if any issue evaluating, skip broadcast to be safe
@@ -135,40 +145,58 @@ io.on("connection", (socket) => {
       try {
         // Only forward to AI when the conversation is an AI conversation
         // (conversationId intentionally uses the `ai:` prefix for AI chats).
-        if ((payload.senderRole || 'customer') === 'customer' && payload.content && payload.conversationId && typeof payload.conversationId === 'string' && payload.conversationId.startsWith('ai:')) {
+        if (
+          (payload.senderRole || "customer") === "customer" &&
+          payload.content &&
+          payload.conversationId &&
+          typeof payload.conversationId === "string" &&
+          payload.conversationId.startsWith("ai:")
+        ) {
           // Use RAG wrapper to include product/promotion context before calling AI
           let aiText;
           try {
-            aiText = await ragService.generateWithContext(payload.content, null);
+            aiText = await ragService.generateWithContext(
+              payload.content,
+              null,
+            );
           } catch (ragErr) {
-            console.error('RAG failed, falling back to raw AI:', ragErr?.message || ragErr);
+            console.error(
+              "RAG failed, falling back to raw AI:",
+              ragErr?.message || ragErr,
+            );
             try {
               aiText = await aiService.generateResponse(payload.content);
             } catch (rawErr) {
-              console.error('Raw AI fallback failed:', rawErr?.message || rawErr);
+              console.error(
+                "Raw AI fallback failed:",
+                rawErr?.message || rawErr,
+              );
               aiText = null;
             }
           }
           if (aiText) {
-            const aiSenderId = process.env.AI_SENDER_ID || payload.receiverId || payload.senderId;
+            const aiSenderId =
+              process.env.AI_SENDER_ID ||
+              payload.receiverId ||
+              payload.senderId;
             const aiMsg = new ChatMessage({
               conversationId: payload.conversationId,
               senderId: aiSenderId,
               receiverId: payload.senderId,
               // mark these messages as AI-generated so admin UI can ignore them
-              senderRole: 'ai',
+              senderRole: "ai",
               isAI: true,
               content: String(aiText).trim(),
             });
             await aiMsg.save();
             // emit the AI reply only to participants in the conversation room
-            io.to(payload.conversationId).emit('new_message', aiMsg);
+            io.to(payload.conversationId).emit("new_message", aiMsg);
             // Do NOT broadcast a global "conversation_changed" for AI replies.
             // Admin UI should not receive AI-only conversations via the global list.
           }
         }
       } catch (aiErr) {
-        logger.error('AI reply failed:', aiErr?.message || aiErr);
+        logger.error("AI reply failed:", aiErr?.message || aiErr);
       }
     } catch (err) {
       console.error("Error saving message:", err.message);
