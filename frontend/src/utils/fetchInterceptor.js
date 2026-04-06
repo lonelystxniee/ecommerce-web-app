@@ -28,7 +28,7 @@ export const setupFetchInterceptor = () => {
       if (!refreshToken) {
         localStorage.removeItem('token')
         localStorage.removeItem('user')
-        window.location.href = '/login'
+        window.location.href = '/'
         return response
       }
 
@@ -85,7 +85,7 @@ export const setupFetchInterceptor = () => {
         localStorage.removeItem('token')
         localStorage.removeItem('refreshToken')
         localStorage.removeItem('user')
-        window.location.href = '/login'
+        window.location.href = '/'
         return response
       } finally {
         isRefreshing = false
