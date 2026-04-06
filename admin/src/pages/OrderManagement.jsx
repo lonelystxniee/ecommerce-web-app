@@ -60,6 +60,7 @@ const OrderManagement = () => {
       pack: 'Chuyển đơn hàng sang trạng thái ĐANG ĐÓNG GÓI?',
       handover: 'Xác nhận BÀN GIAO đơn hàng cho đơn vị vận chuyển GHN?',
       cancel: 'Bạn có chắc chắn muốn HỦY đơn hàng này?',
+      revert: 'Bạn có chắc chắn muốn hủy xác nhận (trở về trạng thái chờ)?',
     }
 
     if (!window.confirm(actionMessages[action] || 'Xác nhận thực hiện hành động này?')) return
@@ -67,16 +68,31 @@ const OrderManagement = () => {
     setWorkflowLoading(orderId)
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`${API_URL}/api/orders/${action}/${orderId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      const data = await response.json()
+      let response
+      let data
+      if (action === 'revert') {
+        // Use the generic status update endpoint to set back to PENDING
+        response = await fetch(`${API_URL}/api/orders/status/${orderId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status: 'PENDING' }),
+        })
+        data = await response.json()
+      } else {
+        response = await fetch(`${API_URL}/api/orders/${action}/${orderId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        data = await response.json()
+      }
+
       if (data.success) {
-        // toast or small notify would be better than alert
         fetchOrders()
         setIsModalOpen(false)
       } else {
@@ -276,43 +292,42 @@ const OrderManagement = () => {
                   <p className="text-[10px] text-gray-400 font-bold">{order.customerInfo.phone}</p>
                 </td>
                 <td className="px-8 py-6 text-center">
-                  <div className="flex justify-center gap-2">
+                  <div className="flex justify-center">
                     {workflowLoading === order._id ? (
                       <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 animate-pulse">
                         <RefreshCcw size={12} className="animate-spin" /> ĐANG XỬ LÝ...
                       </div>
                     ) : (
-                      <>
-                        {order.status === 'PENDING' && (
-                          <button
-                            onClick={() => handleWorkflow(order._id, 'confirm')}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-xl text-[10px] font-bold shadow-sm shadow-blue-200 transition-all active:scale-95"
-                          >
-                            XÁC NHẬN
-                          </button>
-                        )}
-                        {order.status === 'CONFIRMED' && (
-                          <button
-                            onClick={() => handleWorkflow(order._id, 'pack')}
-                            className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-1.5 rounded-xl text-[10px] font-bold shadow-sm shadow-orange-200 transition-all active:scale-95"
-                          >
-                            ĐÓNG GÓI
-                          </button>
-                        )}
-                        {order.status === 'PACKING' && (
-                          <button
-                            onClick={() => handleWorkflow(order._id, 'handover')}
-                            className="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-xl text-[10px] font-bold shadow-sm shadow-green-200 transition-all active:scale-95"
-                          >
-                            BÀN GIAO GHN
-                          </button>
-                        )}
-                        {['READY_TO_PICK', 'PICKING', 'STORING', 'DELIVERING', 'COMPLETED'].includes(order.status) && (
-                          <span className="text-green-600 font-black text-[10px] flex items-center gap-1 bg-green-50 px-3 py-1 rounded-full">
-                            <CheckCircle size={12} /> ĐÃ BÀN GIAO
-                          </span>
-                        )}
-                      </>
+                      // If already handed over / in delivery flow, show the previous green badge
+                      (['READY_TO_PICK', 'PICKING', 'STORING', 'DELIVERING', 'COMPLETED'].includes(order.status) ? (
+                        <span className="text-green-600 font-black text-[10px] flex items-center gap-1 bg-green-50 px-3 py-1 rounded-full">
+                          <CheckCircle size={12} /> ĐÃ BÀN GIAO
+                        </span>
+                      ) : (
+                        <select
+                          defaultValue=""
+                          onChange={async (e) => {
+                            const act = e.target.value
+                            if (!act) return
+                            // reset select immediately for better UX
+                            e.target.value = ''
+                            await handleWorkflow(order._id, act)
+                          }}
+                          className="text-[10px] font-bold px-4 py-1.5 rounded-xl bg-[#f7f4ef]/60 border border-transparent focus:border-[#9d0b0f]/30 outline-none transition-all cursor-pointer shadow-sm"
+                        >
+                          {/* show current internal status as the first, disabled option */}
+                          <option value="" disabled>
+                            {STATUS_MAP[order.status] || order.status}
+                          </option>
+                          {/* Allow reverting confirmation if currently confirmed or packing */}
+                          {['CONFIRMED', 'PACKING'].includes(order.status) && <option value="revert">HỦY XÁC NHẬN</option>}
+                          {/* Admin can always choose to confirm or pack from list */}
+                          <option value="confirm">XÁC NHẬN</option>
+                          <option value="pack">ĐÓNG GÓI</option>
+                          {/* Bàn giao GHN only if GHN code already exists (created from detail modal) */}
+                          {(order.ghnOrderCode || (order.shipping && order.shipping.ghnOrderCode)) && <option value="handover">BÀN GIAO GHN</option>}
+                        </select>
+                      ))
                     )}
                   </div>
                 </td>

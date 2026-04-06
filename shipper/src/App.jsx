@@ -323,7 +323,7 @@ function App() {
                           Thu hộ COD
                         </p>
                         <p className="text-lg font-black text-red-600">
-                          {order.totalPrice.toLocaleString()}đ
+                          {(((order.paymentMethod || "").toUpperCase() === "VNPAY") ? 0 : Number(order.totalPrice || 0)).toLocaleString()}đ
                         </p>
                       </div>
 
@@ -350,6 +350,30 @@ function App() {
                           <Navigation size={14} fill="white" />
                         </button>
                       )}
+                      <div className="flex flex-col items-end gap-2">
+                        <label className="text-[11px] text-gray-500">
+                          <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                            const f = e.target.files && e.target.files[0];
+                            if (!f) return;
+                            const token = localStorage.getItem('token');
+                            const fd = new FormData();
+                            fd.append('image', f);
+                            try {
+                              const res = await fetch(`http://localhost:5175/api/orders/${order._id}/images`, {
+                                method: 'POST',
+                                headers: token ? { Authorization: `Bearer ${token}` } : {},
+                                body: fd,
+                              });
+                              const d = await res.json();
+                              if (d.success) {
+                                alert('Upload thành công');
+                                // optional: refresh list
+                              } else alert('Lỗi: ' + (d.message || 'Upload thất bại'))
+                            } catch (err) { alert('Lỗi kết nối') }
+                          }} />
+                          <button onClick={(ev) => { ev.stopPropagation(); const input = ev.currentTarget.previousSibling; input.click(); }} className="px-3 py-2 rounded-xl bg-white text-gray-700 text-xs font-bold">Ảnh</button>
+                        </label>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -1,4 +1,5 @@
 const ghn = require('../services/ghnService');
+const calculateShippingFee = require('../utils/shippingFee');
 const Order = require('../models/Order');
 
 exports.calculate = async (req, res) => {
@@ -16,6 +17,36 @@ exports.calculate = async (req, res) => {
     };
 
     const result = await ghn.calculateFee(payload);
+
+    // Apply business adjustments to shipping fee before returning
+    try {
+      const orderValue = Number(body.orderValue || body.order_value || 0);
+      const feeData = result && (result.data || result);
+      let originalFee = 0;
+      if (Array.isArray(feeData) && feeData.length) {
+        originalFee = Number(feeData[0].total || feeData[0].shipping_fee || 0);
+      } else if (feeData && typeof feeData === 'object') {
+        originalFee = Number(feeData.total || feeData.shipping_fee || 0);
+      }
+
+      const adjustment = calculateShippingFee({ total: orderValue }, originalFee, { returnBreakdown: true });
+
+      // Mutate result so callers (frontend) see adjusted fee in the same fields
+      if (Array.isArray(feeData) && feeData.length) {
+        feeData[0].total = adjustment.shippingFee;
+        feeData[0].shipping_fee = adjustment.shippingFee;
+        feeData[0].adjustment = adjustment;
+      } else if (feeData && typeof feeData === 'object') {
+        feeData.total = adjustment.shippingFee;
+        feeData.shipping_fee = adjustment.shippingFee;
+        feeData.adjustment = adjustment;
+      }
+      // also attach top-level adjusted info
+      result.adjustment = adjustment;
+    } catch (adjErr) {
+      console.error('Shipping adjustment failed:', adjErr);
+    }
+
     res.json({ success: true, result });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message || 'Failed to calculate fee' });

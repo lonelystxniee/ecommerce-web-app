@@ -1,5 +1,6 @@
 const Order = require("../models/Order");
 const ghnService = require("../services/ghnService");
+const calculateShippingFee = require('../utils/shippingFee');
 const logger = require("../utils/logger");
 
 // 1. Tạo đơn hàng trên GHN — dùng `ghnService.createOrder`
@@ -112,7 +113,14 @@ exports.createGHNOrder = async (orderId) => {
                 // attempt to map fee if present in response
                 const fee = data.total_fee || data.total || data.fee || (data.data && (data.data.total_fee || data.data.total || data.data.fee));
                 if (fee) {
-                    orderDoc.shipping.shippingFee = Number(fee) || orderDoc.shipping.shippingFee;
+                    // Apply same business adjustments as other code paths
+                    try {
+                        const adj = calculateShippingFee({ total: orderDoc.totalPrice || 0 }, Number(fee), { returnBreakdown: true });
+                        orderDoc.shipping.shippingFee = Number(adj.shippingFee || 0);
+                        orderDoc.shipping.shippingFeeBreakdown = adj;
+                    } catch (e) {
+                        orderDoc.shipping.shippingFee = Number(fee) || orderDoc.shipping.shippingFee;
+                    }
                 }
 
                 orderDoc.trackingHistory = orderDoc.trackingHistory || [];

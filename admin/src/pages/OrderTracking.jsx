@@ -78,7 +78,7 @@ const OrderTracking = () => {
 
                 <div className="bg-white p-8 sm:p-12 rounded-[40px] shadow-[0_20px_50px_rgba(157,11,15,0.05)] border border-stone-100 mb-8 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-linear-to-bl from-[#9d0b0f]/5 to-transparent rounded-full -mr-32 -mt-32 blur-3xl"></div>
-                    
+
                     <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
                         <div className="text-center md:text-left">
                             <span className="inline-block px-3 py-1 rounded-full bg-[#f39200]/10 text-[#f39200] text-[10px] font-black uppercase tracking-widest mb-2">Quản trị vận đơn</span>
@@ -93,7 +93,7 @@ const OrderTracking = () => {
                         <div className="flex-1 w-full max-w-2xl">
                             <div className="relative flex justify-between items-center px-4">
                                 <div className="absolute left-8 right-8 top-5 h-1 bg-stone-100 -z-10">
-                                    <div 
+                                    <div
                                         className="h-full bg-[#9d0b0f] transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(157,11,15,0.4)]"
                                         style={{ width: `${Math.max(0, (currentStep - 1) / (steps.length - 1)) * 100}%` }}
                                     ></div>
@@ -129,10 +129,10 @@ const OrderTracking = () => {
                                     <IconClock className="text-[#9d0b0f]" /> Lịch sử cập nhật
                                 </h3>
                             </div>
-                            
+
                             <div className="p-8 space-y-0 relative">
                                 <div className="absolute left-[51px] top-12 bottom-12 w-0.5 bg-linear-to-b from-[#9d0b0f]/20 via-stone-100 to-transparent"></div>
-                                
+
                                 {order.trackingHistory?.map((step, index) => (
                                     <div key={index} className="relative pl-16 py-6 group transition-all">
                                         <div className={`absolute left-[39px] top-1/2 -translate-y-1/2 w-6 h-6 rounded-xl border-4 border-white shadow-xl transition-all duration-500 z-10 scale-0 group-hover:scale-110 animate-scaleIn
@@ -140,8 +140,8 @@ const OrderTracking = () => {
                                         ></div>
 
                                         <div className={`p-6 rounded-[32px] transition-all duration-300 border
-                                            ${index === 0 
-                                                ? "bg-white border-[#9d0b0f]/20 shadow-[0_15px_40px_rgba(157,11,15,0.08)]" 
+                                            ${index === 0
+                                                ? "bg-white border-[#9d0b0f]/20 shadow-[0_15px_40px_rgba(157,11,15,0.08)]"
                                                 : "bg-stone-50/30 border-transparent hover:bg-white hover:border-stone-100 hover:shadow-sm"}
                                         `}>
                                             <div className="flex justify-between items-start gap-4">
@@ -166,39 +166,81 @@ const OrderTracking = () => {
 
                     <div className="lg:col-span-5 space-y-8">
                         <div className="bg-white p-10 rounded-[48px] shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-stone-100 relative overflow-hidden group">
-                           <div className="absolute top-0 left-0 w-full h-2 bg-[#9d0b0f]"></div>
-                           <h3 className="text-[#9d0b0f] font-black uppercase text-xs mb-8 flex items-center gap-2 tracking-widest"><IconMap size={18} /> Điểm đến giao hàng</h3>
-                           <div className="space-y-6">
-                              <div>
-                                 <p className="text-3xl font-black text-[#3e2714] leading-none mb-2">{order.customerInfo.fullName}</p>
-                                 <p className="text-lg font-bold text-stone-500">{order.customerInfo.phone}</p>
-                              </div>
-                              <div className="p-6 rounded-[32px] bg-stone-50 border border-stone-100 italic text-stone-600 leading-relaxed shadow-inner">
-                                 {order.customerInfo.address}
-                              </div>
-                           </div>
+                            <div className="absolute top-0 left-0 w-full h-2 bg-[#9d0b0f]"></div>
+                            <h3 className="text-[#9d0b0f] font-black uppercase text-xs mb-8 flex items-center gap-2 tracking-widest"><IconMap size={18} /> Điểm đến giao hàng</h3>
+                            <div className="space-y-6">
+                                <div>
+                                    <p className="text-3xl font-black text-[#3e2714] leading-none mb-2">{order.customerInfo.fullName}</p>
+                                    <p className="text-lg font-bold text-stone-500">{order.customerInfo.phone}</p>
+                                </div>
+                                <div className="p-6 rounded-[32px] bg-stone-50 border border-stone-100 italic text-stone-600 leading-relaxed shadow-inner">
+                                    {order.customerInfo.address}
+                                </div>
+                            </div>
                         </div>
 
                         <div className="bg-[#3e2714] p-10 rounded-[48px] shadow-2xl relative overflow-hidden group">
-                           <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/5 rounded-full -mb-16 -mr-16 blur-2xl"></div>
-                           <h3 className="text-stone-400 font-bold uppercase text-[10px] tracking-[0.3em] mb-6">Chi tiết thanh toán</h3>
-                           <div className="space-y-4 mb-8">
-                              <div className="flex justify-between text-sm">
-                                 <span className="text-stone-400">Giá trị hàng hóa</span>
-                                 <span className="text-white font-bold">{order.items?.reduce((s, i) => s + i.price * i.quantity, 0).toLocaleString()}đ</span>
-                              </div>
-                              <div className="flex justify-between text-sm">
-                                 <span className="text-stone-400">Phí giao hàng</span>
-                                 <span className="text-white font-bold">{(order.shipping?.shippingFee || 0).toLocaleString()}đ</span>
-                              </div>
-                           </div>
-                           <div className="border-t border-white/10 pt-6 flex justify-between items-end">
-                              <div>
-                                 <p className="text-stone-500 text-[10px] font-black uppercase tracking-widest mb-1">Tổng thu hộ (COD)</p>
-                                 <p className="text-4xl font-black text-[#f39200] leading-none">{(order.totalPrice || 0).toLocaleString()}đ</p>
-                              </div>
-                              <div className="p-4 bg-white/5 rounded-3xl text-[#f39200] border border-white/10"><IconCard size={32} /></div>
-                           </div>
+                            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/5 rounded-full -mb-16 -mr-16 blur-2xl"></div>
+                            <h3 className="text-stone-400 font-bold uppercase text-[10px] tracking-[0.3em] mb-6">Chi tiết thanh toán</h3>
+                            <div className="space-y-4 mb-8">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-stone-400">Giá trị hàng hóa</span>
+                                    <span className="text-white font-bold">{order.items?.reduce((s, i) => s + i.price * i.quantity, 0).toLocaleString()}đ</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-stone-400">Phí giao hàng</span>
+                                    <span className="text-white font-bold">{(order.shipping?.shippingFee || 0).toLocaleString()}đ</span>
+                                </div>
+                            </div>
+                            <div className="border-t border-white/10 pt-6 flex justify-between items-end">
+                                <div>
+                                    <p className="text-stone-500 text-[10px] font-black uppercase tracking-widest mb-1">Tổng thu hộ (COD)</p>
+                                    <p className="text-4xl font-black text-[#f39200] leading-none">{(order.totalPrice || 0).toLocaleString()}đ</p>
+                                </div>
+                                <div className="p-4 bg-white/5 rounded-3xl text-[#f39200] border border-white/10"><IconCard size={32} /></div>
+                            </div>
+                        </div>
+                        {/* Images + Upload (Admin) */}
+                        <div className="bg-white p-6 rounded-[32px] shadow-sm border border-stone-100">
+                            <h4 className="text-sm font-black text-stone-700 mb-4">Ảnh đơn hàng / Ghi chú</h4>
+                            <div className="mb-4">
+                                {order.orderImages && order.orderImages.length > 0 ? (
+                                    <div className="flex gap-2 flex-wrap">
+                                        {order.orderImages.map((img, i) => (
+                                            <a key={i} href={img.url} target="_blank" rel="noreferrer" className="w-24 h-24 rounded-lg overflow-hidden border">
+                                                <img src={img.url} alt={`order-${i}`} className="w-full h-full object-cover" />
+                                            </a>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-sm text-stone-400 italic">Chưa có ảnh</div>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="inline-flex items-center gap-2">
+                                    <input id="admin-upload" type="file" className="hidden" accept="image/*" onChange={async (e) => {
+                                        const f = e.target.files && e.target.files[0];
+                                        if (!f) return;
+                                        const token = localStorage.getItem('token');
+                                        const fd = new FormData();
+                                        fd.append('image', f);
+                                        try {
+                                            const res = await fetch(`${API_URL}/api/orders/${order._id}/images`, {
+                                                method: 'POST',
+                                                headers: token ? { Authorization: `Bearer ${token}` } : {},
+                                                body: fd,
+                                            });
+                                            const d = await res.json();
+                                            if (d.success) {
+                                                alert('Upload thành công');
+                                                window.location.reload();
+                                            } else alert('Lỗi: ' + (d.message || 'Upload thất bại'))
+                                        } catch (err) { alert('Lỗi kết nối') }
+                                    }} />
+                                    <button onClick={() => document.getElementById('admin-upload').click()} className="px-4 py-2 bg-[#9d0b0f] text-white rounded-xl font-bold">Tải ảnh lên</button>
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>

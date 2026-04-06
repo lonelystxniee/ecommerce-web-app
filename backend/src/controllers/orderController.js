@@ -3,6 +3,7 @@ const Product = require('../models/Product')
 const Promotion = require('../models/Promotion')
 const Notification = require('../models/Notification')
 const ghn = require('./ghnController')
+const calculateShippingFee = require('../utils/shippingFee')
 const activityController = require('./activityController')
 
 const addUniqueHistory = (order, status, desc) => {
@@ -96,6 +97,16 @@ exports.createOrder = async (req, res) => {
           newOrder.shipping.shippingServiceName = feeData[0].short_description || feeData[0].service_name || ''
         } else if (feeData && typeof feeData === 'object') {
           shippingFeeValue = Number(feeData.total || feeData.shipping_fee || 0)
+        }
+        // Adjust shipping fee according to business rules (clamp, discounts, free-ship)
+        try {
+          const adjustment = calculateShippingFee({ total: subtotalFromItems }, shippingFeeValue, { returnBreakdown: true })
+          // If function returned breakdown object, use its shippingFee; otherwise fallback
+          shippingFeeValue = adjustment && typeof adjustment === 'object' ? Number(adjustment.shippingFee || 0) : Number(adjustment || 0)
+          // persist breakdown for debugging/analytics
+          newOrder.shipping.shippingFeeBreakdown = adjustment
+        } catch (adjErr) {
+          console.error('Shipping adjustment failed:', adjErr)
         }
         newOrder.shipping.shippingFee = shippingFeeValue
         newOrder.shipping.shippingWeight = shippingInfo.weight

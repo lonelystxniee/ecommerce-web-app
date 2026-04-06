@@ -182,7 +182,7 @@ const Cart = () => {
               </div>
               <div className="flex justify-between text-[#88694f] font-bold">
                 <span>Phí giao hàng:</span>
-                <span className="text-green-600 uppercase text-[10px] font-black bg-green-50 px-2 py-1 rounded-md">Miễn phí</span>
+                <span className="text-green-600 uppercase text-[10px] font-black bg-green-50 px-2 py-1 rounded-md">Chưa xác định</span>
               </div>
             </div>
 

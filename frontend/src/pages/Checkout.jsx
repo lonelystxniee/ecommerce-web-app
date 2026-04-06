@@ -154,6 +154,7 @@ const Checkout = () => {
           to_district_id: Number(locationSelection.districtId),
           to_ward_code: locationSelection.wardCode,
           weight,
+          orderValue: totalPrice,
         }),
       });
       const data = await res.json();
@@ -289,9 +290,9 @@ const Checkout = () => {
         email: formData.email,
         address: selectedAddress
           ? (selectedAddress.street || "") +
-            (selectedAddress.ward ? ", " + selectedAddress.ward : "") +
-            (selectedAddress.district ? ", " + selectedAddress.district : "") +
-            (selectedAddress.province ? ", " + selectedAddress.province : "")
+          (selectedAddress.ward ? ", " + selectedAddress.ward : "") +
+          (selectedAddress.district ? ", " + selectedAddress.district : "") +
+          (selectedAddress.province ? ", " + selectedAddress.province : "")
           : formData.address,
         note: formData.note,
       },
@@ -305,18 +306,18 @@ const Checkout = () => {
         province: selectedAddress
           ? selectedAddress.province || null
           : provinces.find(
-              (p) => String(p.ProvinceID || p.province_id) === String(locationSelection.provinceId),
-            )?.ProvinceName || null,
+            (p) => String(p.ProvinceID || p.province_id) === String(locationSelection.provinceId),
+          )?.ProvinceName || null,
         district: selectedAddress
           ? selectedAddress.district || null
           : districts.find(
-              (d) => String(d.DistrictID || d.district_id) === String(locationSelection.districtId),
-            )?.DistrictName || null,
+            (d) => String(d.DistrictID || d.district_id) === String(locationSelection.districtId),
+          )?.DistrictName || null,
         ward: selectedAddress
           ? selectedAddress.ward || null
           : wards.find(
-              (w) => String(w.WardCode || w.code) === String(locationSelection.wardCode),
-            )?.WardName || null,
+            (w) => String(w.WardCode || w.code) === String(locationSelection.wardCode),
+          )?.WardName || null,
         to_district_id: Number(locationSelection.districtId) || undefined,
         to_ward_code: locationSelection.wardCode || undefined,
         weight: selectedItems.reduce((sum, it) => sum + (it.weight || 300) * (it.quantity || 1), 0),
@@ -697,11 +698,10 @@ const Checkout = () => {
                           <div
                             key={promo._id}
                             onClick={() => handleApplyPromo(promo.code)}
-                            className={`p-3 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between ${
-                              appliedCode === promo.code
+                            className={`p-3 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between ${appliedCode === promo.code
                                 ? "border-primary bg-red-50"
                                 : "border-white bg-white hover:border-secondary"
-                            }`}
+                              }`}
                           >
                             <div className="flex items-center gap-3">
                               <Tag size={16} className="text-primary" />
@@ -715,11 +715,10 @@ const Checkout = () => {
                               </div>
                             </div>
                             <div
-                              className={`text-[9px] font-black px-3 py-1 rounded-full ${
-                                appliedCode === promo.code
+                              className={`text-[9px] font-black px-3 py-1 rounded-full ${appliedCode === promo.code
                                   ? "bg-primary text-white"
                                   : "bg-gray-100 text-[#88694f]"
-                              }`}
+                                }`}
                             >
                               {appliedCode === promo.code ? "ĐÃ ÁP DỤNG" : "ÁP DỤNG"}
                             </div>
