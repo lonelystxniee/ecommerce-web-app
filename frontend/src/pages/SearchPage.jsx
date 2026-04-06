@@ -5,8 +5,10 @@ import {
   ChevronRight,
   Filter,
   SlidersHorizontal,
+  Heart,
 } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import { useWishlist } from "../context/WishlistContext";
 import toast from "react-hot-toast";
 import API_URL from "../config/apiConfig";
 
@@ -15,11 +17,13 @@ const SearchPage = () => {
   const query = searchParams.get("q") || "";
 
 
+
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [, setPagination] = useState({});
   const { addToCart } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
 
   // Local state for UI inputs (to keep them responsive)
   const [filters, setFilters] = useState({
@@ -217,6 +221,19 @@ const SearchPage = () => {
                         alt={product.productName}
                         className="object-contain w-full h-full transition-transform duration-700 group-hover:scale-110"
                       />
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleWishlist(product._id);
+                        }}
+                        className="absolute top-3 right-3 p-2 bg-white/80 hover:bg-white rounded-xl shadow-sm z-10 transition-all active:scale-90"
+                      >
+                        <Heart
+                          size={18}
+                          className={isInWishlist(product._id) ? "text-[#9d0b0f] fill-[#9d0b0f]" : "text-gray-400"}
+                        />
+                      </button>
                       <div className="absolute inset-0 transition-all duration-500 bg-black/0 group-hover:bg-black/5" />
                     </Link>
 

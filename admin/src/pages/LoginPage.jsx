@@ -26,13 +26,16 @@ const LoginPage = () => {
             const res = await fetch(`${API_URL}/api/auth/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ email, password, isAdminLogin: true }),
             });
             const data = await res.json();
             if (data.success) {
                 console.log(data.user.role);
                 if (data.user.role === "ADMIN") {
                     localStorage.setItem("token", data.token);
+                    if (data.refreshToken) {
+                        localStorage.setItem("refreshToken", data.refreshToken);
+                    }
                     localStorage.setItem("user", JSON.stringify(data.user));
                     navigate("/");
                 } else {
@@ -117,7 +120,7 @@ const LoginPage = () => {
                     </button>
 
                     <div className="pt-4 text-center">
-                        <p className="text-xs text-[#88694f] font-medium">Bản quyền thuộc về Ô mai Hồng Lam © 2025</p>
+                        <p className="text-xs text-[#88694f] font-medium">Bản quyền thuộc về ClickGo © 2025</p>
                     </div>
                 </form>
             </div>

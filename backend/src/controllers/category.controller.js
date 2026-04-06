@@ -161,17 +161,51 @@ exports.updateCategory = async (req, res) => {
 exports.deleteCategory = async (req, res) => {
     try {
         const { id } = req.params;
-        const deleted = await Category.findByIdAndDelete(id);
-        if (!deleted) {
+
+        // 1. Kiểm tra xem category có tồn tại không
+        const categoryToDelete = await Category.findById(id);
+        if (!categoryToDelete) {
             return res.status(404).json({ success: false, message: "Category not found" });
         }
 
-        // Ghi log
-        if (req.user) {
-            await activityController.createLog(req.user.id, "Xóa danh mục", `Đã xóa danh mục: ${deleted.name}`, req);
+        // 2. Tìm hoặc tạo danh mục mặc định "Khác"
+        let defaultCategory = await Category.findOne({ name: "Khác" });
+        if (!defaultCategory) {
+            defaultCategory = await Category.create({
+                name: "Khác",
+                description: "Danh mục mặc định cho các sản phẩm chưa phân loại"
+            });
         }
 
-        res.json({ success: true, message: "Category deleted successfully" });
+        // Không cho phép xóa danh mục "Khác" nếu nó là danh mục mặc định chứa fallback
+        if (categoryToDelete._id.toString() === defaultCategory._id.toString()) {
+            return res.status(400).json({ success: false, message: "Không thể xóa danh mục mặc định 'Khác'" });
+        }
+
+        // 3. Tìm các sản phẩm đang có categoryID chứa ID của danh mục sắp xóa
+        const Product = require("../models/Product"); // Import tạm thời để tránh circular dependency error cục bộ nếu có
+
+        // Nếu một sản phẩm CHỈ CÓ 1 danh mục và đó là danh mục bị xóa -> Gán sang "Khác"
+        await Product.updateMany(
+            { categoryID: { $size: 1, $in: [id] } },
+            { $set: { categoryID: [defaultCategory._id] } }
+        );
+
+        // Nếu một sản phẩm có NHIỀU danh mục -> Chỉ cần pull (xóa) ID danh mục bị xóa ra khỏi mảng
+        await Product.updateMany(
+            { categoryID: id },
+            { $pull: { categoryID: id } }
+        );
+
+        // 4. Tiến hành xóa category
+        await Category.findByIdAndDelete(id);
+
+        // Ghi log
+        if (req.user) {
+            await activityController.createLog(req.user.id, "Xóa danh mục", `Đã xóa danh mục: ${categoryToDelete.name} và chuyển các sản phẩm mồ côi sang danh mục Khác`, req);
+        }
+
+        res.json({ success: true, message: "Category deleted successfully and products reassigned" });
     } catch (error) {
         console.error(error);
         res.status(500).json({ success: false, message: "Server error" });

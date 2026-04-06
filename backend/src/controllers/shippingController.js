@@ -1,4 +1,5 @@
 const ghn = require('../services/ghnService');
+const calculateShippingFee = require('../utils/shippingFee');
 const Order = require('../models/Order');
 
 exports.calculate = async (req, res) => {
@@ -16,6 +17,36 @@ exports.calculate = async (req, res) => {
     };
 
     const result = await ghn.calculateFee(payload);
+
+    // Apply business adjustments to shipping fee before returning
+    try {
+      const orderValue = Number(body.orderValue || body.order_value || 0);
+      const feeData = result && (result.data || result);
+      let originalFee = 0;
+      if (Array.isArray(feeData) && feeData.length) {
+        originalFee = Number(feeData[0].total || feeData[0].shipping_fee || 0);
+      } else if (feeData && typeof feeData === 'object') {
+        originalFee = Number(feeData.total || feeData.shipping_fee || 0);
+      }
+
+      const adjustment = calculateShippingFee({ total: orderValue }, originalFee, { returnBreakdown: true });
+
+      // Mutate result so callers (frontend) see adjusted fee in the same fields
+      if (Array.isArray(feeData) && feeData.length) {
+        feeData[0].total = adjustment.shippingFee;
+        feeData[0].shipping_fee = adjustment.shippingFee;
+        feeData[0].adjustment = adjustment;
+      } else if (feeData && typeof feeData === 'object') {
+        feeData.total = adjustment.shippingFee;
+        feeData.shipping_fee = adjustment.shippingFee;
+        feeData.adjustment = adjustment;
+      }
+      // also attach top-level adjusted info
+      result.adjustment = adjustment;
+    } catch (adjErr) {
+      console.error('Shipping adjustment failed:', adjErr);
+    }
+
     res.json({ success: true, result });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message || 'Failed to calculate fee' });
@@ -72,13 +103,16 @@ exports.create = async (req, res) => {
 
     const ghnRes = await ghn.createOrder(payload);
 
-    // save to Order if orderId provided
+    // save to Order if orderId provided (persist to both top-level and nested fields)
     if (orderId) {
       const order = await Order.findById(orderId);
       if (order) {
         order.shipping = order.shipping || {};
         const orderCode = (ghnRes && ghnRes.data && (ghnRes.data.order_code || ghnRes.data.data && ghnRes.data.data.order_code)) || (ghnRes && ghnRes.data && ghnRes.data.orderId) || null;
-        order.shipping.ghnOrderCode = orderCode || order.shipping.ghnOrderCode;
+        if (orderCode) {
+          order.shipping.ghnOrderCode = orderCode;
+          order.ghnOrderCode = orderCode;
+        }
         // try to map shipping fee back
         if (ghnRes && ghnRes.data && ghnRes.data.total_fee) {
           order.shipping.shippingFee = ghnRes.data.total_fee;
@@ -103,6 +137,17 @@ exports.getDetail = async (req, res) => {
     if (!code && orderId) {
       const order = await Order.findById(orderId);
       if (!order || !order.shipping || !order.shipping.ghnOrderCode) return res.status(404).json({ success: false, message: 'GHN order code not found in order' });
+
+      // permission: allow admin, shipper, or owner
+      if (req.user) {
+        const isAdmin = req.user.role === 'ADMIN';
+        const isShipper = req.user.role === 'SHIPPER';
+        const isOwner = String(order.userId || '') === String(req.user._id || req.user.id || '');
+        if (!isAdmin && !isShipper && !isOwner) {
+          return res.status(403).json({ success: false, message: 'Không có quyền xem thông tin giao vận' });
+        }
+      }
+
       code = order.shipping.ghnOrderCode;
     }
     const detail = await ghn.getOrderDetail(code);
@@ -121,11 +166,14 @@ exports.webhook = async (req, res) => {
     const status = payload.status || (payload.data && payload.data.status) || null;
 
     if (order_code) {
-      const order = await Order.findOne({ 'shipping.ghnOrderCode': order_code });
+      const order = await Order.findOne({ $or: [{ 'shipping.ghnOrderCode': order_code }, { ghnOrderCode: order_code }] });
       if (order) {
+        order.shipping = order.shipping || {};
+        order.shipping.ghnOrderCode = order.shipping.ghnOrderCode || order.ghnOrderCode;
         order.shipping.shippingStatus = status || order.shipping.shippingStatus;
         order.shipping.shippingEvents = order.shipping.shippingEvents || [];
         order.shipping.shippingEvents.push({ time: new Date(), status: status || 'updated', note: JSON.stringify(payload) });
+        // also persist top-level status if relevant
         await order.save();
       }
     }
@@ -142,6 +190,16 @@ exports.getEvents = async (req, res) => {
     const { orderId } = req.params;
     const order = await Order.findById(orderId);
     if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+    // permission: owner/admin/shipper
+    if (req.user) {
+      const isAdmin = req.user.role === 'ADMIN';
+      const isShipper = req.user.role === 'SHIPPER';
+      const isOwner = String(order.userId || '') === String(req.user._id || req.user.id || '');
+      if (!isAdmin && !isShipper && !isOwner) {
+        return res.status(403).json({ success: false, message: 'Không có quyền xem sự kiện giao vận' });
+      }
+    }
+
     res.json({ success: true, shipping: order.shipping || {} });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message || 'Failed to get shipping events' });

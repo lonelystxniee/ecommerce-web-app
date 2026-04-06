@@ -14,7 +14,6 @@ import {
 import toast from "react-hot-toast";
 import API_URL from "../config/apiConfig";
 
-
 // ─── Helpers độ mạnh mật khẩu ─────────────────────────────────────────────
 function getStrength(password) {
     let score = 0;

@@ -27,7 +27,11 @@ const ReviewManagement = () => {
     const fetchReviews = async (page = 1) => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_URL}/api/reviews?page=${page}&limit=10&search=${searchTerm}`);
+            const response = await fetch(`${API_URL}/api/reviews?page=${page}&limit=6&search=${searchTerm}`, {
+                headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`
+                }
+            });
             const data = await response.json();
             if (data.success) {
                 setReviews(data.reviews);
@@ -161,14 +165,25 @@ const ReviewManagement = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3 max-w-xs">
+                                            <a
+                                                href={`http://localhost:5174/product/${review.productID?._id}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-3 max-w-xs hover:bg-gray-100 p-2 rounded-lg transition-colors group cursor-pointer"
+                                                title="Xem sản phẩm trên cửa hàng"
+                                            >
                                                 <img
                                                     src={review.productID?.images?.[0] || "https://via.placeholder.com/50"}
                                                     alt=""
-                                                    className="w-10 h-10 object-contain rounded border border-gray-100 bg-white flex-shrink-0"
+                                                    className="w-10 h-10 object-contain rounded border border-gray-100 bg-white flex-shrink-0 group-hover:border-primary transition-colors"
                                                 />
-                                                <p className="text-sm font-medium text-[#3e2714] line-clamp-1">{review.productID?.productName || "Sản phẩm không tồn tại"}</p>
-                                            </div>
+                                                <div className="flex flex-col">
+                                                    <p className="text-sm font-medium text-[#3e2714] line-clamp-1 group-hover:text-primary transition-colors">{review.productID?.productName || "Sản phẩm không tồn tại"}</p>
+                                                    <span className="text-[10px] text-primary flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <ExternalLink size={10} /> Xem trên Web
+                                                    </span>
+                                                </div>
+                                            </a>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="space-y-1">
@@ -180,7 +195,36 @@ const ReviewManagement = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="space-y-2">
-                                                <p className="text-sm text-gray-600 line-clamp-2 italic">"{review.comment}"</p>
+                                                <p className="text-sm text-gray-600 line-clamp-2 italic">
+                                                    "{(() => {
+                                                        const badWords = ["ngu", "chó", "đm", "vl", "vãi", "cứt", "tệ", "dở", "địt", "lồn", "cặc", "đĩ", "điếm"];
+                                                        let text = review.comment || "";
+
+                                                        // Create a regex to match any bad word (case insensitive)
+                                                        const regex = new RegExp(`(${badWords.join('|')})`, 'gi');
+
+                                                        // Split text by bad words and wrap matches in a styled span
+                                                        const parts = text.split(regex);
+
+                                                        return parts.map((part, index) => {
+                                                            if (regex.test(part)) {
+                                                                // Extract the first letter and mask the rest
+                                                                const firstChar = part.charAt(0);
+                                                                const maskedText = firstChar + "*".repeat(part.length - 1);
+                                                                return (
+                                                                    <span
+                                                                        key={index}
+                                                                        className="bg-red-100 text-[#9d0b0f] font-bold px-1 rounded mx-0.5 border border-red-200"
+                                                                        title={`Từ gốc: ${part}`}
+                                                                    >
+                                                                        {maskedText}
+                                                                    </span>
+                                                                );
+                                                            }
+                                                            return part;
+                                                        });
+                                                    })()}"
+                                                </p>
                                                 {(review.images?.length > 0 || review.videos?.length > 0) && (
                                                     <div className="flex gap-1">
                                                         {review.images?.slice(0, 3).map((img, i) => (
@@ -213,26 +257,58 @@ const ReviewManagement = () => {
 
                 {/* Pagination */}
                 {pagination.totalPages > 1 && (
-                    <div className="bg-gray-50/50 px-6 py-4 flex items-center justify-between border-t border-gray-200">
-                        <p className="text-sm text-gray-500 font-medium">
-                            Hiển thị <span className="text-[#3e2714] font-bold">{(pagination.currentPage - 1) * 10 + 1}</span> - <span className="text-[#3e2714] font-bold">{Math.min(pagination.currentPage * 10, pagination.totalReviews)}</span> trong tổng số <span className="text-[#3e2714] font-bold">{pagination.totalReviews}</span> đánh giá
-                        </p>
-                        <div className="flex gap-2">
+                    <div className="bg-gray-50/50 px-6 py-8 flex flex-col items-center gap-6 border-t border-gray-200">
+                        <div className="flex items-center gap-2 order-1">
                             <button
                                 onClick={() => fetchReviews(pagination.currentPage - 1)}
-                                disabled={pagination.currentPage === 1}
-                                className="p-2 rounded border border-gray-200 bg-white text-gray-500 hover:text-primary hover:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                                disabled={pagination.currentPage === 1 || loading}
+                                className="p-2 rounded-xl border border-gray-200 bg-white hover:bg-primary hover:text-white transition-all disabled:opacity-40 shadow-sm"
                             >
                                 <ChevronLeft size={18} />
                             </button>
+
+                            {/* Numeric Pages */}
+                            <div className="hidden md:flex items-center gap-1 mx-2">
+                                {[...Array(pagination.totalPages)].map((_, i) => {
+                                    const pageNum = i + 1;
+                                    if (
+                                        pageNum === 1 ||
+                                        pageNum === pagination.totalPages ||
+                                        (pageNum >= pagination.currentPage - 1 && pageNum <= pagination.currentPage + 1)
+                                    ) {
+                                        return (
+                                            <button
+                                                key={pageNum}
+                                                onClick={() => fetchReviews(pageNum)}
+                                                className={`w-9 h-9 rounded-xl border-2 text-xs font-black transition-all ${pagination.currentPage === pageNum
+                                                        ? "bg-primary text-white border-primary shadow-md shadow-red-100"
+                                                        : "bg-white text-[#3e2714] border-stone-100 hover:border-primary hover:text-primary"
+                                                    }`}
+                                            >
+                                                {pageNum}
+                                            </button>
+                                        );
+                                    } else if (
+                                        (pageNum === pagination.currentPage - 2 && pageNum > 1) ||
+                                        (pageNum === pagination.currentPage + 2 && pageNum < pagination.totalPages)
+                                    ) {
+                                        return <span key={pageNum} className="text-gray-400 font-bold px-1">...</span>;
+                                    }
+                                    return null;
+                                })}
+                            </div>
+
                             <button
                                 onClick={() => fetchReviews(pagination.currentPage + 1)}
-                                disabled={pagination.currentPage === pagination.totalPages}
-                                className="p-2 rounded border border-gray-200 bg-white text-gray-500 hover:text-primary hover:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                                disabled={pagination.currentPage === pagination.totalPages || loading}
+                                className="p-2 rounded-xl border border-gray-200 bg-white hover:bg-primary hover:text-white transition-all disabled:opacity-40 shadow-sm"
                             >
                                 <ChevronRight size={18} />
                             </button>
                         </div>
+                        <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest opacity-60">
+                            Hiển thị {(pagination.currentPage - 1) * 6 + 1} - {Math.min(pagination.currentPage * 6, pagination.totalReviews)} / {pagination.totalReviews} đánh giá — Trang {pagination.currentPage} / {pagination.totalPages}
+                        </p>
                     </div>
                 )}
             </div>

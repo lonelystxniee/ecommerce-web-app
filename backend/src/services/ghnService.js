@@ -90,7 +90,20 @@ module.exports = {
   // cancel order
   cancelOrder: async (body) => {
     const payload = { shop_id: GHN_SHOP_ID, ...body };
-    const raw = await request('/v2/shipping-order/cancel', { method: 'POST', body: JSON.stringify(payload) });
-    return raw;
+    const path = '/v2/shipping-order/cancel';
+    const url = `${GHN_API_BASE}${path}`;
+    try {
+      logger.info('GHN cancel payload', payload);
+      const res = await fetch(url, { method: 'POST', headers: defaultHeaders(), body: JSON.stringify(payload) });
+      const data = await res.json();
+      // Return raw data so caller can inspect non-200 responses without an exception
+      if (!data) {
+        logger.warn('GHN cancel returned empty response', { url, payload });
+      }
+      return data;
+    } catch (err) {
+      logger.error('GHN cancelOrder fetch error', err.message || err);
+      throw err;
+    }
   },
 };

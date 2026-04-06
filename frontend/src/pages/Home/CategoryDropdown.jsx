@@ -35,7 +35,7 @@ export const CategoryDropdown = ({ display, categories }) => {
         <div
           className={`absolute left-0 top-full w-full bg-primary z-99
             transition-all duration-300 ease-out max-h-100 overflow-y-auto custom-scrollbar
-            ${open ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"}
+            ${open ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}
           `}
         >
           <MenuItem categories={categories} />

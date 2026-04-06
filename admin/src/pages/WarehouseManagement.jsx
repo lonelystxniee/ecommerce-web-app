@@ -13,12 +13,15 @@ import {
     Upload
 } from "lucide-react";
 import toast from "react-hot-toast";
+import WarehouseHistoryModal from "../components/WarehouseHistoryModal";
 
 const WarehouseManagement = () => {
     const [items, setItems] = useState([]);
     const [supplier, setSupplier] = useState("");
     const [note, setNote] = useState("");
     const [loading, setLoading] = useState(false);
+    const [isImporting, setIsImporting] = useState(false);
+    const [importResult, setImportResult] = useState(null); // null = hidden, object = show popup
     const [categories, setCategories] = useState([]);
     const [allProducts, setAllProducts] = useState([]);
     const [pagination, setPagination] = useState({
@@ -30,6 +33,8 @@ const WarehouseManagement = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
+    const [showLowStock, setShowLowStock] = useState(false);
+    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({
         name: "",
@@ -45,12 +50,17 @@ const WarehouseManagement = () => {
 
     useEffect(() => {
         fetchCategories();
-        fetchAllProducts(1);
     }, []);
 
     const fetchAllProducts = async (page = 1) => {
         try {
-            const res = await fetch(`${API_URL}/api/products?page=${page}&limit=12`);
+            const token = localStorage.getItem("token");
+            const endpoint = showLowStock
+                ? `${API_URL}/api/products/low-stock?page=${page}&limit=12`
+                : `${API_URL}/api/products?page=${page}&limit=12`;
+            const res = await fetch(endpoint, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
             const data = await res.json();
             if (data.success) {
                 setAllProducts(data.products || []);
@@ -65,6 +75,10 @@ const WarehouseManagement = () => {
             console.error("Fetch all products error:", err);
         }
     };
+
+    useEffect(() => {
+        fetchAllProducts(1);
+    }, [showLowStock]);
 
     const handlePageChange = (newPage) => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
@@ -249,8 +263,36 @@ const WarehouseManagement = () => {
     };
 
     const fetchHistory = () => {
-        // History is no longer stored in a collection
-        toast.info("Lịch sử nhập kho không được lưu trữ cục bộ để giữ hiệu năng hệ thống");
+        setIsHistoryModalOpen(true);
+    };
+
+    const handleImportExcel = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (!window.confirm(`Nhập kho từ file ${file.name}?`)) { e.target.value = ''; return; }
+        setIsImporting(true);
+        try {
+            const token = localStorage.getItem("token");
+            const fd = new FormData();
+            fd.append("file", file);
+            const res = await fetch(`${API_URL}/api/products/import-warehouse-excel`, {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${token}` },
+                body: fd
+            });
+            const data = await res.json();
+            if (data.success) {
+                setImportResult({ success: true, ...data.results, fileName: file.name });
+                fetchAllProducts(1);
+            } else {
+                setImportResult({ success: false, message: data.message, fileName: file.name });
+            }
+        } catch (err) {
+            toast.error("Lỗi kết nối máy chủ!");
+        } finally {
+            setIsImporting(false);
+            e.target.value = '';
+        }
     };
 
     const handleSubmit = async () => {
@@ -306,15 +348,34 @@ const WarehouseManagement = () => {
                         Nhập hàng mới hoặc bổ sung tồn kho cho sản phẩm hiện có
                     </p>
                 </div>
-                <button
-                    onClick={() => {
-                        fetchHistory();
-                    }}
-                    className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold uppercase text-xs tracking-widest transition-all shadow-lg bg-white text-[#800a0d] border border-[#800a0d]/20`}
-                >
-                    <History size={18} />
-                    Xem lịch sử tạm thời
-                </button>
+                <div className="flex flex-wrap gap-3 items-center">
+                    <label
+                        className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold uppercase text-xs tracking-widest transition-all shadow-lg cursor-pointer ${isImporting ? "bg-green-300 text-white cursor-wait" : "bg-green-600 text-white hover:bg-green-700"
+                            }`}
+                        title="Tải lên file Excel gồm 2 cột: Mã sản phẩm (SKU) và Số lượng nhập"
+                    >
+                        {isImporting ? (
+                            <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Đang nhập...</>
+                        ) : (
+                            <><Upload size={18} /> Nhập Excel</>
+                        )}
+                        <input type="file" className="hidden" accept=".xlsx,.xls,.csv" onChange={handleImportExcel} disabled={isImporting} />
+                    </label>
+                    <button
+                        onClick={() => setShowLowStock(!showLowStock)}
+                        className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold uppercase text-xs tracking-widest transition-all shadow-lg ${showLowStock ? "bg-[#800a0d] text-white" : "bg-white text-[#800a0d] border border-[#800a0d]/20"}`}
+                    >
+                        <AlertCircle size={18} />
+                        {showLowStock ? "Xem tất cả SP" : "Cảnh báo hết hàng"}
+                    </button>
+                    <button
+                        onClick={() => { fetchHistory(); }}
+                        className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold uppercase text-xs tracking-widest transition-all shadow-lg bg-white text-[#800a0d] border border-[#800a0d]/20`}
+                    >
+                        <History size={18} />
+                        Xem lịch sử tạm thời
+                    </button>
+                </div>
             </div>
 
             {/* Stock In Form */}
@@ -399,7 +460,9 @@ const WarehouseManagement = () => {
                     {/* Quick Selection Grid & Pagination */}
                     {searchQuery.length === 0 && allProducts.length > 0 && (
                         <div className="mt-8">
-                            <h4 className="text-[10px] font-black text-[#88694f] uppercase tracking-widest mb-4 ml-1">Chọn nhanh sản phẩm</h4>
+                            <h4 className="text-[10px] font-black text-[#88694f] uppercase tracking-widest mb-4 ml-1">
+                                {showLowStock ? "Sản phẩm sắp hết hàng (< 2)" : "Chọn nhanh sản phẩm"}
+                            </h4>
                             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                                 {allProducts.map((product) => (
                                     <button
@@ -422,35 +485,40 @@ const WarehouseManagement = () => {
 
                             {/* Pagination Controls */}
                             {pagination.totalPages > 1 && (
-                                <div className="mt-8 flex justify-center items-center gap-2">
-                                    <button
-                                        onClick={() => handlePageChange(pagination.currentPage - 1)}
-                                        disabled={pagination.currentPage === 1}
-                                        className="px-4 py-2 bg-white border border-gray-100 rounded-xl text-xs font-black uppercase text-[#88694f] disabled:opacity-30 hover:bg-[#800a0d] hover:text-white transition-all shadow-sm"
-                                    >
-                                        Trước
-                                    </button>
-                                    <div className="flex gap-1">
-                                        {[...Array(pagination.totalPages)].map((_, i) => (
-                                            <button
-                                                key={i + 1}
-                                                onClick={() => handlePageChange(i + 1)}
-                                                className={`w-8 h-8 rounded-xl text-xs font-black transition-all ${pagination.currentPage === i + 1
-                                                    ? "bg-[#800a0d] text-white shadow-lg"
-                                                    : "bg-white border border-gray-100 text-[#3e2714] hover:bg-gray-50"
-                                                    }`}
-                                            >
-                                                {i + 1}
-                                            </button>
-                                        ))}
+                                <div className="mt-12 flex flex-col items-center gap-6 pt-8 border-t border-dashed border-stone-200">
+                                    <div className="flex items-center gap-2 order-1">
+                                        <button
+                                            onClick={() => handlePageChange(pagination.currentPage - 1)}
+                                            disabled={pagination.currentPage === 1}
+                                            className="px-4 py-2 bg-white border border-gray-100 rounded-xl text-xs font-black uppercase text-[#88694f] disabled:opacity-30 hover:bg-[#800a0d] hover:text-white transition-all shadow-sm"
+                                        >
+                                            Trước
+                                        </button>
+                                        <div className="flex gap-1">
+                                            {[...Array(pagination.totalPages)].map((_, i) => (
+                                                <button
+                                                    key={i + 1}
+                                                    onClick={() => handlePageChange(i + 1)}
+                                                    className={`w-10 h-10 rounded-xl text-xs font-black transition-all ${pagination.currentPage === i + 1
+                                                        ? "bg-[#800a0d] text-white shadow-lg shadow-red-100"
+                                                        : "bg-white border border-gray-100 text-[#3e2714] hover:border-[#800a0d] hover:text-[#800a0d]"
+                                                        }`}
+                                                >
+                                                    {i + 1}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <button
+                                            onClick={() => handlePageChange(pagination.currentPage + 1)}
+                                            disabled={pagination.currentPage === pagination.totalPages}
+                                            className="px-4 py-2 bg-white border border-gray-100 rounded-xl text-xs font-black uppercase text-[#88694f] disabled:opacity-30 hover:bg-[#800a0d] hover:text-white transition-all shadow-sm"
+                                        >
+                                            Sau
+                                        </button>
                                     </div>
-                                    <button
-                                        onClick={() => handlePageChange(pagination.currentPage + 1)}
-                                        disabled={pagination.currentPage === pagination.totalPages}
-                                        className="px-4 py-2 bg-white border border-gray-100 rounded-xl text-xs font-black uppercase text-[#88694f] disabled:opacity-30 hover:bg-[#800a0d] hover:text-white transition-all shadow-sm"
-                                    >
-                                        Sau
-                                    </button>
+                                    <p className="text-[11px] text-[#88694f] font-bold uppercase tracking-widest opacity-60">
+                                        Trang {pagination.currentPage} / {pagination.totalPages} — Tổng {pagination.totalProducts} sản phẩm
+                                    </p>
                                 </div>
                             )}
                         </div>
@@ -624,6 +692,12 @@ const WarehouseManagement = () => {
                     )}
                 </div>
             </div>
+
+            {/* MODAL LỊCH SỬ NHẬP KHO */}
+            <WarehouseHistoryModal
+                isOpen={isHistoryModalOpen}
+                onClose={() => setIsHistoryModalOpen(false)}
+            />
 
             {/* MODAL THÊM SẢN PHẨM MỚI */}
             {isModalOpen && (
@@ -814,6 +888,91 @@ const WarehouseManagement = () => {
                                 {loading ? "Đang xử lý..." : "Lưu & Thêm vào danh sách nhập"}
                             </button>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Excel Import Result Popup */}
+            {importResult && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                    <div
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        onClick={() => setImportResult(null)}
+                    />
+                    <div className="relative bg-white rounded-[32px] shadow-2xl border border-gray-100 w-full max-w-lg overflow-hidden">
+                        {/* Header */}
+                        <div className={`px-8 py-6 flex items-center justify-between ${importResult.success ? 'bg-green-600' : 'bg-red-600'} text-white`}>
+                            <div className="flex items-center gap-3">
+                                {importResult.success ? <CheckCircle2 size={28} /> : <AlertCircle size={28} />}
+                                <div>
+                                    <h3 className="text-lg font-black uppercase">Kết quả nhập Excel</h3>
+                                    <p className="text-sm opacity-80 font-medium">{importResult.fileName}</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setImportResult(null)} className="hover:scale-110 transition-transform">
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-8 space-y-4">
+                            {importResult.success ? (
+                                <>
+                                    {/* Stats */}
+                                    <div className="grid grid-cols-3 gap-4">
+                                        <div className="bg-green-50 border border-green-100 rounded-2xl p-4 text-center">
+                                            <p className="text-3xl font-black text-green-600">{importResult.updated ?? 0}</p>
+                                            <p className="text-[11px] font-bold text-green-700 uppercase mt-1">Cập nhật thành công</p>
+                                        </div>
+                                        <div className="bg-yellow-50 border border-yellow-100 rounded-2xl p-4 text-center">
+                                            <p className="text-3xl font-black text-yellow-600">{importResult.notFound?.length ?? 0}</p>
+                                            <p className="text-[11px] font-bold text-yellow-700 uppercase mt-1">Không tìm thấy</p>
+                                        </div>
+                                        <div className="bg-red-50 border border-red-100 rounded-2xl p-4 text-center">
+                                            <p className="text-3xl font-black text-red-500">{importResult.failed ?? 0}</p>
+                                            <p className="text-[11px] font-bold text-red-700 uppercase mt-1">Lỗi</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Not found list */}
+                                    {importResult.notFound?.length > 0 && (
+                                        <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4">
+                                            <p className="text-[11px] font-black uppercase text-yellow-700 mb-2">⚠️ Mã không tìm thấy trong hệ thống:</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {importResult.notFound.map((sku, i) => (
+                                                    <span key={i} className="text-xs bg-white border border-yellow-200 text-yellow-800 font-bold px-2 py-1 rounded-lg">{sku}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Error list */}
+                                    {importResult.errors?.length > 0 && (
+                                        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 max-h-32 overflow-y-auto">
+                                            <p className="text-[11px] font-black uppercase text-red-700 mb-2">❌ Chi tiết lỗi:</p>
+                                            {importResult.errors.map((err, i) => (
+                                                <p key={i} className="text-xs text-red-600 font-medium">{err}</p>
+                                            ))}
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="bg-red-50 border border-red-100 rounded-2xl p-6 text-center">
+                                    <AlertCircle size={40} className="text-red-400 mx-auto mb-3" />
+                                    <p className="text-sm font-bold text-red-700">{importResult.message}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-8 pb-8">
+                            <button
+                                onClick={() => setImportResult(null)}
+                                className="w-full bg-[#800a0d] text-white py-3 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-black transition-all shadow-lg"
+                            >
+                                Đóng
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

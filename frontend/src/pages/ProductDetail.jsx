@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Minus,
   Plus,
@@ -16,25 +16,30 @@ import {
   Play,
   X,
   Heart,
+  ChevronRight,
+  Facebook,
 } from "lucide-react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 
+import { ProductItemSmall } from "./Home/ProductItemSmall";
 import toast from "react-hot-toast";
 import API_URL from "../config/apiConfig";
 
 const ProductDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { addToCart } = useCart();
+  const { addToCart, cartItems, setQuantity } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
 
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeImg, setActiveImg] = useState(0);
-  const [quantities, setQuantities] = useState([]); // Chuyển thành mảng rỗng để khởi tạo theo data
+  const [quantities, setQuantities] = useState([]);
+  const isActionBusy = useRef(false);
+  const [relatedProducts, setRelatedProducts] = useState([]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -44,12 +49,14 @@ const ProductDetail = () => {
         const data = await res.json();
         if (data.success) {
           setProduct(data.product);
-          // Initialize quantities based on the number of variants
+          // Initialize quantities based on available variants with stock > 0
+          let availableVariants = [];
           if (data.product.variants && data.product.variants.length > 0) {
-            setQuantities(new Array(data.product.variants.length).fill(0));
+            availableVariants = data.product.variants.filter(v => v.stock > 0);
           } else {
-            setQuantities([0]);
+            availableVariants = [{ label: "Giá gốc", price: data.product.price, stock: data.product.quantity || 0 }].filter(v => v.stock > 0);
           }
+          setQuantities(new Array(availableVariants.length).fill(availableVariants.length === 1 ? 1 : 0));
         }
       } catch (error) {
         console.error("Lỗi lấy chi tiết sản phẩm:", error);
@@ -61,6 +68,30 @@ const ProductDetail = () => {
     fetchProduct();
     window.scrollTo(0, 0);
   }, [id]);
+
+  useEffect(() => {
+    const fetchRelatedProducts = async () => {
+      if (!product || !product.categoryID || product.categoryID.length === 0) return;
+      try {
+        const categoryId = product.categoryID[0]._id || product.categoryID[0];
+        const res = await fetch(`${API_URL}/api/products/search?categoryId=${categoryId}&limit=6`);
+        const data = await res.json();
+        if (data.success) {
+          // Filter out the current product, limit to 5 and only show products in stock
+          const filtered = data.products
+            .filter(p => p._id !== id && p.quantity > 0)
+            .slice(0, 5);
+          setRelatedProducts(filtered);
+        }
+      } catch (error) {
+        console.error("Lỗi lấy sản phẩm liên quan:", error);
+      }
+    };
+
+    if (product) {
+      fetchRelatedProducts();
+    }
+  }, [product, id]);
 
   // Logic: Lấy mảng images từ DB, nếu không có thì fallback về trường image cũ
   const productImages =
@@ -101,7 +132,10 @@ const ProductDetail = () => {
         const savedUser = localStorage.getItem("user");
         if (savedUser) {
           const currentUser = JSON.parse(savedUser);
-          const existingReview = data.reviews.find(r => r.userID?._id === currentUser._id || r.userID === currentUser._id);
+          const existingReview = data.reviews.find(r =>
+            (r.userID && r.userID._id === currentUser._id) ||
+            r.userID === currentUser._id
+          );
           if (existingReview) {
             setUserReview(existingReview);
             setUserRating(existingReview.rating);
@@ -225,12 +259,26 @@ const ProductDetail = () => {
 
   // Logic: Use variants from backend, fallback to flat fields if none
   const variants = product?.variants && product.variants.length > 0
-    ? product.variants
-    : (product ? [{ label: "Giá gốc", price: product.price }] : []);
+    ? product.variants.filter(v => v.stock > 0)
+    : (product ? [{ label: "Giá gốc", price: product.price, stock: product.quantity || 0 }].filter(v => v.stock > 0) : []);
 
   const updateQty = (index, delta) => {
     const newQty = [...quantities];
-    newQty[index] = Math.max(0, newQty[index] + delta);
+    const newAmount = newQty[index] + delta;
+    if (newAmount >= 1 && newAmount <= variants[index].stock) {
+      newQty[index] = newAmount;
+      setQuantities(newQty);
+    }
+  };
+
+  const handleQtyChange = (index, val) => {
+    let num = parseInt(val);
+    if (isNaN(num)) num = 0;
+    const max = variants[index].stock;
+    if (num > max) num = max;
+    if (num < 0) num = 0;
+    const newQty = [...quantities];
+    newQty[index] = num;
     setQuantities(newQty);
   };
 
@@ -263,6 +311,7 @@ const ProductDetail = () => {
     );
   };
 
+
   const calculateTotal = () =>
     quantities.reduce(
       (total, q, i) => total + q * (variants[i]?.price || 0),
@@ -270,23 +319,36 @@ const ProductDetail = () => {
     );
 
   const handleAction = (type) => {
+    if (isActionBusy.current) return;
+    isActionBusy.current = true;
+    setTimeout(() => { isActionBusy.current = false; }, 800);
+
     let hasItems = false;
     quantities.forEach((q, i) => {
       if (q > 0) {
-        // Logic: Thêm vào giỏ hàng với thông tin biến thể thật
-        addToCart({
-          ...product,
-          id: `${product._id}-${variants[i].label}`,
-          name: product.name,
-          label: variants[i].label,
-          price: variants[i].price,
-          quantity: q,
-          image: productImages[0]
-        });
+        const itemId = `${product._id}-${variants[i].label}`;
+        const existing = cartItems.find((item) => item.id === itemId);
+
+        if (type === "buy_now" && existing) {
+          setQuantity(itemId, q);
+        } else {
+          addToCart({
+            ...product,
+            id: itemId,
+            name: product.name,
+            label: variants[i].label,
+            price: variants[i].price,
+            quantity: q,
+            image: productImages[0]
+          });
+        }
         hasItems = true;
       }
     });
-    if (!hasItems) return toast.error("Vui lòng chọn số lượng!");
+    if (!hasItems) {
+      isActionBusy.current = false;
+      return toast.error("Vui lòng chọn số lượng!");
+    }
     if (type === "buy_now") navigate("/cart");
     else toast.success("Đã thêm vào giỏ hàng thành công!");
   };
@@ -385,66 +447,100 @@ const ProductDetail = () => {
             </p>
 
             <div className="bg-[#efe7db] rounded-lg p-1 shadow-inner overflow-hidden">
-              <table className="w-full text-[13px]">
-                <thead>
-                  <tr className="text-[#88694f] font-bold border-b border-gray-300">
-                    <th className="py-2 text-left pl-3 uppercase text-[10px]">
-                      Khối lượng
-                    </th>
-                    <th className="py-2 text-center uppercase text-[10px]">
-                      Giá
-                    </th>
-                    <th className="py-2 text-center uppercase text-[10px]">
-                      Số lượng
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {variants.map((v, i) => (
-                    <tr key={i} className="font-bold hover:bg-white/30">
-                      <td className="py-4 pl-3 text-gray-700">{v.label}</td>
-                      <td className="py-4 text-center text-primary">
-                        {v.price.toLocaleString()}đ
-                      </td>
-                      <td className="flex justify-center py-4">
-                        <div className="flex items-center overflow-hidden bg-white border border-gray-300 rounded">
-                          <button
-                            onClick={() => updateQty(i, -1)}
-                            className="px-2 py-1 text-gray-400 border-r"
-                          >
-                            <Minus size={12} />
-                          </button>
-                          <span className="w-8 text-center">
-                            {quantities[i]}
-                          </span>
-                          <button
-                            onClick={() => updateQty(i, 1)}
-                            className="px-2 py-1 text-gray-400 border-l"
-                          >
-                            <Plus size={12} />
-                          </button>
-                        </div>
-                      </td>
+              {variants.length > 0 ? (
+                <table className="w-full text-[13px]">
+                  <thead>
+                    <tr className="text-[#88694f] font-bold border-b border-gray-300">
+                      <th className="py-2 text-left pl-3 uppercase text-[10px]">
+                        Phân loại
+                      </th>
+                      <th className="py-2 text-center uppercase text-[10px]">
+                        Giá
+                      </th>
+                      <th className="py-2 text-center uppercase text-[10px]">
+                        Còn lại
+                      </th>
+                      <th className="py-2 text-center uppercase text-[10px]">
+                        Số lượng
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {variants.map((v, i) => (
+                      <tr key={i} className="font-bold hover:bg-white/30">
+                        <td className="py-4 pl-3 text-gray-700">{v.label}</td>
+                        <td className="py-4 text-center text-primary">
+                          {v.price.toLocaleString()}đ
+                        </td>
+                        <td className="py-4 text-center font-medium text-gray-700">
+                          {v.stock}
+                        </td>
+                        <td className="flex justify-center py-4">
+                          <div className="flex items-center overflow-hidden bg-white border border-gray-300 rounded">
+                            <button
+                              onClick={() => updateQty(i, -1)}
+                              className="px-2 py-1 text-gray-400 border-r"
+                            >
+                              <Minus size={12} />
+                            </button>
+                            <input
+                              type="number"
+                              min="0"
+                              max={v.stock}
+                              value={quantities[i]}
+                              onChange={(e) => handleQtyChange(i, e.target.value)}
+                              onWheel={(e) => e.target.blur()}
+                              className="w-10 text-center bg-white outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border-none"
+                            />
+                            <button
+                              onClick={() => updateQty(i, 1)}
+                              className="px-2 py-1 text-gray-400 border-l"
+                            >
+                              <Plus size={12} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="p-6 text-center text-red-500 font-bold text-lg bg-white/50">
+                  Sản phẩm hiện tại đã hết hàng!
+                </div>
+              )}
             </div>
 
             <div className="mt-8">
-              <p className="mb-6 text-xl italic font-bold">
-                Thành tiền:{" "}
-                <span className="text-2xl font-black text-primary">
-                  {calculateTotal().toLocaleString()}đ
-                </span>
-              </p>
+              {variants.length > 0 && (
+                <p className="mb-6 text-xl italic font-bold">
+                  Thành tiền:{" "}
+                  <span className="text-2xl font-black text-primary">
+                    {calculateTotal().toLocaleString()}đ
+                  </span>
+                </p>
+              )}
               <div className="flex gap-3">
-                <button
-                  onClick={() => handleAction("add_to_cart")}
-                  className="flex-1 bg-[#f39200] text-white py-4 rounded-md font-bold uppercase tracking-widest shadow-lg active:scale-95"
-                >
-                  Thêm vào giỏ
-                </button>
+                {variants.length > 0 ? (
+                  <>
+                    <button
+                      onClick={() => handleAction("add_to_cart")}
+                      disabled={isActionBusy.current}
+                      className="flex-1 border-2 border-[#f39200] text-[#f39200] py-4 rounded-md font-bold uppercase tracking-widest hover:bg-[#f39200] hover:text-white transition-all active:scale-95 shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      Thêm vào giỏ
+                    </button>
+                    <button
+                      onClick={() => handleAction("buy_now")}
+                      disabled={isActionBusy.current}
+                      className="flex-1 bg-[#f39200] text-white py-4 rounded-md font-bold uppercase tracking-widest shadow-lg active:scale-95 hover:bg-[#d88200] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      Mua ngay
+                    </button>
+                  </>
+                ) : (
+                  <div className="flex-1" />
+                )}
                 <button
                   onClick={() => toggleWishlist(product._id)}
                   className={`px-4 py-4 rounded-md shadow-lg transition-all active:scale-95 border-2 ${isInWishlist(product._id)
@@ -647,7 +743,24 @@ const ProductDetail = () => {
                         />
                       ))}
                     </div>
-                    <p className="text-sm text-gray-600 leading-relaxed mb-4">{review.comment}</p>
+                    <p className="text-sm text-gray-600 leading-relaxed mb-4">
+                      {(() => {
+                        const badWords = ["ngu", "chó", "đm", "vl", "vãi", "cứt", "tệ", "dở", "địt", "lồn", "cặc", "đĩ", "điếm"];
+                        let text = review.comment || "";
+
+                        const regex = new RegExp(`(${badWords.join('|')})`, 'gi');
+                        const parts = text.split(regex);
+
+                        return parts.map((part, index) => {
+                          if (regex.test(part)) {
+                            const firstChar = part.charAt(0);
+                            const maskedText = firstChar + "*".repeat(part.length - 1);
+                            return <span key={index}>{maskedText}</span>;
+                          }
+                          return part;
+                        });
+                      })()}
+                    </p>
 
                     {/* Media trong bình luận */}
                     <div className="flex flex-wrap gap-2">
@@ -713,6 +826,28 @@ const ProductDetail = () => {
 
         {/* Video Player Modal */}
         <VideoModal videoUrl={activeVideo} onClose={() => setActiveVideo(null)} />
+
+        {/* Sản phẩm cùng loại */}
+        {relatedProducts.length > 0 && (
+          <div className="mt-16 pt-12 border-t border-gray-100">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-2xl font-bold uppercase tracking-tighter text-primary">
+                Sản phẩm cùng loại
+              </h3>
+              <Link
+                to={`/category/${product.categoryID?.[0]?.slug || ''}`}
+                className="text-sm font-bold text-[#88694f] hover:text-primary transition-colors flex items-center gap-1"
+              >
+                Xem tất cả <ChevronRight size={16} />
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {relatedProducts.map((p) => (
+                <ProductItemSmall key={p._id} product={p} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div >
   );

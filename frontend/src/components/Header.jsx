@@ -20,7 +20,9 @@ import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import AuthForm from "./AuthForm";
 import SearchBar from "./SearchBar";
+import NotificationDropdown from "./NotificationDropdown";
 import { CategoryDropdown } from "../pages/Home/CategoryDropdown";
+import Wallet from "./Wallet";
 
 const Header = () => {
   const { totalItems } = useCart();
@@ -33,7 +35,6 @@ const Header = () => {
 
   const mainDropdownRef = useRef(null);
   const stickyDropdownRef = useRef(null);
-
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -121,7 +122,7 @@ const Header = () => {
                   className="object-cover h-full w-50"
                 />
                 <p className="absolute text-sm font-bold text-transparent md:text-base whitespace-nowrap bottom-2 bg-linear-to-r from-primary to-secondary bg-clip-text">
-                  Trao niềm tin, nhận tài lộc
+                  Trao niềm tin, nhận chất lượng
                 </p>
               </Link>
             </div>
@@ -134,16 +135,20 @@ const Header = () => {
 
           <div className="flex flex-col justify-start flex-1 pt-2">
             <div className="flex items-center justify-end gap-6 py-4">
+              <Wallet />
               <div className="flex items-center gap-1 font-bold text-primary">
                 <Phone size={14} className="text-white fill-primary" />
                 <span className="text-sm">Giao hàng tận nơi: 19008122</span>
               </div>
             </div>
 
-            <div className="flex items-center w-full gap-4">
+            <div className="flex items-center justify-end w-full gap-4">
               <SearchBar />
               <div className="flex items-center gap-4">
-                <Link to="/wishlist" className="relative group text-primary hidden md:block">
+                <Link
+                  to="/wishlist"
+                  className="relative hidden group text-primary md:block"
+                >
                   <div className="border-secondary rounded-full border-2 p-1.5 group-hover:bg-secondary transition-all">
                     <Heart size={20} className="group-hover:text-white" />
                   </div>
@@ -153,6 +158,7 @@ const Header = () => {
                     </span>
                   )}
                 </Link>
+                <NotificationDropdown user={user} />
                 <AuthAndCart
                   totalItems={totalItems}
                   wishlistCount={wishlistIds.length}
@@ -171,8 +177,8 @@ const Header = () => {
 
       <div
         className={`fixed top-0 left-0 w-full bg-white shadow-md z-100 transition-all duration-500 transform bg-[url('https://honglam.vn/_next/static/media/bg-body.9bfd1cb8.png')] ${isScrolled
-            ? "translate-y-0 opacity-100"
-            : "-translate-y-full opacity-0 pointer-events-none"
+          ? "translate-y-0 opacity-100"
+          : "-translate-y-full opacity-0 pointer-events-none"
           }`}
       >
         <div className="flex items-center gap-6 px-4 py-2 mx-auto max-w-300">
@@ -182,16 +188,19 @@ const Header = () => {
           <div className="hidden flex-2 lg:block">
             <SearchBar />
           </div>
-          <AuthAndCart
-            totalItems={totalItems}
-            wishlistCount={wishlistIds.length}
-            user={user}
-            onAuthClick={() => setIsAuthOpen(true)}
-            isDropdownOpen={isUserDropdownOpen}
-            setIsDropdownOpen={setIsUserDropdownOpen}
-            dropdownRef={stickyDropdownRef}
-            onLogout={handleLogout}
-          />
+          <div className="flex items-center gap-4">
+            <NotificationDropdown user={user} />
+            <AuthAndCart
+              totalItems={totalItems}
+              wishlistCount={wishlistIds.length}
+              user={user}
+              onAuthClick={() => setIsAuthOpen(true)}
+              isDropdownOpen={isUserDropdownOpen}
+              setIsDropdownOpen={setIsUserDropdownOpen}
+              dropdownRef={stickyDropdownRef}
+              onLogout={handleLogout}
+            />
+          </div>
         </div>
       </div>
 

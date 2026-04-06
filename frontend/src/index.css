@@ -30,6 +30,14 @@
   html {
     @apply font-trust-san;
   }
+  
+  /* Reset tất cả hành vi bẻ chữ mặc định có thể gây lỗi tiếng Việt */
+  p, span, div, h1, h2, h3, h4, h5, h6, a, li {
+    word-break: normal;
+    overflow-wrap: break-word;
+    white-space: normal;
+    hyphens: none;
+  }
 }
 
 @keyframes zoomIn {
@@ -72,20 +80,13 @@ select {
 
 body {
   background:
-    url(https://honglam.vn/_next/static/media/bg-footer-optimized.6b456453.jpg)
-      bottom no-repeat,
-    url(https://honglam.vn/_next/static/media/bg-body-5.41b92e69.png) right 80%
-      no-repeat,
-    url(https://honglam.vn/_next/static/media/bg-body-4.1f9bdefd.png) left 60%
-      no-repeat,
-    url(https://honglam.vn/_next/static/media/bg-body-3.e2cb3b1c.png) right 40%
-      no-repeat,
-    url(https://honglam.vn/_next/static/media/bg-body-2.f61c9139.png) left 20%
-      no-repeat,
-    url(https://honglam.vn/_next/static/media/bg-body-1.418a9985.png) right 10%
-      no-repeat,
-    url(https://honglam.vn/_next/static/media/bg-header-2.489b84a6.jpg) top
-      no-repeat,
+    url(https://honglam.vn/_next/static/media/bg-footer-optimized.6b456453.jpg) bottom no-repeat,
+    url(https://honglam.vn/_next/static/media/bg-body-5.41b92e69.png) right 80% no-repeat,
+    url(https://honglam.vn/_next/static/media/bg-body-4.1f9bdefd.png) left 60% no-repeat,
+    url(https://honglam.vn/_next/static/media/bg-body-3.e2cb3b1c.png) right 40% no-repeat,
+    url(https://honglam.vn/_next/static/media/bg-body-2.f61c9139.png) left 20% no-repeat,
+    url(https://honglam.vn/_next/static/media/bg-body-1.418a9985.png) right 10% no-repeat,
+    url(https://honglam.vn/_next/static/media/bg-header-2.489b84a6.jpg) top no-repeat,
     url(https://honglam.vn/_next/static/media/bg-body.9bfd1cb8.png);
   background-color: #fdfaf5;
   min-height: 100vh;

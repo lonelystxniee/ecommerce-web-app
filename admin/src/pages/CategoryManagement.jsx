@@ -202,7 +202,7 @@ const CategoryManagement = () => {
                         Quản lý danh mục
                     </h2>
                     <p className="text-[#88694f] italic">
-                        Quản lý các loại sản phẩm Ô mai Hồng Lam
+                        Quản lý các loại sản phẩm Clickgo
                     </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-4">
@@ -262,56 +262,70 @@ const CategoryManagement = () => {
             )}
 
             {/* Danh sách danh mục */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {pagedCategories.map((cat) => (
-                    <div
-                        key={cat._id}
-                        className="bg-white rounded-[32px] border border-gray-100 overflow-hidden hover:shadow-xl transition-all group p-6 flex flex-col justify-between"
-                    >
-                        <div>
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="bg-[#f7f4ef] p-3 rounded-2xl text-[#9d0b0f]">
-                                    <Layers size={24} />
-                                </div>
-                                <h3 className="font-bold text-xl text-[#3e2714]">
-                                    {cat.name}
-                                </h3>
-                            </div>
-                            <p className="text-[#88694f] text-sm line-clamp-3 mb-4">
-                                {cat.description || "Chưa có mô tả."}
-                            </p>
+            <div className="bg-white rounded-[32px] border border-gray-100 overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-[#f7f4ef] text-[#9d0b0f] text-sm uppercase">
+                                <th className="px-6 py-4 font-bold">Tên danh mục</th>
+                                <th className="px-6 py-4 font-bold">Mô tả</th>
+                                <th className="px-6 py-4 font-bold text-right">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {pagedCategories.map((cat) => (
+                                <tr key={cat._id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="bg-[#f7f4ef] p-2 pr-2.5 rounded-xl text-[#9d0b0f]">
+                                                <Layers size={20} />
+                                            </div>
+                                            <span className="font-bold text-[#3e2714] text-base">{cat.name}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-[#88694f] text-sm max-w-[400px]">
+                                        <p className="truncate" title={cat.description || "Chưa có mô tả."}>
+                                            {cat.description || "Chưa có mô tả."}
+                                        </p>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex justify-end gap-2">
+                                            <button
+                                                onClick={() => handleEdit(cat)}
+                                                className="p-2 bg-blue-50 text-blue-500 rounded-xl hover:bg-blue-500 hover:text-white transition-all"
+                                                title="Sửa"
+                                            >
+                                                <Edit2 size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(cat._id)}
+                                                className="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"
+                                                title="Xóa"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    {pagedCategories.length === 0 && (
+                        <div className="p-8 text-center text-gray-400 font-bold">
+                            Không tìm thấy danh mục nào.
                         </div>
-
-                        <div className="flex justify-end gap-2 pt-4 border-t border-gray-50">
-                            <button
-                                onClick={() => handleEdit(cat)}
-                                className="p-2 bg-blue-50 text-blue-500 rounded-xl hover:bg-blue-500 hover:text-white transition-all"
-                            >
-                                <Edit2 size={16} />
-                            </button>
-                            <button
-                                onClick={() => handleDelete(cat._id)}
-                                className="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"
-                            >
-                                <Trash2 size={16} />
-                            </button>
-                        </div>
-                    </div>
-                ))}
+                    )}
+                </div>
             </div>
 
             {/* PAGINATION */}
             {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200">
-                    <p className="text-sm text-[#88694f]">
-                        Trang <span className="font-bold text-[#9d0b0f]">{currentPage}</span> / {totalPages}
-                        {" — "}Tổng <span className="font-bold">{categories.length}</span> danh mục
-                    </p>
-                    <div className="flex items-center gap-2">
+                <div className="flex flex-col items-center gap-6 mt-8 pt-6 border-t border-dashed border-stone-200">
+                    <div className="flex items-center gap-2 order-1">
                         <button
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                             disabled={currentPage === 1}
-                            className="p-2 rounded-xl border border-gray-200 hover:bg-[#9d0b0f] hover:text-white hover:border-[#9d0b0f] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="p-2 rounded-xl border border-gray-200 hover:bg-[#9d0b0f] hover:text-white hover:border-[#9d0b0f] transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-white"
                         >
                             <ChevronLeft size={18} />
                         </button>
@@ -319,9 +333,9 @@ const CategoryManagement = () => {
                             <button
                                 key={p}
                                 onClick={() => setCurrentPage(p)}
-                                className={`w-9 h-9 rounded-xl text-sm font-bold transition-all ${currentPage === p
-                                    ? "bg-[#9d0b0f] text-white shadow-lg"
-                                    : "border border-gray-200 hover:border-[#9d0b0f] hover:text-[#9d0b0f]"
+                                className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${currentPage === p
+                                    ? "bg-[#9d0b0f] text-white shadow-lg shadow-red-100"
+                                    : "bg-white border border-gray-100 hover:border-[#9d0b0f] hover:text-[#9d0b0f]"
                                     }`}
                             >
                                 {p}
@@ -330,11 +344,14 @@ const CategoryManagement = () => {
                         <button
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages}
-                            className="p-2 rounded-xl border border-gray-200 hover:bg-[#9d0b0f] hover:text-white hover:border-[#9d0b0f] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="p-2 rounded-xl border border-gray-200 hover:bg-[#9d0b0f] hover:text-white hover:border-[#9d0b0f] transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-white"
                         >
                             <ChevronRight size={18} />
                         </button>
                     </div>
+                    <p className="text-[11px] text-[#88694f] font-bold uppercase tracking-widest opacity-60">
+                        Trang {currentPage} / {totalPages} — Tổng {categories.length} danh mục
+                    </p>
                 </div>
             )}
 

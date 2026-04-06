@@ -4,7 +4,9 @@ import { Toaster } from "react-hot-toast";
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import CombinedChatWidget from "./components/CombinedChatWidget";
 import Home from "./pages/Home/Home";
+import MagazineDetail from "./pages/MagazineDetail";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
@@ -20,6 +22,11 @@ import ForgotPassword from "./pages/ForgotPassword";
 import OrderTracking from "./pages/OrderTracking";
 import VnpayReturn from "./pages/VnpayReturn";
 import AdminOrders from "./pages/AdminOrders";
+import LuckyWheel from "./pages/LuckyWheel";
+import WelcomePopup from "./pages/Home/WelcomePopup";
+import PromoPopup from "./components/PromoPopup";
+import NotificationListener from "./components/NotificationListener";
+import Wallet from "./components/Wallet";
 
 function App() {
   return (
@@ -28,9 +35,13 @@ function App() {
         <Router>
           <div className="bg-transparent app-container">
             <Header />
+            <WelcomePopup />
+            <PromoPopup />
+            <NotificationListener />
             <main className="min-h-screen">
               <Routes>
                 <Route path="/" element={<Home />} />
+                <Route path="/magazine/:id" element={<MagazineDetail />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
                 <Route path="/search" element={<SearchPage />} />
                 <Route path="/cart" element={<Cart />} />
@@ -44,10 +55,13 @@ function App() {
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/order-tracking/:id" element={<OrderTracking />} />
+                <Route path="/lucky-wheel" element={<LuckyWheel />} />
                 <Route path="/vnpay-return" element={<VnpayReturn />} />
+                <Route path="/wallet" element={<Wallet />} />
               </Routes>
             </main>
             <Footer />
+            <CombinedChatWidget />
             <ScrollToTop />
             <Toaster
               position="top-right"
