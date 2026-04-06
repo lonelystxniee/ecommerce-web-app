@@ -19,6 +19,20 @@ export default function ChatPanel() {
     const scrollRef = useRef(null);
     const admin = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("user")) : null;
 
+    const formatConvDateTime = (iso) => {
+        if (!iso) return ''
+        const d = new Date(iso)
+        const now = new Date()
+        const isToday = d.toDateString() === now.toDateString()
+        const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)
+        const isYesterday = d.toDateString() === yesterday.toDateString()
+        const time = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+        if (isToday) return time
+        if (isYesterday) return `Hôm qua • ${time}`
+        const date = d.toLocaleDateString('vi-VN')
+        return `${date} • ${time}`
+    }
+
     const resetChatState = () => {
         setTargetUserId("");
         setConversationId("");
@@ -164,9 +178,9 @@ export default function ChatPanel() {
         <div>
             <div className="fixed right-6 bottom-6 z-50 flex flex-col items-end">
                 {!open && (
-                    <button 
-                        onClick={() => { setOpen(true); setTotalUnread(0); }} 
-                        aria-label="Mở chat quản trị" 
+                    <button
+                        onClick={() => { setOpen(true); setTotalUnread(0); }}
+                        aria-label="Mở chat quản trị"
                         className="relative w-16 h-16 rounded-full bg-gradient-to-r from-red-700 to-rose-600 text-white shadow-xl shadow-red-900/30 flex items-center justify-center hover:scale-105 transition-transform duration-300 animate-pulse-slow"
                     >
                         <span className="text-2xl drop-shadow-md">💬</span>
@@ -191,14 +205,13 @@ export default function ChatPanel() {
                                 <div className="p-3 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
                                     {conversations.length === 0 && <div className="text-xs text-center p-10 text-gray-400 font-medium italic">Chưa có cuộc hội thoại</div>}
                                     {conversations.map((c) => (
-                                        <div 
-                                            key={c.conversationId} 
-                                            onClick={() => openConversation(c)} 
-                                            className={`flex items-center gap-3 p-3 mb-1.5 rounded-xl cursor-pointer transition-all duration-200 border border-transparent ${
-                                                conversationId === c.conversationId 
-                                                ? 'bg-red-50/80 border-red-100 shadow-sm' 
+                                        <div
+                                            key={c.conversationId}
+                                            onClick={() => openConversation(c)}
+                                            className={`flex items-center gap-3 p-3 mb-1.5 rounded-xl cursor-pointer transition-all duration-200 border border-transparent ${conversationId === c.conversationId
+                                                ? 'bg-red-50/80 border-red-100 shadow-sm'
                                                 : 'hover:bg-gray-50 hover:border-gray-100'
-                                            }`}
+                                                }`}
                                         >
                                             <div className="relative shrink-0">
                                                 <div className="w-12 h-12 rounded-full bg-gray-100 border-2 border-white shadow-sm flex items-center justify-center overflow-hidden">
@@ -214,7 +227,7 @@ export default function ChatPanel() {
                                                         {c.user?.fullName || c.conversationId}
                                                     </div>
                                                     <div className="text-[10px] font-bold text-gray-400 shrink-0 ml-2">
-                                                        {new Date(c.lastAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        {formatConvDateTime(c.lastAt)}
                                                     </div>
                                                 </div>
                                                 <div className="flex justify-between items-center gap-2">
@@ -259,11 +272,10 @@ export default function ChatPanel() {
                                     )}
                                     {messages.map((m) => (
                                         <div key={m._id} className={`flex ${m.senderRole === 'admin' ? 'justify-end' : 'justify-start'} animate-fade-in mb-2`}>
-                                            <div className={`px-5 py-3 rounded-2xl max-w-[80%] shadow-sm ${
-                                                m.senderRole === 'admin' 
-                                                ? 'bg-gradient-to-br from-red-600 to-rose-500 text-white' 
+                                            <div className={`px-5 py-3 rounded-2xl max-w-[80%] shadow-sm ${m.senderRole === 'admin'
+                                                ? 'bg-gradient-to-br from-red-600 to-rose-500 text-white'
                                                 : 'bg-white text-gray-800 border border-gray-100'
-                                            }`}>
+                                                }`}>
                                                 <div className="text-[14px] leading-relaxed break-words whitespace-pre-wrap">{m.content}</div>
                                                 <div className={`text-[10px] mt-1.5 text-right font-medium ${m.senderRole === 'admin' ? 'text-red-100/90' : 'text-gray-400'}`}>
                                                     {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -283,24 +295,23 @@ export default function ChatPanel() {
                                     </div>
 
                                     <div className="flex gap-3 items-center bg-gray-50 p-1.5 rounded-[18px] border border-gray-200 focus-within:border-red-300 focus-within:ring-4 focus-within:ring-red-100/50 transition-all">
-                                        <input 
-                                            value={text} 
-                                            onChange={(e) => setText(e.target.value)} 
-                                            onKeyDown={(e) => e.key === "Enter" && handleSend()} 
-                                            placeholder="Nhập câu trả lời cho khách hàng..." 
-                                            className="flex-1 px-4 py-2 bg-transparent text-[15px] outline-none placeholder-gray-400 font-medium text-gray-800" 
+                                        <input
+                                            value={text}
+                                            onChange={(e) => setText(e.target.value)}
+                                            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                                            placeholder="Nhập câu trả lời cho khách hàng..."
+                                            className="flex-1 px-4 py-2 bg-transparent text-[15px] outline-none placeholder-gray-400 font-medium text-gray-800"
                                         />
-                                        <button 
-                                            onClick={() => handleSend()} 
-                                            disabled={!text.trim()} 
-                                            className={`p-3 rounded-xl flex items-center justify-center transition-all duration-300 ${
-                                                text.trim() 
-                                                ? 'bg-gradient-to-r from-red-700 to-red-600 text-white shadow-md hover:shadow-lg hover:-translate-y-0.5' 
+                                        <button
+                                            onClick={() => handleSend()}
+                                            disabled={!text.trim()}
+                                            className={`p-3 rounded-xl flex items-center justify-center transition-all duration-300 ${text.trim()
+                                                ? 'bg-gradient-to-r from-red-700 to-red-600 text-white shadow-md hover:shadow-lg hover:-translate-y-0.5'
                                                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                            }`}
+                                                }`}
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 -rotate-45 ml-1 mt-0.5">
-                                              <path d="M3.478 2.404a.75.75 0 00-.926.941l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.404z" />
+                                                <path d="M3.478 2.404a.75.75 0 00-.926.941l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.404z" />
                                             </svg>
                                         </button>
                                     </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Minus,
   Plus,
@@ -30,7 +30,7 @@ import API_URL from "../config/apiConfig";
 const ProductDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { addToCart } = useCart();
+  const { addToCart, cartItems, setQuantity } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
 
 
@@ -38,6 +38,7 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [activeImg, setActiveImg] = useState(0);
   const [quantities, setQuantities] = useState([]);
+  const isActionBusy = useRef(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
 
   useEffect(() => {
@@ -55,7 +56,7 @@ const ProductDetail = () => {
           } else {
             availableVariants = [{ label: "Giá gốc", price: data.product.price, stock: data.product.quantity || 0 }].filter(v => v.stock > 0);
           }
-          setQuantities(new Array(availableVariants.length).fill(1));
+          setQuantities(new Array(availableVariants.length).fill(availableVariants.length === 1 ? 1 : 0));
         }
       } catch (error) {
         console.error("Lỗi lấy chi tiết sản phẩm:", error);
@@ -318,23 +319,36 @@ const ProductDetail = () => {
     );
 
   const handleAction = (type) => {
+    if (isActionBusy.current) return;
+    isActionBusy.current = true;
+    setTimeout(() => { isActionBusy.current = false; }, 800);
+
     let hasItems = false;
     quantities.forEach((q, i) => {
       if (q > 0) {
-        // Logic: Thêm vào giỏ hàng với thông tin biến thể thật
-        addToCart({
-          ...product,
-          id: `${product._id}-${variants[i].label}`,
-          name: product.name,
-          label: variants[i].label,
-          price: variants[i].price,
-          quantity: q,
-          image: productImages[0]
-        });
+        const itemId = `${product._id}-${variants[i].label}`;
+        const existing = cartItems.find((item) => item.id === itemId);
+
+        if (type === "buy_now" && existing) {
+          setQuantity(itemId, q);
+        } else {
+          addToCart({
+            ...product,
+            id: itemId,
+            name: product.name,
+            label: variants[i].label,
+            price: variants[i].price,
+            quantity: q,
+            image: productImages[0]
+          });
+        }
         hasItems = true;
       }
     });
-    if (!hasItems) return toast.error("Vui lòng chọn số lượng!");
+    if (!hasItems) {
+      isActionBusy.current = false;
+      return toast.error("Vui lòng chọn số lượng!");
+    }
     if (type === "buy_now") navigate("/cart");
     else toast.success("Đã thêm vào giỏ hàng thành công!");
   };
@@ -475,6 +489,7 @@ const ProductDetail = () => {
                               max={v.stock}
                               value={quantities[i]}
                               onChange={(e) => handleQtyChange(i, e.target.value)}
+                              onWheel={(e) => e.target.blur()}
                               className="w-10 text-center bg-white outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border-none"
                             />
                             <button
@@ -510,13 +525,15 @@ const ProductDetail = () => {
                   <>
                     <button
                       onClick={() => handleAction("add_to_cart")}
-                      className="flex-1 border-2 border-[#f39200] text-[#f39200] py-4 rounded-md font-bold uppercase tracking-widest hover:bg-[#f39200] hover:text-white transition-all active:scale-95 shadow-md"
+                      disabled={isActionBusy.current}
+                      className="flex-1 border-2 border-[#f39200] text-[#f39200] py-4 rounded-md font-bold uppercase tracking-widest hover:bg-[#f39200] hover:text-white transition-all active:scale-95 shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       Thêm vào giỏ
                     </button>
                     <button
                       onClick={() => handleAction("buy_now")}
-                      className="flex-1 bg-[#f39200] text-white py-4 rounded-md font-bold uppercase tracking-widest shadow-lg active:scale-95 hover:bg-[#d88200] transition-colors"
+                      disabled={isActionBusy.current}
+                      className="flex-1 bg-[#f39200] text-white py-4 rounded-md font-bold uppercase tracking-widest shadow-lg active:scale-95 hover:bg-[#d88200] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       Mua ngay
                     </button>

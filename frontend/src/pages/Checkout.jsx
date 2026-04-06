@@ -138,6 +138,7 @@ const Checkout = () => {
           to_district_id: Number(locationSelection.districtId),
           to_ward_code: locationSelection.wardCode,
           weight,
+          orderValue: totalPrice,
         }),
       })
       const data = await res.json()
@@ -295,10 +296,10 @@ const Checkout = () => {
         phone: formData.phone,
         email: formData.email,
         address: selectedAddress
-          ? (selectedAddress.street || '') +
-            (selectedAddress.ward ? ', ' + selectedAddress.ward : '') +
-            (selectedAddress.district ? ', ' + selectedAddress.district : '') +
-            (selectedAddress.province ? ', ' + selectedAddress.province : '')
+          ? (selectedAddress.street || "") +
+          (selectedAddress.ward ? ", " + selectedAddress.ward : "") +
+          (selectedAddress.district ? ", " + selectedAddress.district : "") +
+          (selectedAddress.province ? ", " + selectedAddress.province : "")
           : formData.address,
         note: formData.note,
       },
@@ -309,9 +310,21 @@ const Checkout = () => {
       paymentMethod: formData.paymentMethod,
       shippingInfo: {
         shippingFee: shippingFee || 0,
-        province: selectedAddress ? selectedAddress.province || null : provinces.find((p) => String(p.ProvinceID || p.province_id) === String(locationSelection.provinceId))?.ProvinceName || null,
-        district: selectedAddress ? selectedAddress.district || null : districts.find((d) => String(d.DistrictID || d.district_id) === String(locationSelection.districtId))?.DistrictName || null,
-        ward: selectedAddress ? selectedAddress.ward || null : wards.find((w) => String(w.WardCode || w.code) === String(locationSelection.wardCode))?.WardName || null,
+        province: selectedAddress
+          ? selectedAddress.province || null
+          : provinces.find(
+            (p) => String(p.ProvinceID || p.province_id) === String(locationSelection.provinceId),
+          )?.ProvinceName || null,
+        district: selectedAddress
+          ? selectedAddress.district || null
+          : districts.find(
+            (d) => String(d.DistrictID || d.district_id) === String(locationSelection.districtId),
+          )?.DistrictName || null,
+        ward: selectedAddress
+          ? selectedAddress.ward || null
+          : wards.find(
+            (w) => String(w.WardCode || w.code) === String(locationSelection.wardCode),
+          )?.WardName || null,
         to_district_id: Number(locationSelection.districtId) || undefined,
         to_ward_code: locationSelection.wardCode || undefined,
         weight: selectedItems.reduce((sum, it) => sum + (it.weight || 300) * (it.quantity || 1), 0),
@@ -441,6 +454,7 @@ const Checkout = () => {
                       className="w-full p-3 transition-all border border-gray-200 rounded-lg outline-none focus:border-secondary bg-gray-50/50"
                     />
                   </div>
+
                   <div>
                     <label className="block mb-2 font-medium text-gray-500">
                       Số điện thoại <span className="text-red-500">*</span>
@@ -454,55 +468,64 @@ const Checkout = () => {
                       className="w-full p-3 transition-all border border-gray-200 rounded-lg outline-none focus:border-secondary bg-gray-50/50"
                     />
                   </div>
+
                   <div>
-                    <label className="block mb-2 font-medium text-gray-500">Email</label>
+                    <label className="block mb-2 font-medium text-gray-500">
+                      Email (tuỳ chọn)
+                    </label>
                     <input
                       type="email"
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      placeholder="email@example.com"
+                      placeholder="Nhập email"
                       className="w-full p-3 transition-all border border-gray-200 rounded-lg outline-none focus:border-secondary bg-gray-50/50"
                     />
                   </div>
-                  {savedAddresses.length > 0 ? (
-                    <div className="md:col-span-2 p-4 border rounded-lg bg-[#fffefc]">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="font-bold text-gray-800">Địa chỉ giao hàng</div>
-                          <div className="mt-2 text-sm text-gray-600">
-                            {selectedAddress ? (
-                              <>
-                                <div className="font-bold">
-                                  {selectedAddress.fullName} {selectedAddress.isDefault && <span className="ml-2 text-xs px-2 py-1 rounded-full bg-[#fde0df] text-primary">Mặc định</span>}
-                                </div>
-                                <div className="text-xs">{selectedAddress.phone}</div>
-                                <div className="mt-2 text-sm">
-                                  {(selectedAddress.street || '') +
-                                    (selectedAddress.ward ? ', ' + selectedAddress.ward : '') +
-                                    (selectedAddress.district ? ', ' + selectedAddress.district : '') +
-                                    (selectedAddress.province ? ', ' + selectedAddress.province : '')}
-                                </div>
-                              </>
-                            ) : (
-                              <div className="text-sm text-gray-600">Chưa chọn địa chỉ</div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => setShowAddressModal(true)} className="px-4 py-2 border rounded-2xl hover:bg-gray-50">
-                            Thay đổi
-                          </button>
-                        </div>
+
+                  {selectedAddress ? (
+                    <div className="md:col-span-2 p-4 border border-dashed border-primary/30 bg-primary/5 rounded-xl">
+                      <div className="flex items-start justify-between mb-2">
+                        <span className="text-[10px] font-black text-primary uppercase">Địa chỉ nhận hàng</span>
+                        <button
+                          type="button"
+                          onClick={() => setShowAddressModal(true)}
+                          className="text-[10px] font-black text-secondary hover:underline"
+                        >
+                          THAY ĐỔI
+                        </button>
                       </div>
+                      <p className="font-bold text-gray-800">
+                        {selectedAddress.fullName || formData.fullName} | {selectedAddress.phone || formData.phone}
+                      </p>
+                      <p className="mt-1 text-gray-600">
+                        {formData.address}
+                      </p>
                     </div>
                   ) : (
                     <>
+                      {token && savedAddresses.length > 0 && (
+                        <div className="md:col-span-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowAddressModal(true)}
+                            className="w-full p-3 font-bold transition-all border-2 border-dashed rounded-lg border-primary text-primary hover:bg-primary/5"
+                          >
+                            CHỌN TỪ ĐỊA CHỈ ĐÃ LƯU
+                          </button>
+                        </div>
+                      )}
+
                       <div className="md:col-span-2">
                         <label className="block mb-2 font-medium text-gray-500">
-                          Tỉnh/Thành <span className="text-red-500">*</span>
+                          Tỉnh / Thành phố <span className="text-red-500">*</span>
                         </label>
-                        <select name="provinceId" value={locationSelection.provinceId} onChange={handleLocationChange} className="w-full p-3 border border-gray-200 rounded-lg outline-none">
+                        <select
+                          name="provinceId"
+                          value={locationSelection.provinceId}
+                          onChange={handleLocationChange}
+                          className="w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-secondary bg-gray-50/50"
+                        >
                           <option value="">Chọn tỉnh/thành</option>
                           {provinces.map((p) => (
                             <option key={p.ProvinceID || p.province_id} value={p.ProvinceID || p.province_id}>
@@ -514,9 +537,15 @@ const Checkout = () => {
 
                       <div>
                         <label className="block mb-2 font-medium text-gray-500">
-                          Quận/Huyện <span className="text-red-500">*</span>
+                          Quận / Huyện <span className="text-red-500">*</span>
                         </label>
-                        <select name="districtId" value={locationSelection.districtId} onChange={handleLocationChange} className="w-full p-3 border border-gray-200 rounded-lg outline-none">
+                        <select
+                          name="districtId"
+                          value={locationSelection.districtId}
+                          onChange={handleLocationChange}
+                          disabled={!locationSelection.provinceId}
+                          className="w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-secondary bg-gray-50/50 disabled:opacity-50"
+                        >
                           <option value="">Chọn quận/huyện</option>
                           {districts.map((d) => (
                             <option key={d.DistrictID || d.district_id} value={d.DistrictID || d.district_id}>
@@ -528,9 +557,15 @@ const Checkout = () => {
 
                       <div>
                         <label className="block mb-2 font-medium text-gray-500">
-                          Xã/Phường <span className="text-red-500">*</span>
+                          Phường / Xã <span className="text-red-500">*</span>
                         </label>
-                        <select name="wardCode" value={locationSelection.wardCode} onChange={handleLocationChange} className="w-full p-3 border border-gray-200 rounded-lg outline-none">
+                        <select
+                          name="wardCode"
+                          value={locationSelection.wardCode}
+                          onChange={handleLocationChange}
+                          disabled={!locationSelection.districtId}
+                          className="w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-secondary bg-gray-50/50 disabled:opacity-50"
+                        >
                           <option value="">Chọn xã/phường</option>
                           {wards.map((w) => (
                             <option key={w.WardCode || w.code} value={w.WardCode || w.code}>
@@ -542,14 +577,14 @@ const Checkout = () => {
 
                       <div className="md:col-span-2">
                         <label className="block mb-2 font-medium text-gray-500">
-                          Địa chỉ chi tiết <span className="text-red-500">*</span>
+                          Địa chỉ chi tiết (Số nhà, tên đường...) <span className="text-red-500">*</span>
                         </label>
                         <textarea
                           name="address"
                           value={formData.address}
                           onChange={handleChange}
-                          placeholder="Số nhà, tên đường, phường/xã..."
-                          className="w-full h-24 p-3 transition-all border border-gray-200 rounded-lg outline-none focus:border-secondary bg-gray-50/50"
+                          placeholder="Ví dụ: 123 Đường ABC..."
+                          className="w-full h-24 p-3 border border-gray-200 rounded-lg outline-none focus:border-secondary bg-gray-50/50"
                         ></textarea>
                       </div>
                     </>

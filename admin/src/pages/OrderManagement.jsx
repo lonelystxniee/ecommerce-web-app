@@ -1,6 +1,83 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Eye, Filter, RefreshCcw, Package, Trash2, X, User, MapPin, Truck, CheckCircle, Phone, Mail, CreditCard, ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
+import { Search, Eye, Filter, RefreshCcw, Package, Trash2, X, User, MapPin, Truck, CheckCircle, Phone, Mail, CreditCard, ChevronLeft, ChevronRight, Calendar, ChevronDown } from 'lucide-react'
+
+// ─── CUSTOM WORKFLOW DROPDOWN ───────────────────────────────────────────────
+const STATUS_STYLE = {
+  PENDING: { bg: 'bg-gray-100', text: 'text-gray-600', dot: 'bg-gray-400' },
+  CONFIRMED: { bg: 'bg-blue-100', text: 'text-blue-600', dot: 'bg-blue-500' },
+  PACKING: { bg: 'bg-orange-100', text: 'text-orange-600', dot: 'bg-orange-500' },
+}
+
+// action → trạng thái kết quả sau khi thực hiện
+const ACTIONS = [
+  { key: 'confirm', label: 'Xác nhận đơn', emoji: '✅', result: 'CONFIRMED', color: 'text-blue-600', hover: 'hover:bg-blue-50' },
+  { key: 'pack', label: 'Đóng gói', emoji: '📦', result: 'PACKING', color: 'text-orange-600', hover: 'hover:bg-orange-50' },
+  { key: 'handover', label: 'Bàn giao GHN', emoji: '🚚', result: 'READY_TO_PICK', color: 'text-green-600', hover: 'hover:bg-green-50' },
+  { key: 'revert', label: 'Hủy xác nhận', emoji: '↩️', result: 'PENDING', color: 'text-yellow-600', hover: 'hover:bg-yellow-50', separator: true },
+  { key: 'cancel', label: 'Hủy đơn', emoji: '❌', result: 'CANCELLED', color: 'text-red-500', hover: 'hover:bg-red-50', separator: true },
+]
+
+const WorkflowDropdown = ({ order, statusMap, onAction }) => {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  const style = STATUS_STYLE[order.status] || { bg: 'bg-gray-100', text: 'text-gray-500', dot: 'bg-gray-400' }
+
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  return (
+    <div ref={ref} className="relative inline-block">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all border ${
+          open ? 'ring-2 ring-offset-1 ring-[#9d0b0f]/30 border-[#9d0b0f]/40' : 'border-transparent'
+        } ${style.bg} ${style.text} hover:shadow-md`}
+      >
+        <span className={`w-1.5 h-1.5 rounded-full ${style.dot} shrink-0`} />
+        {statusMap[order.status] || order.status}
+        <ChevronDown size={12} className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="absolute z-50 mt-1.5 left-0 min-w-[180px] bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden animate-fadeIn">
+          <div className="px-3 py-2 border-b border-gray-50">
+            <p className="text-[9px] font-black uppercase tracking-widest text-gray-400">Chuyển trạng thái</p>
+          </div>
+          {ACTIONS.map((a) => {
+            const isCurrent = order.status === a.result
+            return (
+              <div key={a.key}>
+                {a.separator && <div className="h-px mx-3 my-1 bg-gray-100" />}
+                <button
+                  onClick={() => {
+                    if (!isCurrent) {
+                      onAction(order._id, a.key)
+                      setOpen(false)
+                    }
+                  }}
+                  disabled={isCurrent}
+                  className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-[11px] font-bold transition-all
+                    ${isCurrent ? 'bg-gray-50 text-gray-300 cursor-not-allowed' : `${a.color} ${a.hover} cursor-pointer`}`}
+                >
+                  <span className="text-sm">{a.emoji}</span>
+                  <span className="flex-1 text-left">{a.label}</span>
+                  {isCurrent && <span className="text-[8px] bg-gray-200 text-gray-400 px-1.5 py-0.5 rounded-full font-black">HIỆN TẠI</span>}
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+// ────────────────────────────────────────────────────────────────────────────
 
 const OrderManagement = () => {
   const [orders, setOrders] = useState([])
@@ -20,6 +97,12 @@ const OrderManagement = () => {
     endDate: '',
     productName: '',
   })
+
+  // Thêm state cho bộ lọc nhanh (Quick Filters)
+  const [itemSearch, setItemSearch] = useState('')
+  const [minPrice, setMinPrice] = useState('')
+  const [maxPrice, setMaxPrice] = useState('')
+  const [statusFilter, setStatusFilter] = useState('ALL')
   const navigate = useNavigate()
 
   const STATUS_MAP = {
@@ -79,8 +162,15 @@ const OrderManagement = () => {
       endDate: '',
       productName: '',
     })
+    setSearchTerm('')
+    setItemSearch('')
+    setMinPrice('')
+    setMaxPrice('')
+    setStatusFilter('ALL')
     fetchOrders()
   }
+
+  const resetFilters = handleResetFilters
 
   const activeFilterCount = Object.values(filters).filter((v) => v !== '' && v !== 'ALL').length
 
@@ -91,6 +181,7 @@ const OrderManagement = () => {
       pack: 'Chuyển đơn hàng sang trạng thái ĐANG ĐÓNG GÓI?',
       handover: 'Xác nhận BÀN GIAO đơn hàng cho đơn vị vận chuyển GHN?',
       cancel: 'Bạn có chắc chắn muốn HỦY đơn hàng này?',
+      revert: 'Bạn có chắc chắn muốn hủy xác nhận (trở về trạng thái chờ)?',
     }
 
     if (!window.confirm(actionMessages[action] || 'Xác nhận thực hiện hành động này?')) return
@@ -98,14 +189,30 @@ const OrderManagement = () => {
     setWorkflowLoading(orderId)
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`${API_URL}/api/orders/${action}/${orderId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      const data = await response.json()
+      let response
+      let data
+      if (action === 'revert') {
+        // Use the generic status update endpoint to set back to PENDING
+        response = await fetch(`${API_URL}/api/orders/status/${orderId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status: 'PENDING' }),
+        })
+        data = await response.json()
+      } else {
+        response = await fetch(`${API_URL}/api/orders/${action}/${orderId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        data = await response.json()
+      }
+
       if (data.success) {
         fetchOrders()
         setIsModalOpen(false)
@@ -119,7 +226,22 @@ const OrderManagement = () => {
     }
   }
 
-  const totalItems = orders.length
+  const filteredOrders = orders.filter((order) => {
+    const matchesSearch =
+      !searchTerm || order._id.toLowerCase().includes(searchTerm.toLowerCase()) || (order.customerInfo && order.customerInfo.fullName.toLowerCase().includes(searchTerm.toLowerCase()))
+
+    const matchesItemSearch = !itemSearch || (order.items || []).some((it) => it.name.toLowerCase().includes(itemSearch.toLowerCase()))
+
+    const matchesStatus = statusFilter === 'ALL' || order.status === statusFilter
+
+    const amount = Number(order.totalPrice || 0)
+    const matchesMinPrice = !minPrice || amount >= Number(minPrice)
+    const matchesMaxPrice = !maxPrice || amount <= Number(maxPrice)
+
+    return matchesSearch && matchesItemSearch && matchesStatus && matchesMinPrice && matchesMaxPrice
+  })
+
+  const totalItems = filteredOrders.length
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
 
   useEffect(() => {
@@ -128,7 +250,7 @@ const OrderManagement = () => {
 
   const startIndex = (currentPage - 1) * pageSize
   const endIndex = startIndex + pageSize
-  const paginatedOrders = orders.slice(startIndex, endIndex)
+  const paginatedOrders = filteredOrders.slice(startIndex, endIndex)
 
   const getVisiblePages = () => {
     const maxVisible = 5
@@ -172,108 +294,85 @@ const OrderManagement = () => {
           <h2 className="text-3xl font-black text-[#9d0b0f] uppercase tracking-tighter">Quản lý vận đơn</h2>
           <p className="text-[#88694f] font-medium italic">Quy trình: Xác nhận → Đóng gói → Bàn giao GHN</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-6 py-3 transition-all border-2 rounded-2xl font-bold uppercase text-[10px] tracking-widest ${showFilters ? 'bg-[#9d0b0f] border-[#9d0b0f] text-white' : 'bg-white border-[#9d0b0f]/20 text-[#9d0b0f] hover:bg-[#f7f4ef]'}`}
-          >
-            <Filter size={18} />
-            <span>Bộ lọc {activeFilterCount > 0 && `(${activeFilterCount})`}</span>
-          </button>
-          <button onClick={fetchOrders} className="p-3 bg-white border border-[#9d0b0f]/20 rounded-2xl text-[#9d0b0f] hover:bg-[#f7f4ef] transition-all">
-            <RefreshCcw size={20} className={loading ? 'animate-spin' : ''} />
-          </button>
-        </div>
+        <button onClick={fetchOrders} className="p-3 bg-white border border-[#9d0b0f]/20 rounded-2xl text-[#9d0b0f]">
+          <RefreshCcw size={20} className={loading ? 'animate-spin' : ''} />
+        </button>
       </div>
 
-      <div className="bg-white/80 p-4 rounded-2xl border border-[#9d0b0f]/10">
-        <div className="relative">
-          <Search className="absolute left-4 top-3 text-[#9d0b0f]" size={18} />
-          <input
-            type="text"
-            name="productName"
-            placeholder="Tìm kiếm theo sản phẩm hoặc mã vận đơn..."
-            value={filters.productName}
-            onChange={handleFilterChange}
-            onKeyDown={(e) => e.key === 'Enter' && fetchOrders()}
-            className="w-full pl-12 py-2.5 bg-transparent outline-none text-sm font-bold text-[#3e2714]"
-          />
-          <button onClick={fetchOrders} className="absolute right-2 top-1.5 px-4 py-1.5 bg-[#9d0b0f] text-white text-[10px] font-black rounded-xl hover:bg-black transition-all">
-            TÌM KIẾM
-          </button>
+      <div className="bg-white/90 p-6 rounded-[32px] shadow-sm border border-[#9d0b0f]/10 space-y-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {/* Tìm kiếm cơ bản */}
+          <div className="relative">
+            <Search className="absolute left-4 top-3 text-[#9d0b0f]" size={16} />
+            <input
+              type="text"
+              placeholder="Tên khách / Mã đơn..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-[#f7f4ef]/50 border border-transparent focus:border-[#9d0b0f]/30 rounded-xl outline-none text-sm transition-all"
+            />
+          </div>
+
+          {/* Tìm theo sản phẩm */}
+          <div className="relative">
+            <Package className="absolute left-4 top-3 text-[#9d0b0f]" size={16} />
+            <input
+              type="text"
+              placeholder="Tên sản phẩm trong đơn..."
+              value={itemSearch}
+              onChange={(e) => setItemSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-[#f7f4ef]/50 border border-transparent focus:border-[#9d0b0f]/30 rounded-xl outline-none text-sm transition-all"
+            />
+          </div>
+
+          {/* Lọc theo giá */}
+          <div className="flex gap-2">
+            <input
+              type="number"
+              placeholder="Giá từ..."
+              value={minPrice}
+              onChange={(e) => setMinPrice(e.target.value)}
+              className="w-1/2 px-4 py-2 bg-[#f7f4ef]/50 border border-transparent focus:border-[#9d0b0f]/30 rounded-xl outline-none text-sm transition-all"
+            />
+            <input
+              type="number"
+              placeholder="đến..."
+              value={maxPrice}
+              onChange={(e) => setMaxPrice(e.target.value)}
+              className="w-1/2 px-4 py-2 bg-[#f7f4ef]/50 border border-transparent focus:border-[#9d0b0f]/30 rounded-xl outline-none text-sm transition-all"
+            />
+          </div>
+
+          {/* Lọc theo trạng thái */}
+          <div className="relative">
+            <Filter className="absolute left-4 top-3 text-[#9d0b0f]" size={16} />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-[#f7f4ef]/50 border border-transparent focus:border-[#9d0b0f]/30 rounded-xl outline-none text-sm transition-all appearance-none cursor-pointer"
+            >
+              <option value="ALL">Tất cả trạng thái</option>
+              {Object.entries(STATUS_MAP).map(([key, val]) => (
+                <option key={key} value={key}>
+                  {val}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Nút thao tác bổ sung */}
+        <div className="flex justify-end gap-3 pt-2 border-t border-gray-100 border-dashed">
+          {(searchTerm || itemSearch || minPrice || maxPrice || statusFilter !== 'ALL') && (
+            <button onClick={resetFilters} className="flex items-center gap-2 px-4 py-1.5 text-xs font-bold text-gray-500 hover:text-[#9d0b0f] transition-colors">
+              <Trash2 size={14} /> Xóa bộ lọc
+            </button>
+          )}
+          <div className="text-[10px] font-bold text-gray-400 flex items-center bg-gray-50 px-3 rounded-lg">
+            Hiển thị: {filteredOrders.length} / {orders.length} đơn hàng
+          </div>
         </div>
       </div>
-
-      {showFilters && (
-        <div className="p-8 border-2 border-[#9d0b0f]/10 bg-white rounded-[40px] shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
-            <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Trạng thái vận đơn</label>
-              <select
-                name="status"
-                value={filters.status}
-                onChange={handleFilterChange}
-                className="w-full px-4 py-3 bg-[#f7f4ef] border-0 rounded-[20px] text-sm font-bold text-[#3e2714] focus:ring-2 focus:ring-[#9d0b0f]"
-              >
-                <option value="ALL">Tất cả trạng thái</option>
-                {Object.entries(STATUS_MAP).map(([key, value]) => (
-                  <option key={key} value={key}>
-                    {value}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Khoảng giá trị (VNĐ)</label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="number"
-                  name="minAmount"
-                  placeholder="Từ"
-                  value={filters.minAmount}
-                  onChange={handleFilterChange}
-                  className="w-full px-4 py-3 bg-[#f7f4ef] border-0 rounded-[20px] text-sm font-bold"
-                />
-                <span className="font-bold text-gray-400">→</span>
-                <input
-                  type="number"
-                  name="maxAmount"
-                  placeholder="Đến"
-                  value={filters.maxAmount}
-                  onChange={handleFilterChange}
-                  className="w-full px-4 py-3 bg-[#f7f4ef] border-0 rounded-[20px] text-sm font-bold"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Từ ngày đặt</label>
-              <div className="relative">
-                <Calendar className="absolute text-[#9d0b0f] left-4 top-3.5" size={16} />
-                <input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} className="w-full py-3 pl-12 pr-4 bg-[#f7f4ef] border-0 rounded-[20px] text-sm font-bold" />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Đến ngày đặt</label>
-              <div className="relative">
-                <Calendar className="absolute text-[#9d0b0f] left-4 top-3.5" size={16} />
-                <input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} className="w-full py-3 pl-12 pr-4 bg-[#f7f4ef] border-0 rounded-[20px] text-sm font-bold" />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-6 mt-8 border-t border-gray-100 border-dashed">
-            <button onClick={handleResetFilters} className="px-8 py-3 text-[10px] font-black uppercase text-gray-500 hover:text-[#9d0b0f] transition-all">
-              Thiết lập lại
-            </button>
-            <button onClick={fetchOrders} className="px-10 py-3 text-[10px] font-black uppercase text-white bg-[#3e2714] hover:bg-[#9d0b0f] rounded-[20px] shadow-lg shadow-stone-200 transition-all">
-              Áp dụng lọc
-            </button>
-          </div>
-        </div>
-      )}
 
       <div className="bg-white rounded-[32px] shadow-xl border border-gray-100 overflow-hidden">
         {loading ? (
@@ -309,34 +408,19 @@ const OrderManagement = () => {
                     <p className="text-[10px] text-gray-400 font-bold">{order.customerInfo.phone}</p>
                   </td>
                   <td className="px-8 py-6 text-center">
-                    <div className="flex justify-center gap-2">
+                    <div className="flex justify-center">
                       {workflowLoading === order._id ? (
                         <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 animate-pulse">
                           <RefreshCcw size={12} className="animate-spin" /> ĐANG XỬ LÝ...
                         </div>
+                      ) : ['READY_TO_PICK', 'PICKING', 'STORING', 'DELIVERING', 'COMPLETED'].includes(order.status) ? (
+                        <span className="text-green-600 font-black text-[10px] flex items-center gap-1 bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
+                          <CheckCircle size={12} /> Đã bàn giao
+                        </span>
+                      ) : order.status === 'CANCELLED' ? (
+                        <span className="text-red-500 font-black text-[10px] bg-red-50 px-3 py-1.5 rounded-full border border-red-100">Đã hủy</span>
                       ) : (
-                        <>
-                          {order.status === 'PENDING' && (
-                            <button onClick={() => handleWorkflow(order._id, 'confirm')} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-xl text-[10px] font-bold shadow-sm">
-                              XÁC NHẬN
-                            </button>
-                          )}
-                          {order.status === 'CONFIRMED' && (
-                            <button onClick={() => handleWorkflow(order._id, 'pack')} className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-1.5 rounded-xl text-[10px] font-bold shadow-sm">
-                              ĐÓNG GÓI
-                            </button>
-                          )}
-                          {order.status === 'PACKING' && (
-                            <button onClick={() => handleWorkflow(order._id, 'handover')} className="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-xl text-[10px] font-bold shadow-sm">
-                              BÀN GIAO GHN
-                            </button>
-                          )}
-                          {['READY_TO_PICK', 'PICKING', 'STORING', 'DELIVERING', 'COMPLETED'].includes(order.status) && (
-                            <span className="text-green-600 font-black text-[10px] flex items-center gap-1 bg-green-50 px-3 py-1 rounded-full">
-                              <CheckCircle size={12} /> ĐÃ BÀN GIAO
-                            </span>
-                          )}
-                        </>
+                        <WorkflowDropdown order={order} statusMap={STATUS_MAP} onAction={handleWorkflow} />
                       )}
                     </div>
                   </td>
@@ -515,7 +599,6 @@ const OrderManagement = () => {
                             })
                             const d = await res.json()
                             if (d.success) {
-                              alert('Đã tạo mã GHN: ' + (d.ghnOrderCode || ''))
                               fetchOrders()
                               setIsModalOpen(false)
                             } else {

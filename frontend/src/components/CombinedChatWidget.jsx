@@ -19,12 +19,12 @@ export default function CombinedChatWidget() {
   const user =
     typeof window !== 'undefined'
       ? (() => {
-          try {
-            return JSON.parse(localStorage.getItem('user'))
-          } catch {
-            return null
-          }
-        })()
+        try {
+          return JSON.parse(localStorage.getItem('user'))
+        } catch {
+          return null
+        }
+      })()
       : null
 
   const scrollRef = useRef(null)
@@ -280,11 +280,10 @@ export default function CombinedChatWidget() {
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
                   <div
-                    className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-xl transition-all duration-500 ${
-                      activeTab === 'support'
+                    className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-xl transition-all duration-500 ${activeTab === 'support'
                         ? 'bg-gradient-to-br from-[#9d0b0f] to-[#ca1d22] text-white shadow-red-200 rotate-3'
                         : 'bg-gradient-to-br from-teal-500 to-emerald-400 text-white shadow-teal-100 -rotate-3'
-                    }`}
+                      }`}
                   >
                     {activeTab === 'support' ? '👩‍💻' : '🤖'}
                   </div>
@@ -310,18 +309,16 @@ export default function CombinedChatWidget() {
               <div className="flex p-1.5 bg-gray-100/80 rounded-[24px] border border-gray-100 relative">
                 <button
                   onClick={() => setActiveTab('support')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-[20px] text-[13px] font-black transition-all duration-500 relative z-10 ${
-                    activeTab === 'support' ? 'bg-white text-[#9d0b0f] shadow-lg scale-[1.02]' : 'text-gray-500 hover:text-gray-700 hover:scale-[0.98]'
-                  }`}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-[20px] text-[13px] font-black transition-all duration-500 relative z-10 ${activeTab === 'support' ? 'bg-white text-[#9d0b0f] shadow-lg scale-[1.02]' : 'text-gray-500 hover:text-gray-700 hover:scale-[0.98]'
+                    }`}
                 >
                   <span>HỖ TRỢ</span>
                   {unreadCount > 0 && <span className="bg-red-600 text-white text-[9px] px-2 py-0.5 rounded-full shadow-md">{unreadCount}</span>}
                 </button>
                 <button
                   onClick={() => setActiveTab('ai')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-[20px] text-[13px] font-black transition-all duration-500 relative z-10 ${
-                    activeTab === 'ai' ? 'bg-white text-teal-600 shadow-lg scale-[1.02]' : 'text-gray-500 hover:text-gray-700 hover:scale-[0.98]'
-                  }`}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-[20px] text-[13px] font-black transition-all duration-500 relative z-10 ${activeTab === 'ai' ? 'bg-white text-teal-600 shadow-lg scale-[1.02]' : 'text-gray-500 hover:text-gray-700 hover:scale-[0.98]'
+                    }`}
                 >
                   <span>TRỢ LÝ AI</span>
                   <span className="bg-teal-100/50 text-teal-600 text-[8px] px-1.5 py-0.5 rounded-md font-black tracking-tighter">BETA</span>
@@ -343,11 +340,10 @@ export default function CombinedChatWidget() {
                   {messagesSupport.map((m) => (
                     <div key={m._id} className={`flex ${m.senderRole === 'admin' ? 'justify-start' : 'justify-end'} animate-zoomIn`}>
                       <div
-                        className={`relative px-5 py-4 rounded-[1.8rem] max-w-[85%] transition-all duration-300 ${
-                          m.senderRole === 'admin'
+                        className={`relative px-5 py-4 rounded-[1.8rem] max-w-[85%] transition-all duration-300 ${m.senderRole === 'admin'
                             ? 'bg-white text-gray-800 rounded-tl-sm shadow-sm border border-gray-100'
                             : 'bg-gradient-to-br from-[#9d0b0f] to-[#ca1d22] text-white rounded-tr-sm shadow-xl shadow-red-900/10'
-                        }`}
+                          }`}
                       >
                         <div
                           className="text-[14px] leading-relaxed break-words whitespace-pre-wrap"
@@ -377,11 +373,10 @@ export default function CombinedChatWidget() {
                   {messagesAI.map((m) => (
                     <div key={m._id} className={`flex ${m.senderRole === 'ai' || m.isAI ? 'justify-start' : 'justify-end'} animate-zoomIn`}>
                       <div
-                        className={`px-5 py-4 rounded-[1.8rem] max-w-[85%] transition-all duration-300 ${
-                          m.senderRole === 'ai' || m.isAI
+                        className={`px-5 py-4 rounded-[1.8rem] max-w-[85%] transition-all duration-300 ${m.senderRole === 'ai' || m.isAI
                             ? 'bg-white/80 backdrop-blur-md text-gray-800 border border-teal-100 rounded-tl-sm shadow-sm'
                             : 'bg-gradient-to-br from-teal-600 to-emerald-500 text-white rounded-tr-sm shadow-xl shadow-teal-900/10'
-                        }`}
+                          }`}
                       >
                         <div
                           className="text-[14px] leading-relaxed break-words whitespace-pre-wrap"
@@ -431,11 +426,10 @@ export default function CombinedChatWidget() {
               )}
 
               <div
-                className={`flex items-center gap-3 p-2 rounded-[28px] border-2 transition-all duration-500 group shadow-sm bg-gray-50/50 ${
-                  activeTab === 'support'
+                className={`flex items-center gap-3 p-2 rounded-[28px] border-2 transition-all duration-500 group shadow-sm bg-gray-50/50 ${activeTab === 'support'
                     ? 'border-gray-50 focus-within:border-red-100/50 focus-within:bg-white focus-within:shadow-[0_10px_30px_rgba(157,11,15,0.08)]'
                     : 'border-gray-50 focus-within:border-teal-100/50 focus-within:bg-white focus-within:shadow-[0_10px_30px_rgba(20,184,166,0.08)]'
-                }`}
+                  }`}
               >
                 <input
                   value={activeTab === 'support' ? textSupport : textAI}
@@ -452,13 +446,12 @@ export default function CombinedChatWidget() {
                 <button
                   onClick={() => (activeTab === 'support' ? handleSendSupport() : handleSendAI())}
                   disabled={activeTab === 'support' ? !textSupport.trim() : !textAI.trim() || loadingAI}
-                  className={`w-14 h-14 rounded-[22px] flex items-center justify-center transition-all duration-500 active:scale-90 ${
-                    (activeTab === 'support' ? textSupport.trim() : textAI.trim() && !loadingAI)
+                  className={`w-14 h-14 rounded-[22px] flex items-center justify-center transition-all duration-500 active:scale-90 ${(activeTab === 'support' ? textSupport.trim() : textAI.trim() && !loadingAI)
                       ? activeTab === 'support'
                         ? 'bg-gradient-to-br from-[#9d0b0f] to-[#ca1d22] text-white shadow-xl shadow-red-900/30'
                         : 'bg-gradient-to-br from-teal-500 to-emerald-400 text-white shadow-xl shadow-teal-900/30'
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed grayscale'
-                  }`}
+                    }`}
                 >
                   {activeTab === 'ai' && loadingAI ? (
                     <svg className="w-6 h-6 animate-spin" viewBox="0 0 24 24">
