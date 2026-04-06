@@ -202,7 +202,7 @@ const CategoryManagement = () => {
                         Quản lý danh mục
                     </h2>
                     <p className="text-[#88694f] italic">
-                        Quản lý các loại sản phẩm Ô mai Hồng Lam
+                        Quản lý các loại sản phẩm Clickgo
                     </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-4">

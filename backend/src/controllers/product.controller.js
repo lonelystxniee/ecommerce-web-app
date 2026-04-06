@@ -15,10 +15,14 @@ exports.createProduct = async (req, res) => {
     if (productCode) {
       const existingProduct = await Product.findOne({ productCode });
       if (existingProduct) {
-        return res.status(400).json({ success: false, message: "Mã sản phẩm đã tồn tại!" });
+        return res
+          .status(400)
+          .json({ success: false, message: "Mã sản phẩm đã tồn tại!" });
       }
     } else {
-      return res.status(400).json({ success: false, message: "Vui lòng cung cấp mã sản phẩm!" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Vui lòng cung cấp mã sản phẩm!" });
     }
 
     // 2️⃣ Upload images if present
@@ -35,12 +39,12 @@ exports.createProduct = async (req, res) => {
     if (req.body.categoryName) {
       const categoryNames = req.body.categoryName
         .split(",")
-        .map(name => name.trim().toLowerCase());
+        .map((name) => name.trim().toLowerCase());
 
       const categories = await Category.find();
       const categoryMap = {};
 
-      categories.forEach(cat => {
+      categories.forEach((cat) => {
         categoryMap[cat.name.trim().toLowerCase()] = cat._id;
       });
 
@@ -54,7 +58,9 @@ exports.createProduct = async (req, res) => {
     // Default to at least one category if needed, or handle error
     if (categoryIds.length === 0 && !req.body.category) {
       // Fallback for case where frontend sends 'category' field
-      const fallbackCat = await Category.findOne({ name: new RegExp(req.body.category || "o-mai", "i") });
+      const fallbackCat = await Category.findOne({
+        name: new RegExp(req.body.category || "o-mai", "i"),
+      });
       if (fallbackCat) categoryIds.push(fallbackCat._id);
     }
 
@@ -62,9 +68,10 @@ exports.createProduct = async (req, res) => {
     let variants = [];
     if (req.body.variants) {
       try {
-        variants = typeof req.body.variants === 'string'
-          ? JSON.parse(req.body.variants)
-          : req.body.variants;
+        variants =
+          typeof req.body.variants === "string"
+            ? JSON.parse(req.body.variants)
+            : req.body.variants;
       } catch (e) {
         console.error("Error parsing variants:", e);
       }
@@ -73,23 +80,30 @@ exports.createProduct = async (req, res) => {
     const productData = {
       productName: req.body.name || req.body.productName,
       productCode,
-      price: req.body.price || (variants[0]?.price || 0),
+      price: req.body.price || variants[0]?.price || 0,
       description: req.body.description || "",
       images: imageUrls,
-      quantity: req.body.quantity || (variants.reduce((acc, v) => acc + (v.stock || 0), 0) || 0),
+      quantity:
+        req.body.quantity ||
+        variants.reduce((acc, v) => acc + (v.stock || 0), 0) ||
+        0,
       status: req.body.status || "active",
       categoryID: categoryIds,
       slogan: req.body.slogan || "",
-      variants: variants
+      variants: variants,
     };
 
     const product = await Product.create(productData);
 
     // Ghi log
-    await activityController.createLog(req.user.id, "Tạo sản phẩm", `Đã tạo sản phẩm: ${productData.productName} (${productData.productCode})`, req);
+    await activityController.createLog(
+      req.user.id,
+      "Tạo sản phẩm",
+      `Đã tạo sản phẩm: ${productData.productName} (${productData.productCode})`,
+      req,
+    );
 
     res.status(201).json({ success: true, product });
-
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -99,7 +113,9 @@ exports.createProduct = async (req, res) => {
 exports.importExcel = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ success: false, message: "No file uploaded" });
+      return res
+        .status(400)
+        .json({ success: false, message: "No file uploaded" });
     }
     const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
     const sheetName = workbook.SheetNames[0];
@@ -109,7 +125,7 @@ exports.importExcel = async (req, res) => {
     // Fetch all existing categories once
     const existingCategories = await Category.find();
     const categoryMap = {};
-    existingCategories.forEach(cat => {
+    existingCategories.forEach((cat) => {
       categoryMap[cat.name.trim().toLowerCase()] = cat._id;
     });
 
@@ -123,21 +139,27 @@ exports.importExcel = async (req, res) => {
 
       const productCode = row.productCode || row.sku || row.code;
       if (!productCode) {
-        errors.push({ row: rowNumber, message: "Mã sản phẩm không được để trống." });
+        errors.push({
+          row: rowNumber,
+          message: "Mã sản phẩm không được để trống.",
+        });
         continue;
       }
 
       // Check for existing productCode to prevent duplicates
       const existingProduct = await Product.findOne({ productCode });
       if (existingProduct) {
-        errors.push({ row: rowNumber, message: `Mã sản phẩm '${productCode}' đã tồn tại.` });
+        errors.push({
+          row: rowNumber,
+          message: `Mã sản phẩm '${productCode}' đã tồn tại.`,
+        });
         continue;
       }
 
       const categoryNames = row.categoryName
         ?.split(",")
-        .map(name => name.trim().toLowerCase())
-        .filter(name => name); // Filter out empty strings
+        .map((name) => name.trim().toLowerCase())
+        .filter((name) => name); // Filter out empty strings
 
       const categoryIds = [];
 
@@ -153,16 +175,23 @@ exports.importExcel = async (req, res) => {
               createdCategoryIds.add(newCategory._id.toString()); // Track newly created
             } catch (catError) {
               // Handle potential duplicate category name if multiple rows try to create the same category concurrently
-              if (catError.code === 11000) { // Duplicate key error
+              if (catError.code === 11000) {
+                // Duplicate key error
                 const existingCat = await Category.findOne({ name: name });
                 if (existingCat) {
                   categoryMap[name] = existingCat._id;
                   categoryIds.push(existingCat._id);
                 } else {
-                  errors.push({ row: rowNumber, message: `Lỗi tạo danh mục '${name}': ${catError.message}` });
+                  errors.push({
+                    row: rowNumber,
+                    message: `Lỗi tạo danh mục '${name}': ${catError.message}`,
+                  });
                 }
               } else {
-                errors.push({ row: rowNumber, message: `Lỗi tạo danh mục '${name}': ${catError.message}` });
+                errors.push({
+                  row: rowNumber,
+                  message: `Lỗi tạo danh mục '${name}': ${catError.message}`,
+                });
               }
             }
           }
@@ -170,7 +199,10 @@ exports.importExcel = async (req, res) => {
       }
 
       if (categoryIds.length === 0) {
-        errors.push({ row: rowNumber, message: "Không tìm thấy hoặc tạo được danh mục cho sản phẩm." });
+        errors.push({
+          row: rowNumber,
+          message: "Không tìm thấy hoặc tạo được danh mục cho sản phẩm.",
+        });
         continue;
       }
 
@@ -183,7 +215,7 @@ exports.importExcel = async (req, res) => {
         quantity: Number(row.quantity) || 0,
         status: row.status || "active",
         categoryID: categoryIds,
-        slogan: row.slogan || ""
+        slogan: row.slogan || "",
       });
     }
 
@@ -193,22 +225,34 @@ exports.importExcel = async (req, res) => {
     if (productsToInsert.length > 0) {
       try {
         insertedProducts = await Product.insertMany(productsToInsert, {
-          ordered: false
+          ordered: false,
         });
         // Ghi log nhập thành công
-        await activityController.createLog(req.user.id, "Nhập Excel sản phẩm", `Đã nhập thành công ${insertedProducts.length} sản phẩm từ Excel`, req);
+        await activityController.createLog(
+          req.user.id,
+          "Nhập Excel sản phẩm",
+          `Đã nhập thành công ${insertedProducts.length} sản phẩm từ Excel`,
+          req,
+        );
       } catch (insertError) {
         // Handle bulk insert errors (e.g., duplicate productCode if not caught earlier)
         if (insertError.writeErrors) {
-          insertError.writeErrors.forEach(err => {
+          insertError.writeErrors.forEach((err) => {
             const productData = productsToInsert[err.index];
             errors.push({
-              row: rows.findIndex(r => (r.productCode || r.sku || r.code) === productData.productCode) + 2,
-              message: `Lỗi khi thêm sản phẩm '${productData.productName}' (Mã: ${productData.productCode}): ${err.errmsg}`
+              row:
+                rows.findIndex(
+                  (r) =>
+                    (r.productCode || r.sku || r.code) ===
+                    productData.productCode,
+                ) + 2,
+              message: `Lỗi khi thêm sản phẩm '${productData.productName}' (Mã: ${productData.productCode}): ${err.errmsg}`,
             });
           });
         } else {
-          errors.push({ message: `Lỗi không xác định khi thêm sản phẩm: ${insertError.message}` });
+          errors.push({
+            message: `Lỗi không xác định khi thêm sản phẩm: ${insertError.message}`,
+          });
         }
         // Successfully inserted documents are in insertError.insertedDocs
         if (insertError.insertedDocs) {
@@ -223,9 +267,8 @@ exports.importExcel = async (req, res) => {
       insertedCount: insertedProducts.length,
       failedCount: errors.length,
       errors: errors,
-      createdCategoriesCount: createdCategoryIds.size
+      createdCategoriesCount: createdCategoryIds.size,
     });
-
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -239,13 +282,17 @@ exports.getAllProducts = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const [products, totalProducts] = await Promise.all([
-      Product.find().populate("categoryID").sort({ createdAt: -1 }).skip(skip).limit(limit),
-      Product.countDocuments()
+      Product.find()
+        .populate("categoryID")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Product.countDocuments(),
     ]);
 
-    const mappedProducts = products.map(p => ({
+    const mappedProducts = products.map((p) => ({
       ...p.toObject(),
-      name: p.productName
+      name: p.productName,
     }));
 
     res.json({
@@ -255,8 +302,8 @@ exports.getAllProducts = async (req, res) => {
         currentPage: page,
         totalPages: Math.ceil(totalProducts / limit),
         totalProducts,
-        limit
-      }
+        limit,
+      },
     });
   } catch (error) {
     console.error(error);
@@ -270,10 +317,17 @@ exports.deleteProduct = async (req, res) => {
     const { id } = req.params;
     const deleted = await Product.findByIdAndDelete(id);
     if (!deleted) {
-      return res.status(404).json({ success: false, message: "Product not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
     }
     // Ghi log
-    await activityController.createLog(req.user.id, "Xóa sản phẩm", `Đã xóa sản phẩm: ${deleted.productName} (${deleted.productCode})`, req);
+    await activityController.createLog(
+      req.user.id,
+      "Xóa sản phẩm",
+      `Đã xóa sản phẩm: ${deleted.productName} (${deleted.productCode})`,
+      req,
+    );
 
     res.json({ success: true, message: "Product deleted successfully" });
   } catch (error) {
@@ -288,7 +342,9 @@ exports.getProductById = async (req, res) => {
     const { id } = req.params;
     const product = await Product.findById(id).populate("categoryID");
     if (!product) {
-      return res.status(404).json({ success: false, message: "Product not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
     }
     const result = { ...product.toObject(), name: product.productName };
     res.json({ success: true, product: result });
@@ -296,7 +352,7 @@ exports.getProductById = async (req, res) => {
     console.error(error);
     res.status(500).json({ success: false, message: "Server error" });
   }
-}
+};
 
 // Update product
 exports.updateProduct = async (req, res) => {
@@ -326,12 +382,12 @@ exports.updateProduct = async (req, res) => {
     if (req.body && req.body.categoryName) {
       const categoryNames = req.body.categoryName
         .split(",")
-        .map(name => name.trim().toLowerCase());
+        .map((name) => name.trim().toLowerCase());
 
       const categories = await Category.find();
       const categoryMap = {};
 
-      categories.forEach(cat => {
+      categories.forEach((cat) => {
         categoryMap[cat.name.trim().toLowerCase()] = cat._id;
       });
 
@@ -349,14 +405,18 @@ exports.updateProduct = async (req, res) => {
     // 2️⃣ Handle variants
     if (req.body.variants) {
       try {
-        updateData.variants = typeof req.body.variants === 'string'
-          ? JSON.parse(req.body.variants)
-          : req.body.variants;
+        updateData.variants =
+          typeof req.body.variants === "string"
+            ? JSON.parse(req.body.variants)
+            : req.body.variants;
 
         // Optionally update top-level price and quantity based on variants
         if (updateData.variants.length > 0) {
           updateData.price = updateData.variants[0].price;
-          updateData.quantity = updateData.variants.reduce((acc, v) => acc + (Number(v.stock) || 0), 0);
+          updateData.quantity = updateData.variants.reduce(
+            (acc, v) => acc + (Number(v.stock) || 0),
+            0,
+          );
         }
       } catch (e) {
         console.error("Error parsing variants in update:", e);
@@ -365,18 +425,27 @@ exports.updateProduct = async (req, res) => {
 
     // 3️⃣ Update product
     const updated = await Product.findByIdAndUpdate(id, updateData, {
-      new: true
+      new: true,
     });
 
     if (!updated) {
-      return res.status(404).json({ success: false, message: "Product not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
     }
 
     // Ghi log
-    await activityController.createLog(req.user.id, "Cập nhật sản phẩm", `Đã cập nhật sản phẩm: ${updated.productName} (${updated.productCode})`, req);
+    await activityController.createLog(
+      req.user.id,
+      "Cập nhật sản phẩm",
+      `Đã cập nhật sản phẩm: ${updated.productName} (${updated.productCode})`,
+      req,
+    );
 
-    res.json({ success: true, product: { ...updated.toObject(), name: updated.productName } });
-
+    res.json({
+      success: true,
+      product: { ...updated.toObject(), name: updated.productName },
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Server error" });
@@ -386,7 +455,15 @@ exports.updateProduct = async (req, res) => {
 // Search products with filters and pagination
 exports.searchProduct = async (req, res) => {
   try {
-    const { q, categoryId, minPrice, maxPrice, sort, page = 1, limit = 12 } = req.query;
+    const {
+      q,
+      categoryId,
+      minPrice,
+      maxPrice,
+      sort,
+      page = 1,
+      limit = 12,
+    } = req.query;
 
     let query = {};
 
@@ -422,7 +499,10 @@ exports.searchProduct = async (req, res) => {
 
     const skip = (Number(page) - 1) * Number(limit);
 
-    const products = await Product.find(query, q ? { score: { $meta: "textScore" } } : {})
+    const products = await Product.find(
+      query,
+      q ? { score: { $meta: "textScore" } } : {},
+    )
       .populate("categoryID")
       .sort(sortOptions)
       .skip(skip)
@@ -437,12 +517,14 @@ exports.searchProduct = async (req, res) => {
         totalProducts,
         currentPage: Number(page),
         totalPages: Math.ceil(totalProducts / Number(limit)),
-        limit: Number(limit)
-      }
+        limit: Number(limit),
+      },
     });
   } catch (error) {
     console.error("Search error:", error);
-    res.status(500).json({ success: false, message: "Lỗi khi tìm kiếm sản phẩm" });
+    res
+      .status(500)
+      .json({ success: false, message: "Lỗi khi tìm kiếm sản phẩm" });
   }
 };
 
@@ -452,14 +534,16 @@ exports.bulkStockIn = async (req, res) => {
     const { items } = req.body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ success: false, message: "Danh sách hàng nhập không hợp lệ" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Danh sách hàng nhập không hợp lệ" });
     }
 
     const results = {
       updated: 0,
       created: 0,
       failed: 0,
-      errors: []
+      errors: [],
     };
 
     for (const item of items) {
@@ -471,25 +555,29 @@ exports.bulkStockIn = async (req, res) => {
           // If product has variants, we MUST update a variant
           if (product.variants && product.variants.length > 0) {
             let variant = item.variantLabel
-              ? product.variants.find(v => v.label === item.variantLabel)
+              ? product.variants.find((v) => v.label === item.variantLabel)
               : product.variants[0]; // If label not provided, default to first variant
 
             if (variant) {
-              variant.stock = (variant.stock || 0) + (Number(item.quantity) || 0);
+              variant.stock =
+                (variant.stock || 0) + (Number(item.quantity) || 0);
               if (item.price) variant.price = Number(item.price);
             } else if (item.variantLabel) {
               // Add new variant if label provided but not found
               product.variants.push({
                 label: item.variantLabel,
                 price: Number(item.price) || product.price,
-                stock: Number(item.quantity) || 0
+                stock: Number(item.quantity) || 0,
               });
             }
             // Sync total quantity
-            product.quantity = product.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
+            product.quantity = product.variants.reduce(
+              (sum, v) => sum + (Number(v.stock) || 0),
+              0,
+            );
           } else {
             // Flat product update
-            product.quantity += (Number(item.quantity) || 0);
+            product.quantity += Number(item.quantity) || 0;
             if (item.price) product.price = Number(item.price);
           }
 
@@ -499,7 +587,9 @@ exports.bulkStockIn = async (req, res) => {
           // Create new product
           if (!item.productName || !item.categoryID) {
             results.failed++;
-            results.errors.push(`Sản phẩm ${item.productCode} chưa tồn tại, thiếu thông tin (Tên hoặc Danh mục)`);
+            results.errors.push(
+              `Sản phẩm ${item.productCode} chưa tồn tại, thiếu thông tin (Tên hoặc Danh mục)`,
+            );
             continue;
           }
 
@@ -511,11 +601,15 @@ exports.bulkStockIn = async (req, res) => {
             categoryID: item.categoryID,
             description: item.description || "",
             slogan: item.slogan || "",
-            variants: item.variantLabel ? [{
-              label: item.variantLabel,
-              price: Number(item.price) || 0,
-              stock: Number(item.quantity) || 0
-            }] : []
+            variants: item.variantLabel
+              ? [
+                  {
+                    label: item.variantLabel,
+                    price: Number(item.price) || 0,
+                    stock: Number(item.quantity) || 0,
+                  },
+                ]
+              : [],
           };
 
           await Product.create(productData);
@@ -523,7 +617,9 @@ exports.bulkStockIn = async (req, res) => {
         }
       } catch (err) {
         results.failed++;
-        results.errors.push(`Lỗi khi xử lý mã ${item.productCode}: ${err.message}`);
+        results.errors.push(
+          `Lỗi khi xử lý mã ${item.productCode}: ${err.message}`,
+        );
       }
     }
 
@@ -532,18 +628,23 @@ exports.bulkStockIn = async (req, res) => {
       req.user.id,
       "Nhập kho hàng loạt",
       `Đã cập nhật ${results.updated} và tạo mới ${results.created} sản phẩm`,
-      req
+      req,
     );
 
     res.status(200).json({
       success: true,
       message: `Nhập kho hoàn tất: Cập nhật ${results.updated}, Tạo mới ${results.created}, Lỗi ${results.failed}`,
-      results
+      results,
     });
-
   } catch (error) {
     console.error("Bulk stock-in error:", error);
-    res.status(500).json({ success: false, message: "Lỗi hệ thống khi nhập kho", error: error.message });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Lỗi hệ thống khi nhập kho",
+        error: error.message,
+      });
   }
 };
 
@@ -551,7 +652,9 @@ exports.bulkStockIn = async (req, res) => {
 exports.importWarehouseExcel = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ success: false, message: "Vui lòng tải lên file Excel!" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Vui lòng tải lên file Excel!" });
     }
 
     // Parse the uploaded file buffer
@@ -561,23 +664,37 @@ exports.importWarehouseExcel = async (req, res) => {
     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
 
     if (rows.length < 2) {
-      return res.status(400).json({ success: false, message: "File không có dữ liệu (cần ít nhất 1 dòng dữ liệu ngoài tiêu đề)!" });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message:
+            "File không có dữ liệu (cần ít nhất 1 dòng dữ liệu ngoài tiêu đề)!",
+        });
     }
 
     // Find SKU and Quantity column indices from header row
-    const header = rows[0].map(h => String(h).toLowerCase().trim());
-    const skuIdx = header.findIndex(h => h.includes("sku") || h.includes("mã") || h.includes("ma"));
-    const qtyIdx = header.findIndex(h => h.includes("số lượng") || h.includes("so luong") || h.includes("quantity") || h.includes("sl"));
+    const header = rows[0].map((h) => String(h).toLowerCase().trim());
+    const skuIdx = header.findIndex(
+      (h) => h.includes("sku") || h.includes("mã") || h.includes("ma"),
+    );
+    const qtyIdx = header.findIndex(
+      (h) =>
+        h.includes("số lượng") ||
+        h.includes("so luong") ||
+        h.includes("quantity") ||
+        h.includes("sl"),
+    );
 
     if (skuIdx === -1 || qtyIdx === -1) {
       return res.status(400).json({
         success: false,
-        message: `File thiếu cột yêu cầu! Cần cột "Mã sản phẩm (SKU)" và "Số lượng nhập". Header đọc được: ${rows[0].join(", ")}`
+        message: `File thiếu cột yêu cầu! Cần cột "Mã sản phẩm (SKU)" và "Số lượng nhập". Header đọc được: ${rows[0].join(", ")}`,
       });
     }
 
     const results = { updated: 0, failed: 0, errors: [], notFound: [] };
-    const dataRows = rows.slice(1).filter(row => row[skuIdx] !== "");
+    const dataRows = rows.slice(1).filter((row) => row[skuIdx] !== "");
 
     for (const row of dataRows) {
       const sku = String(row[skuIdx]).trim();
@@ -586,7 +703,9 @@ exports.importWarehouseExcel = async (req, res) => {
       if (!sku) continue;
       if (qty <= 0) {
         results.failed++;
-        results.errors.push(`${sku}: Số lượng nhập phải > 0 (đọc được: ${row[qtyIdx]})`);
+        results.errors.push(
+          `${sku}: Số lượng nhập phải > 0 (đọc được: ${row[qtyIdx]})`,
+        );
         continue;
       }
 
@@ -619,7 +738,7 @@ exports.importWarehouseExcel = async (req, res) => {
       req.user.id,
       "Nhập kho qua Excel",
       `Đã cập nhật ${results.updated} sản phẩm từ file Excel. Lỗi: ${results.failed}`,
-      req
+      req,
     );
 
     let message = `✅ Đã cập nhật ${results.updated} sản phẩm thành công!`;
@@ -633,7 +752,13 @@ exports.importWarehouseExcel = async (req, res) => {
     res.status(200).json({ success: true, message, results });
   } catch (error) {
     console.error("Import warehouse Excel error:", error);
-    res.status(500).json({ success: false, message: "Lỗi hệ thống khi đọc file Excel", error: error.message });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Lỗi hệ thống khi đọc file Excel",
+        error: error.message,
+      });
   }
 };
 
@@ -650,12 +775,12 @@ exports.getLowStockProducts = async (req, res) => {
         .sort({ quantity: 1 })
         .skip(skip)
         .limit(limit),
-      Product.countDocuments({ quantity: { $lt: 2 } })
+      Product.countDocuments({ quantity: { $lt: 2 } }),
     ]);
 
-    const mappedProducts = products.map(p => ({
+    const mappedProducts = products.map((p) => ({
       ...p.toObject(),
-      name: p.productName
+      name: p.productName,
     }));
 
     res.json({
@@ -665,12 +790,11 @@ exports.getLowStockProducts = async (req, res) => {
         currentPage: page,
         totalPages: Math.ceil(totalProducts / limit),
         totalProducts,
-        limit
-      }
+        limit,
+      },
     });
   } catch (error) {
     console.error("Get low stock products error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
-

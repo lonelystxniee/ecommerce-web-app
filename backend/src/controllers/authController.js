@@ -185,7 +185,7 @@ exports.register = async (req, res) => {
   try {
     console.log("--- BẮT ĐẦU ĐĂNG KÝ ---");
     console.log("Email:", email);
-    
+
     const existing = await User.findOne({ email });
     if (existing) {
       console.log("❌ Lỗi: Email đã tồn tại:", email);
@@ -1190,7 +1190,7 @@ exports.sendOTP = async (req, res) => {
           </div>
           <p style="color: #666; font-size: 14px; line-height: 1.6;">Mã này sẽ hết hạn sau <strong>5 phút</strong>. Vui lòng tuyệt đối không chia sẻ mã này với bất kỳ ai để bảo mật tài khoản.</p>
           <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
-          <p style="font-size: 12px; color: #aaa; text-align: center;">© 2025 ClickGo – Hệ thống bán hàng Hồng Lam. Mọi quyền được bảo lưu.</p>
+          <p style="font-size: 12px; color: #aaa; text-align: center;">© 2025 ClickGo – Hệ thống bán hàng Clickgo. Mọi quyền được bảo lưu.</p>
         </div>
       `,
     });

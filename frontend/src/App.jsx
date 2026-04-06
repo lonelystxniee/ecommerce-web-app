@@ -1,31 +1,32 @@
-import React from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { Toaster } from 'react-hot-toast'
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 
-import Header from './components/Header'
-import Footer from './components/Footer'
-import CombinedChatWidget from './components/CombinedChatWidget'
-import Home from './pages/Home/Home'
-import MagazineDetail from './pages/MagazineDetail'
-import ProductDetail from './pages/ProductDetail'
-import Cart from './pages/Cart'
-import Checkout from './pages/Checkout'
-import { CartProvider } from './context/CartContext'
-import { WishlistProvider } from './context/WishlistContext'
-import CategoryPage from './pages/CategoryPage'
-import WishlistPage from './pages/WishlistPage'
-import ScrollToTop from './components/ScrollToTop'
-import AccountPage from './pages/AccountPage'
-import ResetPassword from './pages/ResetPassword'
-import SearchPage from './pages/SearchPage'
-import ForgotPassword from './pages/ForgotPassword'
-import OrderTracking from './pages/OrderTracking'
-import VnpayReturn from './pages/VnpayReturn'
-import AdminOrders from './pages/AdminOrders'
-import LuckyWheel from './pages/LuckyWheel'
-import WelcomePopup from './pages/Home/WelcomePopup'
-import PromoPopup from './components/PromoPopup'
-import NotificationListener from './components/NotificationListener'
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+import CombinedChatWidget from "./components/CombinedChatWidget";
+import Home from "./pages/Home/Home";
+import MagazineDetail from "./pages/MagazineDetail";
+import ProductDetail from "./pages/ProductDetail";
+import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import { CartProvider } from "./context/CartContext";
+import { WishlistProvider } from "./context/WishlistContext";
+import CategoryPage from "./pages/CategoryPage";
+import WishlistPage from "./pages/WishlistPage";
+import ScrollToTop from "./components/ScrollToTop";
+import AccountPage from "./pages/AccountPage";
+import ResetPassword from "./pages/ResetPassword";
+import SearchPage from "./pages/SearchPage";
+import ForgotPassword from "./pages/ForgotPassword";
+import OrderTracking from "./pages/OrderTracking";
+import VnpayReturn from "./pages/VnpayReturn";
+import AdminOrders from "./pages/AdminOrders";
+import LuckyWheel from "./pages/LuckyWheel";
+import WelcomePopup from "./pages/Home/WelcomePopup";
+import PromoPopup from "./components/PromoPopup";
+import NotificationListener from "./components/NotificationListener";
+import Wallet from "./components/Wallet";
 
 function App() {
   return (
@@ -56,6 +57,7 @@ function App() {
                 <Route path="/order-tracking/:id" element={<OrderTracking />} />
                 <Route path="/lucky-wheel" element={<LuckyWheel />} />
                 <Route path="/vnpay-return" element={<VnpayReturn />} />
+                <Route path="/wallet" element={<Wallet />} />
               </Routes>
             </main>
             <Footer />
@@ -70,26 +72,26 @@ function App() {
               toastOptions={{
                 duration: 3000,
                 style: {
-                  background: '#fdfaf5',
-                  color: '#5e4027',
-                  border: '1px solid #800a0d',
-                  fontFamily: 'Momo Trust Sans, sans-serif',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  borderRadius: '12px',
-                  padding: '12px 24px',
-                  boxShadow: '0 10px 15px -3px rgba(128, 10, 13, 0.1)',
+                  background: "#fdfaf5",
+                  color: "#5e4027",
+                  border: "1px solid #800a0d",
+                  fontFamily: "Momo Trust Sans, sans-serif",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  borderRadius: "12px",
+                  padding: "12px 24px",
+                  boxShadow: "0 10px 15px -3px rgba(128, 10, 13, 0.1)",
                 },
                 success: {
                   iconTheme: {
-                    primary: '#800a0d',
-                    secondary: '#fdfaf5',
+                    primary: "#800a0d",
+                    secondary: "#fdfaf5",
                   },
                 },
                 error: {
                   iconTheme: {
-                    primary: '#800a0d',
-                    secondary: '#fdfaf5',
+                    primary: "#800a0d",
+                    secondary: "#fdfaf5",
                   },
                 },
               }}
@@ -98,7 +100,7 @@ function App() {
         </Router>
       </WishlistProvider>
     </CartProvider>
-  )
+  );
 }
 
-export default App
+export default App;

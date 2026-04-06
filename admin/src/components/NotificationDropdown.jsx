@@ -59,11 +59,19 @@ const NotificationDropdown = () => {
 
   const normalizeLink = (link) => {
     if (!link) return ''
-    // Xử lý link cũ từ database: /orders?highlight=ID -> /order-tracking/ID
+
+    // Convert customer-facing order tracking links to admin-facing ones
+    if (link.includes('/order-tracking/')) {
+      const id = link.split('/order-tracking/')[1]
+      return `/orders/order-tracking/${id}`
+    }
+
+    // Handle legacy highlight param: /orders?highlight=ID
     if (link.includes('highlight=')) {
       const id = link.split('highlight=')[1]
-      return `/order-tracking/${id}`
+      return `/orders/order-tracking/${id}`
     }
+
     return link.replace(/^\/admin/, '')
   }
 
@@ -89,16 +97,14 @@ const NotificationDropdown = () => {
       })
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
       setUnreadCount(0)
-    } catch (e) {
-      console.error('Lỗi khi đánh dấu tất cả đã đọc:', e)
-    }
+    } catch {}
   }
 
   return (
     <div className="relative group" ref={dropdownRef}>
       <div
         onClick={() => setIsOpen(!isOpen)}
-        className="cursor-pointer text-[#800a0d] bg-white relative z-99 flex rounded-full border border-gray-200 p-2 hover:bg-gray-50 transition-all shadow-sm"
+        className="cursor-pointer text-[#800a0d] bg-white relative flex rounded-full border border-gray-200 p-2 hover:bg-gray-50 transition-all shadow-sm"
         title="Thông báo"
       >
         <Bell size={20} className="hover:text-red-700" />
@@ -140,7 +146,13 @@ const NotificationDropdown = () => {
                   <p className={`text-sm ${n.isRead ? 'text-gray-600' : 'text-gray-900 font-semibold'} leading-snug`}>{n.message}</p>
                   <div className="flex justify-between items-center mt-0.5">
                     <span className="text-[11px] text-gray-400 font-medium">
-                      {new Date(n.createdAt).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}
+                      {new Date(n.createdAt).toLocaleString('vi-VN', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                      })}
                     </span>
                     {n.link && (
                       <Link to={normalizeLink(n.link)} className="text-[11px] text-primary font-semibold hover:underline bg-red-50 px-2 py-0.5 rounded-full" onClick={() => setIsOpen(false)}>

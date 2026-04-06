@@ -252,7 +252,7 @@ const UserManagement = () => {
             Quản lý khách hàng
           </h2>
           <p className="text-[#88694f] font-medium italic">
-            Danh sách thành viên mua sắm tại Hồng Lam
+            Danh sách thành viên mua sắm tại CLickgo
           </p>
         </div>
         <div className="flex gap-2">
@@ -372,152 +372,152 @@ const UserManagement = () => {
 
       {/* Bảng Dữ Liệu */}
       <div className="overflow-x-auto border border-gray-100 shadow-xl bg-white/90 rounded-[32px]">
-          <table className="w-full text-left min-w-[1000px]">
-            <thead className="bg-[#9d0b0f] text-white text-xs uppercase font-bold tracking-widest">
+        <table className="w-full text-left min-w-[1000px]">
+          <thead className="bg-[#9d0b0f] text-white text-xs uppercase font-bold tracking-widest">
+            <tr>
+              <th className="px-8 py-5 text-center w-20">STT</th>
+              <th className="px-8 py-5">Người dùng</th>
+              <th className="px-8 py-5">Liên hệ</th>
+              <th className="px-8 py-5 text-center">Ngày tạo</th>
+              <th className="px-8 py-5 text-center">Vai trò</th>
+              <th className="px-8 py-5 text-center">Trạng thái</th>
+              <th className="px-8 py-5 text-right">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {loading ? (
               <tr>
-                <th className="px-8 py-5 text-center w-20">STT</th>
-                <th className="px-8 py-5">Người dùng</th>
-                <th className="px-8 py-5">Liên hệ</th>
-                <th className="px-8 py-5 text-center">Ngày tạo</th>
-                <th className="px-8 py-5 text-center">Vai trò</th>
-                <th className="px-8 py-5 text-center">Trạng thái</th>
-                <th className="px-8 py-5 text-right">Thao tác</th>
+                <td colSpan="5" className="px-8 py-20 text-center">
+                  <div className="flex flex-col items-center gap-2">
+                    <RefreshCcw
+                      className="animate-spin text-[#9d0b0f]"
+                      size={40}
+                    />
+                    <p className="text-[#88694f] font-medium">
+                      Đang tải dữ liệu...
+                    </p>
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {loading ? (
-                <tr>
-                  <td colSpan="5" className="px-8 py-20 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <RefreshCcw
-                        className="animate-spin text-[#9d0b0f]"
-                        size={40}
-                      />
-                      <p className="text-[#88694f] font-medium">
-                        Đang tải dữ liệu...
+            ) : displayUsers.length === 0 ? (
+              <tr>
+                <td
+                  colSpan="7"
+                  className="px-8 py-20 text-center text-[#88694f]"
+                >
+                  Không tìm thấy người dùng nào
+                </td>
+              </tr>
+            ) : (
+              displayUsers.map((user, index) => (
+                <tr
+                  key={user._id}
+                  className="hover:bg-[#f7f4ef]/50 transition-colors group"
+                >
+                  <td className="px-8 py-6 text-center font-bold text-[#9d0b0f]">
+                    {(currentPage - 1) * limit + index + 1}
+                  </td>
+                  <td className="px-8 py-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-[#f39200] to-[#faa519] text-white flex items-center justify-center font-bold shadow-md group-hover:scale-110 transition-transform">
+                        {user.fullName.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-bold text-[#3e2714]">
+                          {user.fullName}
+                        </p>
+                        <p className="text-[10px] text-[#88694f] flex items-center gap-1">
+                          <UserIcon size={10} /> ID:{" "}
+                          {user._id.substring(0, 8)}...
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-8 py-6">
+                    <div className="space-y-1">
+                      <p className="text-sm text-[#3e2714] flex items-center gap-2">
+                        <Mail size={14} className="text-[#9d0b0f]" />{" "}
+                        {user.email}
                       </p>
+                      {user.phone && (
+                        <p className="text-xs text-[#88694f] flex items-center gap-2">
+                          <Phone size={14} className="text-[#f39200]" />{" "}
+                          {user.phone}
+                        </p>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-8 py-6 text-center">
+                    <p className="text-[11px] font-medium text-gray-400 whitespace-nowrap italic">
+                      {new Date(user.createdAt).toLocaleDateString("vi-VN")} {new Date(user.createdAt).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </td>
+                  <td className="px-8 py-6 text-center">
+                    <span
+                      className={`px-4 py-1.5 rounded-full text-[10px] font-bold flex items-center justify-center gap-1 mx-auto w-fit ${user.role === "ADMIN"
+                        ? "bg-red-100 text-red-600 border border-red-200"
+                        : user.role === "STAFF"
+                          ? "bg-blue-100 text-blue-600 border border-blue-200"
+                          : "bg-gray-100 text-gray-600 border border-gray-200"
+                        }`}
+                    >
+                      <Shield size={12} />
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className="px-8 py-6 text-center">
+                    <span
+                      className={`px-4 py-1.5 rounded-full text-[10px] font-bold mx-auto w-fit block ${user.status === "ACTIVE"
+                        ? "bg-green-100 text-green-600 border border-green-200"
+                        : "bg-yellow-100 text-yellow-600 border border-yellow-200"
+                        }`}
+                    >
+                      {user.status === "ACTIVE"
+                        ? "ĐANG HOẠT ĐỘNG"
+                        : "BỊ KHÓA"}
+                    </span>
+                  </td>
+                  <td className="px-8 py-6 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => handleOpenEditModal(user)}
+                        className="p-2 text-blue-500 transition-all hover:bg-blue-50 rounded-xl"
+                        title="Chỉnh sửa"
+                      >
+                        <Edit2 size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteUser(user._id)}
+                        className="p-2 text-red-500 transition-all hover:bg-red-50 rounded-xl"
+                        title="Xóa"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleToggleStatus(user)}
+                        className={`p-2 transition-all rounded-xl ${user.status === "ACTIVE"
+                          ? "text-orange-500 hover:bg-orange-50"
+                          : "text-green-500 hover:bg-green-50"
+                          }`}
+                        title={
+                          user.status === "ACTIVE"
+                            ? "Khóa tài khoản"
+                            : "Mở khóa tài khoản"
+                        }
+                      >
+                        {user.status === "ACTIVE" ? (
+                          <Lock size={18} />
+                        ) : (
+                          <Unlock size={18} />
+                        )}
+                      </button>
                     </div>
                   </td>
                 </tr>
-              ) : displayUsers.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan="7"
-                    className="px-8 py-20 text-center text-[#88694f]"
-                  >
-                    Không tìm thấy người dùng nào
-                  </td>
-                </tr>
-              ) : (
-                displayUsers.map((user, index) => (
-                  <tr
-                    key={user._id}
-                    className="hover:bg-[#f7f4ef]/50 transition-colors group"
-                  >
-                    <td className="px-8 py-6 text-center font-bold text-[#9d0b0f]">
-                      {(currentPage - 1) * limit + index + 1}
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-[#f39200] to-[#faa519] text-white flex items-center justify-center font-bold shadow-md group-hover:scale-110 transition-transform">
-                          {user.fullName.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="font-bold text-[#3e2714]">
-                            {user.fullName}
-                          </p>
-                          <p className="text-[10px] text-[#88694f] flex items-center gap-1">
-                            <UserIcon size={10} /> ID:{" "}
-                            {user._id.substring(0, 8)}...
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="space-y-1">
-                        <p className="text-sm text-[#3e2714] flex items-center gap-2">
-                          <Mail size={14} className="text-[#9d0b0f]" />{" "}
-                          {user.email}
-                        </p>
-                        {user.phone && (
-                          <p className="text-xs text-[#88694f] flex items-center gap-2">
-                            <Phone size={14} className="text-[#f39200]" />{" "}
-                            {user.phone}
-                          </p>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-8 py-6 text-center">
-                      <p className="text-[11px] font-medium text-gray-400 whitespace-nowrap italic">
-                        {new Date(user.createdAt).toLocaleDateString("vi-VN")} {new Date(user.createdAt).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    </td>
-                    <td className="px-8 py-6 text-center">
-                      <span
-                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold flex items-center justify-center gap-1 mx-auto w-fit ${user.role === "ADMIN"
-                          ? "bg-red-100 text-red-600 border border-red-200"
-                          : user.role === "STAFF"
-                            ? "bg-blue-100 text-blue-600 border border-blue-200"
-                            : "bg-gray-100 text-gray-600 border border-gray-200"
-                          }`}
-                      >
-                        <Shield size={12} />
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="px-8 py-6 text-center">
-                      <span
-                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold mx-auto w-fit block ${user.status === "ACTIVE"
-                          ? "bg-green-100 text-green-600 border border-green-200"
-                          : "bg-yellow-100 text-yellow-600 border border-yellow-200"
-                          }`}
-                      >
-                        {user.status === "ACTIVE"
-                          ? "ĐANG HOẠT ĐỘNG"
-                          : "BỊ KHÓA"}
-                      </span>
-                    </td>
-                    <td className="px-8 py-6 text-right">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() => handleOpenEditModal(user)}
-                          className="p-2 text-blue-500 transition-all hover:bg-blue-50 rounded-xl"
-                          title="Chỉnh sửa"
-                        >
-                          <Edit2 size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteUser(user._id)}
-                          className="p-2 text-red-500 transition-all hover:bg-red-50 rounded-xl"
-                          title="Xóa"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleToggleStatus(user)}
-                          className={`p-2 transition-all rounded-xl ${user.status === "ACTIVE"
-                            ? "text-orange-500 hover:bg-orange-50"
-                            : "text-green-500 hover:bg-green-50"
-                            }`}
-                          title={
-                            user.status === "ACTIVE"
-                              ? "Khóa tài khoản"
-                              : "Mở khóa tài khoản"
-                          }
-                        >
-                          {user.status === "ACTIVE" ? (
-                            <Lock size={18} />
-                          ) : (
-                            <Unlock size={18} />
-                          )}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
       {/* Pagination Controls */}

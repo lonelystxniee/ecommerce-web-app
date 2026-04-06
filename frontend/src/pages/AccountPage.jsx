@@ -49,6 +49,10 @@ const STATUS_LABELS = {
   DELIVERED: 'Giao thành công',
   COMPLETED: 'Hoàn tất',
   CANCELLED: 'Đã hủy',
+  RETURN_REQUESTED: 'Chờ lấy hàng hoàn',
+  RETURN_PICKING: 'Shipper đang trả hàng',
+  READY_TO_RETURN: 'Chờ hoàn tiền',
+  RETURNED: 'Đã hoàn tiền',
 }
 
 // --- COMPONENT CHÍNH ---
@@ -71,6 +75,28 @@ const AccountPage = () => {
     }
     return null
   }, [])
+
+  const hasShownToast = useRef(false)
+  useEffect(() => {
+    const topupStatus = searchParams.get('topup')
+    const amount = searchParams.get('amount')
+
+    if (topupStatus && !hasShownToast.current) {
+      if (topupStatus === 'success') {
+        toast.success(`Nạp tiền vào ví thành công! +${Number(amount).toLocaleString()}đ`)
+        const newParams = new URLSearchParams(searchParams)
+        newParams.delete('topup')
+        newParams.delete('amount')
+        navigate({ search: newParams.toString() }, { replace: true })
+      } else if (topupStatus === 'fail') {
+        toast.error('Nạp tiền thất bại hoặc đã bị hủy.')
+        const newParams = new URLSearchParams(searchParams)
+        newParams.delete('topup')
+        navigate({ search: newParams.toString() }, { replace: true })
+      }
+      hasShownToast.current = true
+    }
+  }, [searchParams, navigate])
 
   useEffect(() => {
     if (!user) navigate('/')
@@ -178,7 +204,6 @@ const PersonalInfo = ({ user: initialUser }) => {
   }
 
   const handleSaveProfile = async () => {
-    // Frontend validation
     if (!formData.fullName || formData.fullName.trim() === '') {
       toast.error('Họ và tên không được để trống!')
       return
@@ -439,6 +464,31 @@ const OrderList = ({ userId }) => {
     }
   }
 
+  const handleRequestReturn = async (orderId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn yêu cầu hoàn trả đơn hàng này? Shipper sẽ liên hệ để lấy lại hàng.')) return
+
+    try {
+      const token = localStorage.getItem('token')
+      const res = await fetch(`${API_URL}/api/orders/request-return/${orderId}`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await res.json()
+
+      if (data.success) {
+        toast.success('Đã gửi yêu cầu hoàn hàng!')
+        // Load lại danh sách đơn hàng
+        const updatedRes = await fetch(`${API_URL}/api/orders/my-orders/${userId}`)
+        const updatedData = await updatedRes.json()
+        if (updatedData.success) setOrders(updatedData.orders)
+      } else {
+        toast.error(data.message)
+      }
+    } catch (error) {
+      toast.error('Lỗi kết nối máy chủ')
+    }
+  }
+
   useEffect(() => {
     const fetchOrders = async () => {
       try {
@@ -471,6 +521,10 @@ const OrderList = ({ userId }) => {
         return 'bg-green-100 text-green-700'
       case 'CANCELLED':
         return 'bg-red-100 text-red-700'
+      case 'RETURNED':
+        return 'bg-gray-100 text-gray-700'
+      case 'RETURN_REQUESTED':
+        return 'bg-indigo-100 text-indigo-700'
       case 'DELIVERING':
         return 'bg-blue-100 text-blue-700'
       default:
@@ -566,6 +620,17 @@ const OrderList = ({ userId }) => {
                       title="Hủy đơn hàng"
                     >
                       <X size={14} /> Hủy đơn
+                    </button>
+                  )}
+                  {order.status === 'COMPLETED' && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleRequestReturn(order._id)
+                      }}
+                      className="px-4 py-2 bg-white text-orange-600 rounded-xl border border-orange-100 hover:bg-orange-50 transition-all shadow-sm text-[10px] font-black uppercase tracking-widest flex items-center gap-2"
+                    >
+                      <RefreshCcw size={14} /> Hoàn trả hàng
                     </button>
                   )}
                 </div>

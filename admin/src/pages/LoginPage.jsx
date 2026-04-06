@@ -34,7 +34,7 @@ const LoginPage = () => {
                 if (data.user.role === "ADMIN") {
                     localStorage.setItem("token", data.token);
                     if (data.refreshToken) {
-                      localStorage.setItem("refreshToken", data.refreshToken);
+                        localStorage.setItem("refreshToken", data.refreshToken);
                     }
                     localStorage.setItem("user", JSON.stringify(data.user));
                     navigate("/");
@@ -120,7 +120,7 @@ const LoginPage = () => {
                     </button>
 
                     <div className="pt-4 text-center">
-                        <p className="text-xs text-[#88694f] font-medium">Bản quyền thuộc về Ô mai Hồng Lam © 2025</p>
+                        <p className="text-xs text-[#88694f] font-medium">Bản quyền thuộc về ClickGo © 2025</p>
                     </div>
                 </form>
             </div>

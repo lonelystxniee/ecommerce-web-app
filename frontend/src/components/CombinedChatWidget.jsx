@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getSocket } from '../utils/socket'
 import API_URL from '../config/apiConfig'
 
@@ -195,8 +195,23 @@ export default function CombinedChatWidget() {
     const content = (overrideText !== undefined ? overrideText : textSupport).trim()
     if (!content || !user || !conversationIdSupport) return
     const localId = `local-${Date.now()}`
-    const payload = { conversationId: conversationIdSupport, senderId: user._id, receiverId: null, senderRole: 'customer', content, clientId: localId }
-    setMessagesSupport((m) => [...m, { ...payload, _id: localId, createdAt: new Date().toISOString(), clientId: localId }])
+    const payload = {
+      conversationId: conversationIdSupport,
+      senderId: user._id,
+      receiverId: null,
+      senderRole: 'customer',
+      content,
+      clientId: localId,
+    }
+    setMessagesSupport((m) => [
+      ...m,
+      {
+        ...payload,
+        _id: localId,
+        createdAt: new Date().toISOString(),
+        clientId: localId,
+      },
+    ])
     const s = getSocket()
     s.emit('send_message', payload)
     setTextSupport('')
@@ -206,8 +221,23 @@ export default function CombinedChatWidget() {
     const content = (overrideText !== undefined ? overrideText : textAI).trim()
     if (!content || !user || !conversationIdAI) return
     const localId = `local-${Date.now()}`
-    const payload = { conversationId: conversationIdAI, senderId: user._id, receiverId: null, senderRole: 'customer', content, clientId: localId }
-    setMessagesAI((m) => [...m, { ...payload, _id: localId, createdAt: new Date().toISOString(), clientId: localId }])
+    const payload = {
+      conversationId: conversationIdAI,
+      senderId: user._id,
+      receiverId: null,
+      senderRole: 'customer',
+      content,
+      clientId: localId,
+    }
+    setMessagesAI((m) => [
+      ...m,
+      {
+        ...payload,
+        _id: localId,
+        createdAt: new Date().toISOString(),
+        clientId: localId,
+      },
+    ])
     const s = getSocket()
     s.emit('send_message', payload)
     setTextAI('')
@@ -319,9 +349,17 @@ export default function CombinedChatWidget() {
                             : 'bg-gradient-to-br from-[#9d0b0f] to-[#ca1d22] text-white rounded-tr-sm shadow-xl shadow-red-900/10'
                         }`}
                       >
-                        <div className="text-[14px] leading-relaxed break-words whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: formatMessage(m.content) }} />
+                        <div
+                          className="text-[14px] leading-relaxed break-words whitespace-pre-wrap"
+                          dangerouslySetInnerHTML={{
+                            __html: formatMessage(m.content),
+                          }}
+                        />
                         <div className={`text-[9px] mt-2 font-bold opacity-60 uppercase tracking-widest ${m.senderRole === 'admin' ? 'text-gray-400' : 'text-red-100 text-right'}`}>
-                          {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {new Date(m.createdAt).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
                         </div>
                       </div>
                     </div>
@@ -345,9 +383,17 @@ export default function CombinedChatWidget() {
                             : 'bg-gradient-to-br from-teal-600 to-emerald-500 text-white rounded-tr-sm shadow-xl shadow-teal-900/10'
                         }`}
                       >
-                        <div className="text-[14px] leading-relaxed break-words whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: formatMessage(m.content) }} />
+                        <div
+                          className="text-[14px] leading-relaxed break-words whitespace-pre-wrap"
+                          dangerouslySetInnerHTML={{
+                            __html: formatMessage(m.content),
+                          }}
+                        />
                         <div className={`text-[9px] mt-2 font-bold opacity-60 uppercase tracking-widest ${m.senderRole === 'ai' || m.isAI ? 'text-teal-400' : 'text-teal-50 text-right'}`}>
-                          {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {new Date(m.createdAt).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
                         </div>
                       </div>
                     </div>
