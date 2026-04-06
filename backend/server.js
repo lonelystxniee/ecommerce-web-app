@@ -27,6 +27,8 @@ const walletRoutes = require("./src/routes/walletRoutes");
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   "https://clickgo-ecom.netlify.app",
+  "https://admin-clickgo.netlify.app",
+  "https://shipper-clickgo.netlify.app",
   "http://localhost:5173",
   "http://localhost:5174",
   "http://localhost:5175",
