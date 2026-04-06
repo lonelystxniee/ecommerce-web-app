@@ -16,7 +16,7 @@ const WishlistPage = () => {
   const currentItems = wishlistItems.slice(startIndex, startIndex + itemsPerPage)
 
   const handleAddToCart = (product) => {
-    addToCart({
+    const success = addToCart({
       ...product,
       id: product._id,
       name: product.productName,
@@ -24,7 +24,7 @@ const WishlistPage = () => {
       quantity: 1,
       image: product.images && product.images.length > 0 ? product.images[0] : product.image,
     })
-    toast.success('Đã thêm vào giỏ hàng!')
+    if (success) toast.success('Đã thêm vào giỏ hàng!')
   }
 
   // --- EMPTY STATE ---

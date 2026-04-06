@@ -24,6 +24,13 @@ const Checkout = () => {
   const selectedItems = cartItems.filter((item) => item.selected !== false)
   const navigate = useNavigate()
 
+  useEffect(() => {
+    if (!localStorage.getItem('token')) {
+      toast.error('Vui lòng đăng nhập để thanh toán')
+      navigate('/account')
+    }
+  }, [navigate])
+
   const savedUser = JSON.parse(localStorage.getItem('user') || '{}')
 
   const [formData, setFormData] = useState({
@@ -254,7 +261,11 @@ const Checkout = () => {
       const res = await fetch(`${API_URL}/api/promotions/check`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: codeToApply, orderValue: totalPrice }),
+        body: JSON.stringify({ 
+          code: codeToApply, 
+          orderValue: totalPrice,
+          userId: savedUser.id || savedUser._id 
+        }),
       })
       const data = await res.json()
       if (data.success) {

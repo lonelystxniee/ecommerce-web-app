@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 const AdvertisementManagement = () => {
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
   const [activeTab, setActiveTab] = useState("hero");
   const [ads, setAds] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -34,7 +35,7 @@ const AdvertisementManagement = () => {
   const fetchAds = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5175/api/ads");
+      const res = await fetch(`${API_URL}/api/ads`);
       const data = await res.json();
       if (data.success) setAds(data.ads);
     } catch (e) {
@@ -69,8 +70,8 @@ const AdvertisementManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const url = editingItem
-      ? `http://localhost:5175/api/ads/${editingItem._id}`
-      : "http://localhost:5175/api/ads";
+      ? `${API_URL}/api/ads/${editingItem._id}`
+      : `${API_URL}/api/ads`;
     const method = editingItem ? "PUT" : "POST";
 
     try {
@@ -91,7 +92,7 @@ const AdvertisementManagement = () => {
 
   const handleDelete = async (id) => {
     if (window.confirm("Xóa quảng cáo này?")) {
-      await fetch(`http://localhost:5175/api/ads/${id}`, { method: "DELETE" });
+      await fetch(`${API_URL}/api/ads/${id}`, { method: "DELETE" });
       fetchAds();
     }
   };

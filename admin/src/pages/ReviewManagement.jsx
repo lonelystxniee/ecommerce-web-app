@@ -23,6 +23,7 @@ const ReviewManagement = () => {
     });
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
+    const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || "http://localhost:5174";
 
     const fetchReviews = async (page = 1) => {
         setLoading(true);
@@ -166,7 +167,7 @@ const ReviewManagement = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <a
-                                                href={`http://localhost:5174/product/${review.productID?._id}`}
+                                                href={`${FRONTEND_URL}/product/${review.productID?._id}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="flex items-center gap-3 max-w-xs hover:bg-gray-100 p-2 rounded-lg transition-colors group cursor-pointer"

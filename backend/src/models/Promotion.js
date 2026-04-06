@@ -12,6 +12,7 @@ const PromotionSchema = new mongoose.Schema(
     endDate: Date,
     usageLimit: Number, // Tổng lượt sử dụng
     usedCount: { type: Number, default: 0 },
+    usedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     status: { type: String, default: "ACTIVE" }, // ACTIVE, EXPIRED, INACTIVE
   },
   { timestamps: true },

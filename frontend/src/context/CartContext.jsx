@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext } from "react";
+import toast from "react-hot-toast";
 
 const CartContext = createContext();
 
@@ -7,6 +8,11 @@ export const CartProvider = ({ children }) => {
 
   // 1. Hàm thêm vào giỏ (xử lý trùng sản phẩm)
   const addToCart = (product) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Vui lòng đăng nhập để thêm vào giỏ hàng");
+      return false;
+    }
     setCartItems((prev) => {
       const isExist = prev.find((item) => item.id === product.id);
       const qtyToAdd = product.quantity || 1;
@@ -19,6 +25,7 @@ export const CartProvider = ({ children }) => {
       }
       return [...prev, { ...product, quantity: qtyToAdd, selected: true }];
     });
+    return true;
   };
 
   // 2. Hàm thay đổi số lượng (+ / -)

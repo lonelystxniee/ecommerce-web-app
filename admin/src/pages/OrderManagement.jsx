@@ -2,20 +2,16 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Eye, Filter, RefreshCcw, Package, Trash2, X, User, MapPin, Truck, CheckCircle, Phone, Mail, CreditCard, ChevronLeft, ChevronRight, Calendar, ChevronDown } from 'lucide-react'
 
-// ─── CUSTOM WORKFLOW DROPDOWN ───────────────────────────────────────────────
 const STATUS_STYLE = {
   PENDING: { bg: 'bg-gray-100', text: 'text-gray-600', dot: 'bg-gray-400' },
   CONFIRMED: { bg: 'bg-blue-100', text: 'text-blue-600', dot: 'bg-blue-500' },
   PACKING: { bg: 'bg-orange-100', text: 'text-orange-600', dot: 'bg-orange-500' },
 }
 
-// action → trạng thái kết quả sau khi thực hiện
 const ACTIONS = [
   { key: 'confirm', label: 'Xác nhận đơn', emoji: '✅', result: 'CONFIRMED', color: 'text-blue-600', hover: 'hover:bg-blue-50' },
   { key: 'pack', label: 'Đóng gói', emoji: '📦', result: 'PACKING', color: 'text-orange-600', hover: 'hover:bg-orange-50' },
-  { key: 'handover', label: 'Bàn giao GHN', emoji: '🚚', result: 'READY_TO_PICK', color: 'text-green-600', hover: 'hover:bg-green-50' },
   { key: 'revert', label: 'Hủy xác nhận', emoji: '↩️', result: 'PENDING', color: 'text-yellow-600', hover: 'hover:bg-yellow-50', separator: true },
-  { key: 'cancel', label: 'Hủy đơn', emoji: '❌', result: 'CANCELLED', color: 'text-red-500', hover: 'hover:bg-red-50', separator: true },
 ]
 
 const WorkflowDropdown = ({ order, statusMap, onAction }) => {
@@ -87,7 +83,6 @@ const OrderManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(8)
-  const [workflowLoading, setWorkflowLoading] = useState(null)
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState({
     status: 'ALL',
@@ -119,8 +114,8 @@ const OrderManagement = () => {
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5175'
 
-  const fetchOrders = async () => {
-    setLoading(true)
+  const fetchOrders = async (silent = false) => {
+    if (!silent) setLoading(true)
     try {
       const token = localStorage.getItem('token')
       const queryParams = new URLSearchParams()
@@ -141,7 +136,7 @@ const OrderManagement = () => {
     } catch (error) {
       console.error(error)
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
@@ -186,7 +181,6 @@ const OrderManagement = () => {
 
     if (!window.confirm(actionMessages[action] || 'Xác nhận thực hiện hành động này?')) return
 
-    setWorkflowLoading(orderId)
     try {
       const token = localStorage.getItem('token')
       let response
@@ -214,15 +208,13 @@ const OrderManagement = () => {
       }
 
       if (data.success) {
-        fetchOrders()
+        fetchOrders(true)
         setIsModalOpen(false)
       } else {
         alert('Lỗi: ' + (data.message || 'Không rõ nguyên nhân'))
       }
     } catch (error) {
       alert('Lỗi kết nối: ' + error.message)
-    } finally {
-      setWorkflowLoading(null)
     }
   }
 
@@ -409,11 +401,7 @@ const OrderManagement = () => {
                   </td>
                   <td className="px-8 py-6 text-center">
                     <div className="flex justify-center">
-                      {workflowLoading === order._id ? (
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 animate-pulse">
-                          <RefreshCcw size={12} className="animate-spin" /> ĐANG XỬ LÝ...
-                        </div>
-                      ) : ['READY_TO_PICK', 'PICKING', 'STORING', 'DELIVERING', 'COMPLETED'].includes(order.status) ? (
+                      {['READY_TO_PICK', 'PICKING', 'STORING', 'DELIVERING', 'COMPLETED'].includes(order.status) ? (
                         <span className="text-green-600 font-black text-[10px] flex items-center gap-1 bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
                           <CheckCircle size={12} /> Đã bàn giao
                         </span>
@@ -599,7 +587,7 @@ const OrderManagement = () => {
                             })
                             const d = await res.json()
                             if (d.success) {
-                              fetchOrders()
+                              fetchOrders(true)
                               setIsModalOpen(false)
                             } else {
                               alert('Lỗi: ' + (d.message || 'Không thể tạo đơn GHN'))
@@ -626,7 +614,7 @@ const OrderManagement = () => {
                             const d = await res.json()
                             if (d.success) {
                               alert(d.message || 'Đã hủy đơn thành công')
-                              fetchOrders()
+                              fetchOrders(true)
                               setIsModalOpen(false)
                             } else {
                               alert('Lỗi: ' + (d.message || 'Không thể hủy đơn'))
@@ -653,7 +641,7 @@ const OrderManagement = () => {
                             const data = await res.json()
                             if (data.success) {
                               alert('Thành công! Tiền đã được cộng vào ví khách.')
-                              fetchOrders()
+                              fetchOrders(true)
                               setIsModalOpen(false)
                             } else {
                               alert('Lỗi: ' + data.message)

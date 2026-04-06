@@ -133,8 +133,8 @@ const PromotionManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const url = editingId
-      ? `http://localhost:5175/api/promotions/update/${editingId}`
-      : "http://localhost:5175/api/promotions/create";
+      ? `${API_URL}/api/promotions/update/${editingId}`
+      : `${API_URL}/api/promotions/create`;
 
     const method = editingId ? "PUT" : "POST";
 

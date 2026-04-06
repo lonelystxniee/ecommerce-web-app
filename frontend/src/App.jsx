@@ -14,7 +14,7 @@ import { CartProvider } from "./context/CartContext";
 import { WishlistProvider } from "./context/WishlistContext";
 import CategoryPage from "./pages/CategoryPage";
 import WishlistPage from "./pages/WishlistPage";
-import ScrollToTop from "./components/ScrollToTop";
+import FloatingActions from "./components/FloatingActions";
 import AccountPage from "./pages/AccountPage";
 import ResetPassword from "./pages/ResetPassword";
 import SearchPage from "./pages/SearchPage";
@@ -61,8 +61,7 @@ function App() {
               </Routes>
             </main>
             <Footer />
-            <CombinedChatWidget />
-            <ScrollToTop />
+            <FloatingActions />
             <Toaster
               position="top-right"
               reverseOrder={false}
