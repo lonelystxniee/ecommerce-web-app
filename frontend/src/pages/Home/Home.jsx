@@ -36,6 +36,34 @@ export const SectionHeading = ({ title, outlined }) => (
   </div>
 )
 
+const SidebarAd = ({ ad, position }) => {
+  return (
+    <a
+      href={ad.link}
+      key={ad._id}
+      className={`relative block mb-8 animate-float`}
+      style={{ animationDelay: position === 'left' ? '0s' : '2s' }}
+    >
+      {/* Container chính: Glassmorphism */}
+      <div className="relative overflow-hidden rounded-2xl border border-white/60 shadow-[0_20px_50px_rgba(0,0,0,0.2)] backdrop-blur-md bg-white/20 p-1.5 transition-all duration-500">
+        <div className="relative overflow-hidden rounded-xl">
+          <img src={ad.image} alt={ad.title} className="w-full h-auto object-cover" />
+        </div>
+      </div>
+
+      {/* Badge đơn giản */}
+      <div className="absolute -top-3 -right-3 z-20">
+        <div className="relative">
+          <div className="absolute inset-0 bg-[#f39200] blur-md opacity-60 animate-pulse rounded-full" />
+          <div className="relative bg-gradient-to-br from-[#f39200] to-[#f7c06a] text-white text-[9px] font-black px-2.5 py-1 rounded-lg border-2 border-white shadow-lg -rotate-12">
+            {ad.title?.includes('Hot') ? 'HOT' : 'ƯU ĐÃI'}
+          </div>
+        </div>
+      </div>
+    </a>
+  )
+}
+
 const Home = () => {
   const navigate = useNavigate()
   const { addToCart } = useCart()
@@ -197,20 +225,16 @@ const Home = () => {
   return (
     <div className="min-h-screen pb-20 bg-transparent">
       {/* QUẢNG CÁO SIDEBAR TRÁI  */}
-      <div className="hidden min-[1400px]:block fixed left-4 top-[20%] z-50 w-35">
+      <div className="hidden min-[1500px]:block fixed left-6 top-[25%] z-50 w-40">
         {leftSidebarAds.map((ad) => (
-          <a href={ad.link} key={ad._id} className="block mb-4 transition-transform hover:scale-105">
-            <img src={ad.image} alt={ad.title} className="w-full h-auto border rounded-lg shadow-lg border-stone-200" />
-          </a>
+          <SidebarAd key={ad._id} ad={ad} position="left" />
         ))}
       </div>
 
       {/* QUẢNG CÁO SIDEBAR PHẢI  */}
-      <div className="hidden min-[1400px]:block fixed right-4 top-[20%] z-50 w-35">
+      <div className="hidden min-[1500px]:block fixed right-6 top-[25%] z-50 w-40">
         {rightSidebarAds.map((ad) => (
-          <a href={ad.link} key={ad._id} className="block mb-4 transition-transform hover:scale-105">
-            <img src={ad.image} alt={ad.title} className="w-full h-auto border rounded-lg shadow-lg border-stone-200" />
-          </a>
+          <SidebarAd key={ad._id} ad={ad} position="right" />
         ))}
       </div>
 

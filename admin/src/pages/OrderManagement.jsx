@@ -83,7 +83,6 @@ const OrderManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(8)
-  const [workflowLoading, setWorkflowLoading] = useState(null)
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState({
     status: 'ALL',
@@ -115,8 +114,8 @@ const OrderManagement = () => {
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5175'
 
-  const fetchOrders = async () => {
-    setLoading(true)
+  const fetchOrders = async (silent = false) => {
+    if (!silent) setLoading(true)
     try {
       const token = localStorage.getItem('token')
       const queryParams = new URLSearchParams()
@@ -137,7 +136,7 @@ const OrderManagement = () => {
     } catch (error) {
       console.error(error)
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
@@ -182,7 +181,6 @@ const OrderManagement = () => {
 
     if (!window.confirm(actionMessages[action] || 'Xác nhận thực hiện hành động này?')) return
 
-    setWorkflowLoading(orderId)
     try {
       const token = localStorage.getItem('token')
       let response
@@ -210,15 +208,13 @@ const OrderManagement = () => {
       }
 
       if (data.success) {
-        fetchOrders()
+        fetchOrders(true)
         setIsModalOpen(false)
       } else {
         alert('Lỗi: ' + (data.message || 'Không rõ nguyên nhân'))
       }
     } catch (error) {
       alert('Lỗi kết nối: ' + error.message)
-    } finally {
-      setWorkflowLoading(null)
     }
   }
 
@@ -405,11 +401,7 @@ const OrderManagement = () => {
                   </td>
                   <td className="px-8 py-6 text-center">
                     <div className="flex justify-center">
-                      {workflowLoading === order._id ? (
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 animate-pulse">
-                          <RefreshCcw size={12} className="animate-spin" /> ĐANG XỬ LÝ...
-                        </div>
-                      ) : ['READY_TO_PICK', 'PICKING', 'STORING', 'DELIVERING', 'COMPLETED'].includes(order.status) ? (
+                      {['READY_TO_PICK', 'PICKING', 'STORING', 'DELIVERING', 'COMPLETED'].includes(order.status) ? (
                         <span className="text-green-600 font-black text-[10px] flex items-center gap-1 bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
                           <CheckCircle size={12} /> Đã bàn giao
                         </span>
@@ -595,7 +587,7 @@ const OrderManagement = () => {
                             })
                             const d = await res.json()
                             if (d.success) {
-                              fetchOrders()
+                              fetchOrders(true)
                               setIsModalOpen(false)
                             } else {
                               alert('Lỗi: ' + (d.message || 'Không thể tạo đơn GHN'))
@@ -622,7 +614,7 @@ const OrderManagement = () => {
                             const d = await res.json()
                             if (d.success) {
                               alert(d.message || 'Đã hủy đơn thành công')
-                              fetchOrders()
+                              fetchOrders(true)
                               setIsModalOpen(false)
                             } else {
                               alert('Lỗi: ' + (d.message || 'Không thể hủy đơn'))
@@ -649,7 +641,7 @@ const OrderManagement = () => {
                             const data = await res.json()
                             if (data.success) {
                               alert('Thành công! Tiền đã được cộng vào ví khách.')
-                              fetchOrders()
+                              fetchOrders(true)
                               setIsModalOpen(false)
                             } else {
                               alert('Lỗi: ' + data.message)

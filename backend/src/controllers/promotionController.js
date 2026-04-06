@@ -47,13 +47,18 @@ exports.delete = async (req, res) => {
 // 5. Kiểm tra mã (User áp dụng) - CẬP NHẬT LOGIC GIỚI HẠN
 exports.checkCode = async (req, res) => {
   try {
-    const { code, orderValue } = req.body;
-    const promo = await Promotion.findOne({ code, status: "ACTIVE" });
+    const { code, orderValue, userId } = req.body;
+    const promo = await Promotion.findOne({ code: code.toUpperCase(), status: "ACTIVE" });
 
     if (!promo)
       return res
         .status(404)
         .json({ success: false, message: "Mã không tồn tại hoặc đã bị khóa" });
+
+    // Kiểm tra xem user đã dùng mã này chưa
+    if (userId && promo.usedBy.includes(userId)) {
+      return res.status(400).json({ success: false, message: "Bạn đã sử dụng mã giảm giá này rồi!" });
+    }
 
     // Kiểm tra ngày hết hạn
     if (new Date() > promo.endDate)
@@ -213,24 +218,31 @@ exports.getMyVouchers = async (req, res) => {
 // MỚI: Lấy tất cả mã khả dụng cho người dùng (Công khai + Cá nhân)
 exports.getAvailablePromotions = async (req, res) => {
   try {
-    // 1. Lấy mã công khai
-    const publicPromos = await Promotion.find({
+    // 1. Lấy mã công khai (chưa bị dùng bởi user hiện tại)
+    const query = {
       status: "ACTIVE",
       endDate: { $gt: new Date() },
-    }).sort({ updatedAt: -1 });
+    };
+    if (req.user) {
+      query.usedBy = { $ne: req.user.id };
+    }
+    const publicPromos = await Promotion.find(query).sort({ updatedAt: -1 });
 
-    // 2. Lấy mã cá nhân (nếu đã đăng nhập)
+    // 2. Lấy mã cá nhân (nếu đã đăng nhập và chưa dùng)
     let userVouchers = [];
     if (req.user) {
       const user = await User.findById(req.user.id).populate("vouchers");
       if (user && user.vouchers) {
         userVouchers = user.vouchers.filter(
-          (v) => v.status === "ACTIVE" && new Date(v.endDate) > new Date(),
+          (v) => 
+            v.status === "ACTIVE" && 
+            new Date(v.endDate) > new Date() &&
+            !v.usedBy.includes(req.user.id)
         );
       }
     }
 
-    // 3. Hợp nhất và loại bỏ trùng lặp (ví dụ: mã vừa công khai vừa trong ví)
+    // 3. Hợp nhất và loại bỏ trùng lặp
     const allPromos = [...publicPromos];
     userVouchers.forEach((uv) => {
       if (!allPromos.find((p) => String(p._id) === String(uv._id))) {

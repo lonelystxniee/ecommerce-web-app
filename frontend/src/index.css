@@ -56,6 +56,36 @@
   animation: zoomIn 0.25s ease-out;
 }
 
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes bounce-x {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(5px);
+  }
+}
+
+.animate-bounce-x {
+  animation: bounce-x 1s infinite;
+}
+
+.animate-bounce-x {
+  animation: bounce-x 1s infinite;
+}
+
 /* Thanh cuộn đẹp cho form Đăng ký */
 .custom-scrollbar::-webkit-scrollbar {
   width: 5px;

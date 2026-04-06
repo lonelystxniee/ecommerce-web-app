@@ -261,7 +261,11 @@ const Checkout = () => {
       const res = await fetch(`${API_URL}/api/promotions/check`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: codeToApply, orderValue: totalPrice }),
+        body: JSON.stringify({ 
+          code: codeToApply, 
+          orderValue: totalPrice,
+          userId: savedUser.id || savedUser._id 
+        }),
       })
       const data = await res.json()
       if (data.success) {

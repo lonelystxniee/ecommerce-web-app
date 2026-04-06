@@ -29,9 +29,32 @@ exports.createOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Giỏ hàng trống!' })
     }
 
-    // Nếu có mã giảm giá, tăng số lượt đã sử dụng trong DB
+    // Nếu có mã giảm giá, kiểm tra và cập nhật thông tin sử dụng
     if (promoCode) {
-      await Promotion.findOneAndUpdate({ code: promoCode.toUpperCase() }, { $inc: { usedCount: 1 } })
+      const promo = await Promotion.findOne({ code: promoCode.toUpperCase() })
+      if (promo) {
+        // Kiểm tra xem user đã dùng mã này chưa
+        if (userId && promo.usedBy.includes(userId)) {
+          return res.status(400).json({ success: false, message: 'Bạn đã sử dụng mã giảm giá này cho đơn hàng trước!' })
+        }
+
+        // Cập nhật lượt dùng và danh sách user đã dùng
+        await Promotion.findOneAndUpdate(
+          { code: promoCode.toUpperCase() },
+          { 
+            $inc: { usedCount: 1 },
+            $push: { usedBy: userId } 
+          }
+        )
+
+        // Xóa mã khỏi ví voucher của user nếu có
+        if (userId) {
+          const User = require('../models/User')
+          await User.findByIdAndUpdate(userId, {
+            $pull: { vouchers: promo._id }
+          })
+        }
+      }
     }
 
     // Tính subtotal từ items
