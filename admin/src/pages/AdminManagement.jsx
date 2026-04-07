@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from 'react'
 import { Search, Plus, Edit2, Trash2, RefreshCcw, X, User as UserIcon, Shield, Phone, Mail, UserPlus, CheckCircle, AlertCircle, Lock, Unlock } from 'lucide-react'
+import { API_URL } from '../config/apiConfig'
 
 const AdminManagement = () => {
   const [users, setUsers] = useState([])
@@ -31,7 +32,6 @@ const AdminManagement = () => {
     status: 'ACTIVE',
   })
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5175'
 
   const fetchUsers = async () => {
     setLoading(true)

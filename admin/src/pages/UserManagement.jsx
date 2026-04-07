@@ -15,7 +15,11 @@ import {
   AlertCircle,
   Lock,
   Unlock,
+  UserPlus,
+  MailCheck,
+  MailWarning,
 } from "lucide-react";
+import { API_URL } from "../config/apiConfig";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -46,8 +50,6 @@ const UserManagement = () => {
     role: "CUSTOMER",
     status: "ACTIVE",
   });
-
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
 
   const fetchUsers = async () => {
     setLoading(true);

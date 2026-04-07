@@ -1,20 +1,27 @@
 import React, { useState, useEffect } from "react";
 import {
+  Search,
   Plus,
-  Trash2,
-  X,
-  Upload,
-  PlusCircle,
-  Package,
-  FileText,
   Edit2,
+  Trash2,
+  Filter,
   ChevronLeft,
   ChevronRight,
-  Search,
+  Package,
+  Star,
+  Eye,
+  AlertCircle,
+  Loader2,
+  RefreshCcw,
+  X,
+  PlusCircle,
+  Box,
+  LayoutGrid,
+  History,
 } from "lucide-react";
+import { API_URL } from "../config/apiConfig";
 
 const ProductManagement = () => {
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
   const [products, setProducts] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);

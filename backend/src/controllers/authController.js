@@ -701,10 +701,10 @@ exports.resetPassword = async (req, res) => {
     });
   }
 
-  if (newPassword.length < 6) {
+  if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/.test(newPassword)) {
     return res.status(400).json({
       success: false,
-      message: "Mật khẩu phải có ít nhất 6 ký tự",
+      message: "Mật khẩu phải có ít nhất 6 ký tự, gồm chữ hoa, chữ thường và số",
     });
   }
 
