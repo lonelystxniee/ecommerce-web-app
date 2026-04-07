@@ -10,6 +10,7 @@ import {
     AlertCircle,
     Loader2
 } from "lucide-react";
+import { API_URL, FRONTEND_URL } from "../config/apiConfig";
 
 
 const ReviewManagement = () => {
@@ -22,8 +23,6 @@ const ReviewManagement = () => {
         totalReviews: 0
     });
 
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5175";
-    const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || "http://localhost:5174";
 
     const fetchReviews = async (page = 1) => {
         setLoading(true);

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import API_URL from "../config/apiConfig";
+import { validatePassword } from "../helpers/validate";
 
 // ─── Helpers độ mạnh mật khẩu ─────────────────────────────────────────────
 function getStrength(password) {
@@ -58,9 +59,11 @@ export default function ResetPassword() {
             setMessage("Mật khẩu xác nhận không khớp!");
             return;
         }
-        if (newPassword.length < 6) {
+        
+        const passwordError = validatePassword(newPassword);
+        if (passwordError) {
             setStatus("error");
-            setMessage("Mật khẩu phải có ít nhất 6 ký tự!");
+            setMessage(passwordError);
             return;
         }
 
