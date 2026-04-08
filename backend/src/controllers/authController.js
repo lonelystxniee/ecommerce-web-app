@@ -10,11 +10,16 @@ const activityController = require('./activityController')
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 10000,
 })
 
 exports.login = async (req, res) => {
@@ -443,6 +448,7 @@ exports.forgotPassword = async (req, res) => {
     const user = await User.findOne({ email })
 
     if (!user) {
+      console.log('Forgot Password: Email not found:', email)
       // Trả về success để không lộ thông tin tài khoản
       return res.status(200).json({
         success: true,
@@ -458,15 +464,17 @@ exports.forgotPassword = async (req, res) => {
     user.resetTokenExpiry = expiry
     await user.save()
 
-    console.log('------------------------------------------')
-    console.log('DEBUG: forgotPassword - Found User:', user.email)
+    console.log('--- FORGOT PASSWORD DEBUG ---')
+    console.log('Email:', user.email)
+    console.log('Token created:', token)
     console.log('FRONTEND_URL:', process.env.FRONTEND_URL)
-    console.log('------------------------------------------')
+    console.log('EMAIL_USER:', process.env.EMAIL_USER)
+    console.log('------------------------------')
 
-    // Phản hồi link đặt lại mật khẩu
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`
 
     try {
+      console.log('Đang gửi email qua SMTP...')
       await transporter.sendMail({
         from: `"ClickGo Shop" <${process.env.EMAIL_USER}>`,
         to: email,
@@ -530,18 +538,19 @@ exports.forgotPassword = async (req, res) => {
         message: 'Link đặt lại mật khẩu đã được gửi về email của bạn!',
       })
     } catch (mailError) {
-      console.error('❌ LỖI GỬI EMAIL SMTP:', mailError.message)
+      console.error('❌ LỖI GỬI EMAIL (SMTP):', mailError.message)
+      console.error('Chi tiết lỗi:', mailError)
       return res.status(500).json({
         success: false,
-        message: 'Không thể gửi email đặt lại mật khẩu. Vui lòng kiểm tra cấu hình SMTP.',
+        message: 'Không thể gửi email. Vui lòng kiểm tra lại cấu hình email (App Password).',
         error: mailError.message,
       })
     }
   } catch (error) {
-    console.error('❌ LỖI FORGOT PASSWORD:', error.message)
+    console.error('❌ LỖI HỆ THỐNG FORGOT PASSWORD:', error.message)
     return res.status(500).json({
       success: false,
-      message: 'Đã có lỗi xảy ra tại Server',
+      message: 'Đã có lỗi xảy ra tại Server khi xử lý yêu cầu quên mật khẩu',
       error: error.message,
     })
   }
