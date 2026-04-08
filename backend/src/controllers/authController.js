@@ -459,24 +459,15 @@ exports.forgotPassword = async (req, res) => {
     await user.save()
 
     console.log('------------------------------------------')
-    console.log('DEBUG: forgotPassword')
-    console.log('User Email:', email)
-    console.log('Generated Token:', token)
-    console.log('Expiry Set To:', expiry.toISOString())
-    console.log('Current Time (Server):', new Date().toISOString())
+    console.log('DEBUG: forgotPassword - Found User:', user.email)
+    console.log('FRONTEND_URL:', process.env.FRONTEND_URL)
     console.log('------------------------------------------')
 
-    // Phản hồi ngay lập tức cho client, không chờ email gửi xong
-    res.status(200).json({
-      success: true,
-      message: 'Nếu email tồn tại, chúng tôi đã gửi link đặt lại mật khẩu!',
-    })
-
-    // Gửi email bất đồng bộ (fire-and-forget) sau khi đã response
+    // Phản hồi link đặt lại mật khẩu
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`
 
-    transporter
-      .sendMail({
+    try {
+      await transporter.sendMail({
         from: `"ClickGo Shop" <${process.env.EMAIL_USER}>`,
         to: email,
         subject: '🔐 Đặt lại mật khẩu tài khoản ClickGo của bạn',
@@ -533,22 +524,26 @@ exports.forgotPassword = async (req, res) => {
         </html>
       `,
       })
-      .then(() => {
-        console.log('✅ Email đặt lại mật khẩu đã gửi tới:', email)
+      console.log('✅ Email đặt lại mật khẩu đã gửi tới:', email)
+      return res.status(200).json({
+        success: true,
+        message: 'Link đặt lại mật khẩu đã được gửi về email của bạn!',
       })
-      .catch((err) => {
-        console.error('❌ Lỗi gửi email (fire-and-forget):', err.message)
-      })
-  } catch (error) {
-    console.error('❌ LỖI FORGOT PASSWORD:', error.message)
-    // Chỉ gửi error response nếu chưa gửi response thành công
-    if (!res.headersSent) {
+    } catch (mailError) {
+      console.error('❌ LỖI GỬI EMAIL SMTP:', mailError.message)
       return res.status(500).json({
         success: false,
-        message: 'Đã có lỗi xảy ra tại Server',
-        error: error.message,
+        message: 'Không thể gửi email đặt lại mật khẩu. Vui lòng kiểm tra cấu hình SMTP.',
+        error: mailError.message,
       })
     }
+  } catch (error) {
+    console.error('❌ LỖI FORGOT PASSWORD:', error.message)
+    return res.status(500).json({
+      success: false,
+      message: 'Đã có lỗi xảy ra tại Server',
+      error: error.message,
+    })
   }
 }
 
@@ -620,6 +615,43 @@ exports.resetPassword = async (req, res) => {
     })
   } catch (error) {
     console.error('❌ LỖI RESET PASSWORD:', error.message)
+    return res.status(500).json({
+      success: false,
+      message: 'Đã có lỗi xảy ra tại Server',
+      error: error.message,
+    })
+  }
+}
+
+exports.verifyResetToken = async (req, res) => {
+  const { token } = req.params
+
+  if (!token) {
+    return res.status(400).json({
+      success: false,
+      message: 'Thiếu token xác thực',
+    })
+  }
+
+  try {
+    const user = await User.findOne({
+      resetToken: token,
+      resetTokenExpiry: { $gt: new Date() },
+    })
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn!',
+      })
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Token hợp lệ',
+    })
+  } catch (error) {
+    console.error('❌ LỖI VERIFY RESET TOKEN:', error.message)
     return res.status(500).json({
       success: false,
       message: 'Đã có lỗi xảy ra tại Server',
@@ -976,28 +1008,34 @@ exports.sendOTP = async (req, res) => {
     await OTP.findOneAndUpdate({ email }, { otp, createdAt: new Date() }, { upsert: true, new: true })
 
     // 4. Gửi Email
-    await transporter.sendMail({
-      from: `"ClickGo Shop" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: 'Mã xác nhận đăng ký tài khoản ClickGo',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-          <h2 style="color: #800a0d; text-align: center; margin-bottom: 30px;">XÁC NHẬN ĐĂNG KÝ</h2>
-          <p>Chào bạn,</p>
-          <p>Chúng tôi nhận được yêu cầu đăng ký tài khoản ClickGo bằng email này. Mã xác nhận của bạn là:</p>
-          <div style="background: #fdfaf5; padding: 20px; border-radius: 12px; text-align: center; margin: 30px 0; border: 1px dashed #800a0d;">
-            <span style="font-size: 36px; font-weight: bold; color: #800a0d; letter-spacing: 6px;">${otp}</span>
+    try {
+      await transporter.sendMail({
+        from: `"ClickGo Shop" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: 'Mã xác nhận đăng ký tài khoản ClickGo',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+            <h2 style="color: #800a0d; text-align: center; margin-bottom: 30px;">XÁC NHẬN ĐĂNG KÝ</h2>
+            <p>Chào bạn,</p>
+            <p>Chúng tôi nhận được yêu cầu đăng ký tài khoản ClickGo bằng email này. Mã xác nhận của bạn là:</p>
+            <div style="background: #fdfaf5; padding: 20px; border-radius: 12px; text-align: center; margin: 30px 0; border: 1px dashed #800a0d;">
+              <span style="font-size: 36px; font-weight: bold; color: #800a0d; letter-spacing: 6px;">${otp}</span>
+            </div>
+            <p style="color: #666; font-size: 14px; line-height: 1.6;">Mã này sẽ hết hạn sau <strong>5 phút</strong>. Vui lòng tuyệt đối không chia sẻ mã này với bất kỳ ai để bảo mật tài khoản.</p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
+            <p style="font-size: 12px; color: #aaa; text-align: center;">© 2025 ClickGo – Hệ thống bán hàng Clickgo. Mọi quyền được bảo lưu.</p>
           </div>
-          <p style="color: #666; font-size: 14px; line-height: 1.6;">Mã này sẽ hết hạn sau <strong>5 phút</strong>. Vui lòng tuyệt đối không chia sẻ mã này với bất kỳ ai để bảo mật tài khoản.</p>
-          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
-          <p style="font-size: 12px; color: #aaa; text-align: center;">© 2025 ClickGo – Hệ thống bán hàng Clickgo. Mọi quyền được bảo lưu.</p>
-        </div>
-      `,
-    })
+        `,
+      })
+      console.log('✅ OTP sent successfully to:', email)
+    } catch (mailError) {
+      console.error('❌ LỖI GỬI EMAIL SMTP (OTP):', mailError.message)
+      throw new Error(`Không thể gửi email xác nhận: ${mailError.message}`)
+    }
 
     return res.status(200).json({ success: true, message: 'Mã xác nhận đã được gửi đến email!' })
   } catch (error) {
-    console.error('LỖI GỬI OTP:', error)
+    console.error('LỖI GỬI OTP:', error.message)
     return res.status(500).json({ success: false, message: 'Lỗi Server: Không thể gửi email xác nhận!', error: error.message })
   }
 }
